@@ -89,3 +89,16 @@ export interface Cake {
   finalCostPrice: number // Полная себестоимость (ингредиенты + декор + расходы)
   recommendedPrice: number // Цена продажи (finalCostPrice + marginPercent)
 }
+
+/** Тип для сохранения рецепта — вычисляемые поля подставляются при загрузке. */
+export type RecipeInput = Omit<Recipe, 'totalWeight' | 'totalCost'>
+
+/** Тип для сохранения торта — вычисляемые поля подставляются при загрузке. */
+export type CakeInput = Omit<
+  Cake,
+  | 'totalIngredientsCost'
+  | 'totalDecorationsCost'
+  | 'totalOverheadsCost'
+  | 'finalCostPrice'
+  | 'recommendedPrice'
+>
