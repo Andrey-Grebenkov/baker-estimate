@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import type { Ingredient } from './types'
+import { roundToCurrency } from './money'
 import {
   buildIngredient,
   calculateIngredientCost,
   calculatePricePerBaseUnit,
   calculateRoundedIngredientCost,
-  roundToCurrency,
 } from './ingredient'
 
 describe('roundToCurrency', () => {
