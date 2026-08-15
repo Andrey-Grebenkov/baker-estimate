@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
+import { CakePrintView } from './CakePrintView'
 import { generateId } from '../lib/id'
-import type { CakeDecorationItem, CakeRecipeItem, Overheads } from '../domain/types'
+import type { CakeDecorationItem, CakeRecipeItem, Overheads, Recipe } from '../domain/types'
 import type { CakeDetails } from '../domain/cake'
 
 function formatMoney(value: number): string {
@@ -28,6 +30,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
   const [marginPercent, setMarginPercent] = useState('30')
   const [error, setError] = useState<string | null>(null)
+  const [printingCakeId, setPrintingCakeId] = useState<string | null>(null)
 
   const resetForm = () => {
     setEditingId(null)
@@ -150,6 +153,23 @@ export function CakesPage({ state }: { state: AppState }) {
     }
   }
 
+  const handlePrint = (cakeId: string) => {
+    const cake = state.cakes.find((c) => c.id === cakeId)
+    if (!cake) return
+
+    flushSync(() => {
+      setPrintingCakeId(cakeId)
+    })
+
+    window.print()
+
+    setPrintingCakeId(null)
+  }
+
+  const printingCake = printingCakeId
+    ? state.cakes.find((c) => c.id === printingCakeId)
+    : null
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -185,6 +205,19 @@ export function CakesPage({ state }: { state: AppState }) {
     }
 
     resetForm()
+  }
+
+  if (printingCake) {
+    return (
+      <div
+        className="fixed inset-0 z-50 block overflow-auto bg-white p-4 sm:p-8 print:static print:block print:p-0"
+        data-testid="cake-print-overlay"
+      >
+        <div className="mx-auto w-full max-w-5xl print:max-w-none">
+          <CakePrintView cake={printingCake} recipes={state.recipes} />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -510,8 +543,10 @@ export function CakesPage({ state }: { state: AppState }) {
               <CakeCard
                 key={cake.id}
                 cake={cake}
+                recipes={state.recipes}
                 onEdit={() => startEdit(cake)}
                 onDelete={() => state.deleteCake(cake.id)}
+                onPrint={() => handlePrint(cake.id)}
               />
             ))}
           </div>
@@ -563,7 +598,7 @@ function CakePreview({ cake }: { cake: CakeDetails | null }) {
 
   return (
     <div
-      className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 sm:p-6"
+      className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 sm:p-6 print:hidden"
       data-testid="cake-preview-card"
     >
       <h3 className="mb-3 text-lg font-semibold text-slate-800">Предварительный расчёт</h3>
@@ -587,25 +622,37 @@ function CakeCard({
   cake,
   onEdit,
   onDelete,
+  onPrint,
+  recipes,
 }: {
   cake: CakeDetails
   onEdit: () => void
   onDelete: () => void
+  onPrint: () => void
+  recipes: Recipe[]
 }) {
   return (
     <div
-      className="rounded-lg border border-slate-100 bg-slate-50 p-4"
+      className="rounded-lg border border-slate-100 bg-slate-50 p-4 print:bg-white"
       data-testid="cake-row"
       data-cake-id={cake.id}
     >
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between print:hidden">
         <div>
           <p className="font-medium text-slate-800">{cake.name}</p>
           <p className="text-sm text-slate-500">
             {cake.recipes.length} рецептов | {cake.decorations.length} декора
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onPrint}
+            className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-50"
+            data-testid="cake-print-button"
+          >
+            Распечатать смету
+          </button>
           <button
             type="button"
             onClick={onEdit}
@@ -626,7 +673,7 @@ function CakeCard({
       </div>
 
       <div
-        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 print:hidden"
         data-testid="cake-result-card"
       >
         <Metric label="Вес" value={`${(cake.weightKg * 1000).toFixed(0)} г / ${cake.weightKg.toFixed(3)} кг`} />
@@ -635,7 +682,7 @@ function CakeCard({
         <Metric label="Наценка" value={`${cake.marginPercent}%`} />
       </div>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
         <Metric label="За 1 кг (себест.)" value={`${formatMoney(cake.costPerKg)} ₽/кг`} />
         <Metric label="За 1 кг (продажа)" value={`${formatMoney(cake.recommendedPricePerKg)} ₽/кг`} />
         <Metric
@@ -644,6 +691,10 @@ function CakeCard({
             cake.totalDecorationsCost,
           )} ₽ + труд ${formatMoney(cake.totalOverheadsCost)} ₽`}
         />
+      </div>
+
+      <div className="hidden print:block">
+        <CakePrintView cake={cake} recipes={recipes} />
       </div>
     </div>
   )

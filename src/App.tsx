@@ -17,8 +17,8 @@ function App() {
   const state = useAppState()
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="app">
-      <header className="bg-white shadow-sm ring-1 ring-slate-200">
+    <div className="min-h-screen bg-slate-50 print:bg-white" data-testid="app">
+      <header className="bg-white shadow-sm ring-1 ring-slate-200 print:hidden">
         <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8">
           <h1
             className="text-xl font-bold text-slate-900 sm:text-2xl"
@@ -32,9 +32,9 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none print:p-0">
         <nav
-          className="mb-6 flex flex-wrap gap-2"
+          className="mb-6 flex flex-wrap gap-2 print:hidden"
           role="tablist"
           data-testid="app-tabs"
         >
