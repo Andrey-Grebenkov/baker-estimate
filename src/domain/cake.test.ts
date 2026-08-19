@@ -74,7 +74,7 @@ const recipesById: Record<string, Recipe> = {
 }
 
 describe('buildCake', () => {
-  it('calculates full cake cost with recipes, decorations, overheads and margin', () => {
+  it('calculates full cake cost with recipes, packaging, decor, overheads and margin', () => {
     const cake = buildCake(
       {
         id: 'cake-1',
@@ -83,10 +83,8 @@ describe('buildCake', () => {
           { recipeId: 'biscuit-1', multiplier: 1 },
           { recipeId: 'cream-1', multiplier: 1.5 },
         ],
-        decorations: [
-          { id: 'box', name: 'Коробка', cost: 150, quantity: 1 },
-          { id: 'topper', name: 'Топпер', cost: 80, quantity: 1 },
-        ],
+        packaging: [{ id: 'box', name: 'Коробка', cost: 150, quantity: 1 }],
+        decor: [{ id: 'topper', name: 'Топпер', cost: 80, quantity: 1 }],
         overheads: { workHours: 3, hourlyRate: 500, fixedCosts: 100 },
         marginPercent: 30,
       },
@@ -94,7 +92,8 @@ describe('buildCake', () => {
     )
 
     expect(cake.totalIngredientsCost).toBe(231.5)
-    expect(cake.totalDecorationsCost).toBe(230)
+    expect(cake.totalPackagingCost).toBe(150)
+    expect(cake.totalDecorCost).toBe(80)
     expect(cake.totalOverheadsCost).toBe(1600)
     expect(cake.finalCostPrice).toBe(2061.5)
     expect(cake.recommendedPrice).toBe(2679.95)
@@ -103,20 +102,22 @@ describe('buildCake', () => {
     expect(cake.recommendedPricePerKg).toBe(3248.42)
   })
 
-  it('handles cake without decorations', () => {
+  it('handles cake without packaging and decor', () => {
     const cake = buildCake(
       {
         id: 'cake-2',
         name: 'Торт без декора',
         recipes: [{ recipeId: 'biscuit-1', multiplier: 1 }],
-        decorations: [],
+        packaging: [],
+        decor: [],
         overheads: { workHours: 1, hourlyRate: 300, fixedCosts: 50 },
         marginPercent: 20,
       },
       recipesById,
     )
 
-    expect(cake.totalDecorationsCost).toBe(0)
+    expect(cake.totalPackagingCost).toBe(0)
+    expect(cake.totalDecorCost).toBe(0)
     expect(cake.finalCostPrice).toBe(454)
     expect(cake.recommendedPrice).toBe(544.8)
   })
@@ -127,7 +128,8 @@ describe('buildCake', () => {
         id: 'cake-3',
         name: 'Торт без наценки',
         recipes: [{ recipeId: 'biscuit-1', multiplier: 1 }],
-        decorations: [],
+        packaging: [],
+        decor: [],
         overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
         marginPercent: 0,
       },
@@ -154,7 +156,8 @@ describe('buildCake', () => {
         id: 'cake-4',
         name: 'Мини-торт',
         recipes: [{ recipeId: 'half-kg', multiplier: 1 }],
-        decorations: [],
+        packaging: [],
+        decor: [],
         overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
         marginPercent: 0,
       },
@@ -181,7 +184,8 @@ describe('buildCake', () => {
         id: 'cake-5',
         name: 'Большой торт',
         recipes: [{ recipeId: 'two-kg', multiplier: 1 }],
-        decorations: [],
+        packaging: [],
+        decor: [],
         overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
         marginPercent: 0,
       },
@@ -199,7 +203,8 @@ describe('buildCake', () => {
         id: 'cake-6',
         name: 'Торт с дробной порцией',
         recipes: [{ recipeId: 'biscuit-1', multiplier: 0.5 }],
-        decorations: [],
+        packaging: [],
+        decor: [],
         overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
         marginPercent: 0,
       },
@@ -217,7 +222,8 @@ describe('buildCake', () => {
         id: 'cake-7',
         name: 'Торт без рецептов',
         recipes: [],
-        decorations: [{ id: 'box', name: 'Коробка', cost: 150, quantity: 1 }],
+        packaging: [{ id: 'box', name: 'Коробка', cost: 150, quantity: 1 }],
+        decor: [],
         overheads: { workHours: 1, hourlyRate: 200, fixedCosts: 0 },
         marginPercent: 10,
       },
@@ -226,6 +232,8 @@ describe('buildCake', () => {
 
     expect(cake.weightKg).toBe(0)
     expect(cake.totalIngredientsCost).toBe(0)
+    expect(cake.totalPackagingCost).toBe(150)
+    expect(cake.totalDecorCost).toBe(0)
     expect(cake.finalCostPrice).toBe(350)
     expect(cake.recommendedPrice).toBe(385)
     expect(cake.costPerKg).toBe(0)
@@ -239,7 +247,8 @@ describe('buildCake', () => {
           id: 'cake-missing',
           name: 'Ошибочный торт',
           recipes: [{ recipeId: 'missing', multiplier: 1 }],
-          decorations: [],
+          packaging: [],
+          decor: [],
           overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
           marginPercent: 0,
         },
@@ -255,7 +264,8 @@ describe('buildCake', () => {
           id: 'cake-negative-multiplier',
           name: 'Ошибочный торт',
           recipes: [{ recipeId: 'biscuit-1', multiplier: -1 }],
-          decorations: [],
+          packaging: [],
+          decor: [],
           overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
           marginPercent: 0,
         },
@@ -264,36 +274,38 @@ describe('buildCake', () => {
     ).toThrow('Recipe multiplier cannot be negative')
   })
 
-  it('throws on negative decoration cost', () => {
+  it('throws on negative packaging cost', () => {
     expect(() =>
       buildCake(
         {
-          id: 'cake-negative-decoration',
+          id: 'cake-negative-packaging-cost',
           name: 'Ошибочный торт',
           recipes: [],
-          decorations: [{ id: 'bad', name: 'Bad', cost: -10, quantity: 1 }],
+          packaging: [{ id: 'bad', name: 'Bad', cost: -10, quantity: 1 }],
+          decor: [],
           overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
           marginPercent: 0,
         },
         {},
       ),
-    ).toThrow('Decoration cost cannot be negative')
+    ).toThrow('Item cost cannot be negative')
   })
 
-  it('throws on negative decoration quantity', () => {
+  it('throws on negative decor quantity', () => {
     expect(() =>
       buildCake(
         {
-          id: 'cake-negative-qty',
+          id: 'cake-negative-decor-qty',
           name: 'Ошибочный торт',
           recipes: [],
-          decorations: [{ id: 'bad', name: 'Bad', cost: 10, quantity: -1 }],
+          packaging: [],
+          decor: [{ id: 'bad', name: 'Bad', cost: 10, quantity: -1 }],
           overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
           marginPercent: 0,
         },
         {},
       ),
-    ).toThrow('Decoration quantity cannot be negative')
+    ).toThrow('Item quantity cannot be negative')
   })
 
   it('throws on negative overheads', () => {
@@ -303,7 +315,8 @@ describe('buildCake', () => {
           id: 'cake-negative-overheads',
           name: 'Ошибочный торт',
           recipes: [],
-          decorations: [],
+          packaging: [],
+          decor: [],
           overheads: { workHours: -1, hourlyRate: 100, fixedCosts: 0 },
           marginPercent: 0,
         },
@@ -319,7 +332,8 @@ describe('buildCake', () => {
           id: 'cake-negative-margin',
           name: 'Ошибочный торт',
           recipes: [],
-          decorations: [],
+          packaging: [],
+          decor: [],
           overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
           marginPercent: -10,
         },

@@ -3,11 +3,12 @@ import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
 import { CakePrintView } from './CakePrintView'
 import { generateId } from '../lib/id'
-import type { CakeDecorationItem, CakeRecipeItem, Overheads, Recipe } from '../domain/types'
-import type { CakeDetails } from '../domain/cake'
+import type { CakeAdditionalItem, CakeRecipeItem, Overheads, Recipe } from '../domain/types'
+import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
+import { roundToCurrency } from '../domain/money'
 
 function formatMoney(value: number): string {
-  return value.toFixed(2)
+  return roundToCurrency(value).toFixed(2)
 }
 
 export function CakesPage({ state }: { state: AppState }) {
@@ -17,10 +18,15 @@ export function CakesPage({ state }: { state: AppState }) {
   const [selectedRecipeId, setSelectedRecipeId] = useState('')
   const [selectedMultiplier, setSelectedMultiplier] = useState('1')
 
-  const [decorations, setDecorations] = useState<CakeDecorationItem[]>([])
-  const [decorationName, setDecorationName] = useState('')
-  const [decorationCost, setDecorationCost] = useState('')
-  const [decorationQuantity, setDecorationQuantity] = useState('1')
+  const [packaging, setPackaging] = useState<CakeAdditionalItem[]>([])
+  const [packagingName, setPackagingName] = useState('')
+  const [packagingCost, setPackagingCost] = useState('')
+  const [packagingQuantity, setPackagingQuantity] = useState('1')
+
+  const [decor, setDecor] = useState<CakeAdditionalItem[]>([])
+  const [decorName, setDecorName] = useState('')
+  const [decorCost, setDecorCost] = useState('')
+  const [decorQuantity, setDecorQuantity] = useState('1')
 
   const [overheads, setOverheads] = useState<Overheads>({
     workHours: 0,
@@ -38,10 +44,14 @@ export function CakesPage({ state }: { state: AppState }) {
     setRecipes([])
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
     setSelectedMultiplier('1')
-    setDecorations([])
-    setDecorationName('')
-    setDecorationCost('')
-    setDecorationQuantity('1')
+    setPackaging([])
+    setPackagingName('')
+    setPackagingCost('')
+    setPackagingQuantity('1')
+    setDecor([])
+    setDecorName('')
+    setDecorCost('')
+    setDecorQuantity('1')
     setOverheads({ workHours: 0, hourlyRate: 0, fixedCosts: 0 })
     setMarginPercent('30')
     setError(null)
@@ -53,10 +63,14 @@ export function CakesPage({ state }: { state: AppState }) {
     setRecipes(cake.recipes)
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
     setSelectedMultiplier('1')
-    setDecorations(cake.decorations)
-    setDecorationName('')
-    setDecorationCost('')
-    setDecorationQuantity('1')
+    setPackaging([...cake.packaging])
+    setPackagingName('')
+    setPackagingCost('')
+    setPackagingQuantity('1')
+    setDecor([...cake.decor])
+    setDecorName('')
+    setDecorCost('')
+    setDecorQuantity('1')
     setOverheads(cake.overheads)
     setMarginPercent(String(cake.marginPercent))
     setError(null)
@@ -90,38 +104,72 @@ export function CakesPage({ state }: { state: AppState }) {
     setRecipes((prev) => prev.filter((r) => r.recipeId !== recipeId))
   }
 
-  const addDecoration = () => {
-    const trimmedName = decorationName.trim()
+  const addPackaging = () => {
+    const trimmedName = packagingName.trim()
     if (trimmedName.length === 0) {
-      setError('Введите название декора/упаковки')
+      setError('Введите название упаковки')
       return
     }
 
-    const cost = Number(decorationCost)
+    const cost = Number(packagingCost)
     if (Number.isNaN(cost) || cost < 0) {
       setError('Стоимость не может быть отрицательной')
       return
     }
 
-    const quantity = Number(decorationQuantity)
+    const quantity = Number(packagingQuantity)
     if (Number.isNaN(quantity) || quantity <= 0) {
       setError('Количество должно быть положительным числом')
       return
     }
 
-    setDecorations((prev) => [
+    setPackaging((prev) => [
       ...prev,
       { id: generateId(), name: trimmedName, cost, quantity },
     ])
 
-    setDecorationName('')
-    setDecorationCost('')
-    setDecorationQuantity('1')
+    setPackagingName('')
+    setPackagingCost('')
+    setPackagingQuantity('1')
     setError(null)
   }
 
-  const removeDecoration = (id: string) => {
-    setDecorations((prev) => prev.filter((d) => d.id !== id))
+  const removePackaging = (id: string) => {
+    setPackaging((prev) => prev.filter((p) => p.id !== id))
+  }
+
+  const addDecor = () => {
+    const trimmedName = decorName.trim()
+    if (trimmedName.length === 0) {
+      setError('Введите название декора')
+      return
+    }
+
+    const cost = Number(decorCost)
+    if (Number.isNaN(cost) || cost < 0) {
+      setError('Стоимость не может быть отрицательной')
+      return
+    }
+
+    const quantity = Number(decorQuantity)
+    if (Number.isNaN(quantity) || quantity <= 0) {
+      setError('Количество должно быть положительным числом')
+      return
+    }
+
+    setDecor((prev) => [
+      ...prev,
+      { id: generateId(), name: trimmedName, cost, quantity },
+    ])
+
+    setDecorName('')
+    setDecorCost('')
+    setDecorQuantity('1')
+    setError(null)
+  }
+
+  const removeDecor = (id: string) => {
+    setDecor((prev) => prev.filter((d) => d.id !== id))
   }
 
   const previewCake = (): CakeDetails | null => {
@@ -135,7 +183,7 @@ export function CakesPage({ state }: { state: AppState }) {
       return null
     }
 
-    const recipesById = Object.fromEntries(state.recipes.map((r) => [r.id, r]))
+    const recipesById = Object.fromEntries(state.recipes.map((r) => [r.id, r])) as Record<string, Recipe>
     const id = editingId ?? generateId()
 
     try {
@@ -143,10 +191,11 @@ export function CakesPage({ state }: { state: AppState }) {
         id,
         name: trimmedName,
         recipes,
-        decorations,
+        packaging,
+        decor,
         overheads,
         marginPercent: margin,
-        ...calculateDerivedCake(recipes, decorations, overheads, margin, recipesById),
+        ...calculateDerivedCake(recipes, packaging, decor, overheads, margin, recipesById),
       }
     } catch {
       return null
@@ -193,7 +242,8 @@ export function CakesPage({ state }: { state: AppState }) {
     const payload = {
       name: trimmedName,
       recipes,
-      decorations,
+      packaging,
+      decor,
       overheads,
       marginPercent: margin,
     }
@@ -330,86 +380,176 @@ export function CakesPage({ state }: { state: AppState }) {
         </div>
 
         <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-slate-700">Упаковка и декор</h3>
+          <h3 className="mb-2 text-sm font-medium text-slate-700">Упаковка</h3>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1 lg:col-span-2">
-              <label htmlFor="decoration-name" className="text-sm text-slate-600">
+              <label htmlFor="packaging-name" className="text-sm text-slate-600">
                 Название
               </label>
               <input
-                id="decoration-name"
+                id="packaging-name"
                 type="text"
-                value={decorationName}
-                onChange={(e) => setDecorationName(e.target.value)}
+                value={packagingName}
+                onChange={(e) => setPackagingName(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                placeholder="Коробка, топпер..."
-                data-testid="decoration-name-input"
+                placeholder="Коробка, подложка..."
+                data-testid="packaging-name-input"
               />
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="decoration-cost" className="text-sm text-slate-600">
+              <label htmlFor="packaging-cost" className="text-sm text-slate-600">
                 Стоимость, ₽
               </label>
               <input
-                id="decoration-cost"
+                id="packaging-cost"
                 type="number"
                 min="0"
                 step="0.01"
-                value={decorationCost}
-                onChange={(e) => setDecorationCost(e.target.value)}
+                value={packagingCost}
+                onChange={(e) => setPackagingCost(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
-                data-testid="decoration-cost-input"
+                data-testid="packaging-cost-input"
               />
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="decoration-quantity" className="text-sm text-slate-600">
+              <label htmlFor="packaging-quantity" className="text-sm text-slate-600">
                 Количество
               </label>
               <input
-                id="decoration-quantity"
+                id="packaging-quantity"
                 type="number"
                 min="0"
                 step="1"
-                value={decorationQuantity}
-                onChange={(e) => setDecorationQuantity(e.target.value)}
+                value={packagingQuantity}
+                onChange={(e) => setPackagingQuantity(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
-                data-testid="decoration-quantity-input"
+                data-testid="packaging-quantity-input"
               />
             </div>
 
             <div className="flex items-end">
               <button
                 type="button"
-                onClick={addDecoration}
+                onClick={addPackaging}
                 className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-                data-testid="cake-add-decoration-button"
+                data-testid="cake-add-packaging-button"
               >
                 Добавить
               </button>
             </div>
           </div>
 
-          {decorations.length > 0 && (
-            <ul className="mt-4 space-y-2" data-testid="cake-decoration-list">
-              {decorations.map((d) => (
+          {packaging.length > 0 && (
+            <ul className="mt-4 space-y-2" data-testid="cake-packaging-list">
+              {packaging.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between rounded-md bg-white p-2 ring-1 ring-slate-200"
+                  data-testid="cake-packaging-row"
+                >
+                  <span className="text-sm text-slate-700">
+                    {p.name} — {p.quantity} шт. × {p.cost} ₽
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removePackaging(p.id)}
+                    className="text-sm text-rose-600 hover:text-rose-700"
+                    data-testid="cake-remove-packaging-button"
+                  >
+                    Удалить
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
+          <h3 className="mb-2 text-sm font-medium text-slate-700">Декор</h3>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="space-y-1 lg:col-span-2">
+              <label htmlFor="decor-name" className="text-sm text-slate-600">
+                Название
+              </label>
+              <input
+                id="decor-name"
+                type="text"
+                value={decorName}
+                onChange={(e) => setDecorName(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="Топпер, свежие ягоды..."
+                data-testid="decor-name-input"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="decor-cost" className="text-sm text-slate-600">
+                Стоимость, ₽
+              </label>
+              <input
+                id="decor-cost"
+                type="number"
+                min="0"
+                step="0.01"
+                value={decorCost}
+                onChange={(e) => setDecorCost(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="0"
+                data-testid="decor-cost-input"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="decor-quantity" className="text-sm text-slate-600">
+                Количество
+              </label>
+              <input
+                id="decor-quantity"
+                type="number"
+                min="0"
+                step="1"
+                value={decorQuantity}
+                onChange={(e) => setDecorQuantity(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="1"
+                data-testid="decor-quantity-input"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={addDecor}
+                className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                data-testid="cake-add-decor-button"
+              >
+                Добавить
+              </button>
+            </div>
+          </div>
+
+          {decor.length > 0 && (
+            <ul className="mt-4 space-y-2" data-testid="cake-decor-list">
+              {decor.map((d) => (
                 <li
                   key={d.id}
                   className="flex items-center justify-between rounded-md bg-white p-2 ring-1 ring-slate-200"
-                  data-testid="cake-decoration-row"
+                  data-testid="cake-decor-row"
                 >
                   <span className="text-sm text-slate-700">
                     {d.name} — {d.quantity} шт. × {d.cost} ₽
                   </span>
                   <button
                     type="button"
-                    onClick={() => removeDecoration(d.id)}
+                    onClick={() => removeDecor(d.id)}
                     className="text-sm text-rose-600 hover:text-rose-700"
-                    data-testid="cake-remove-decoration-button"
+                    data-testid="cake-remove-decor-button"
                   >
                     Удалить
                   </button>
@@ -558,11 +698,12 @@ export function CakesPage({ state }: { state: AppState }) {
 
 function calculateDerivedCake(
   recipes: CakeRecipeItem[],
-  decorations: CakeDecorationItem[],
+  packaging: CakeAdditionalItem[],
+  decor: CakeAdditionalItem[],
   overheads: Overheads,
   marginPercent: number,
-  recipesById: Record<string, { totalCost: number; totalWeight: number }>,
-): Omit<CakeDetails, 'id' | 'name' | 'recipes' | 'decorations' | 'overheads' | 'marginPercent'> {
+  recipesById: Record<string, Recipe>,
+): Omit<CakeDetails, 'id' | 'name' | 'recipes' | 'packaging' | 'decor' | 'overheads' | 'marginPercent'> {
   let totalIngredientsCost = 0
   let totalWeightGrams = 0
 
@@ -571,25 +712,42 @@ function calculateDerivedCake(
     if (!recipe) {
       throw new Error(`Recipe with id "${item.recipeId}" not found`)
     }
-    totalIngredientsCost += recipe.totalCost * item.multiplier
+    totalIngredientsCost += roundToCurrency(recipe.totalCost * item.multiplier)
     totalWeightGrams += recipe.totalWeight * item.multiplier
   }
 
-  const totalDecorationsCost = decorations.reduce((sum, d) => sum + d.cost * d.quantity, 0)
-  const totalOverheadsCost = overheads.workHours * overheads.hourlyRate + overheads.fixedCosts
+  totalIngredientsCost = roundToCurrency(totalIngredientsCost)
+
+  const totalPackagingCost = roundToCurrency(
+    packaging.reduce((sum, item) => sum + item.cost * item.quantity, 0),
+  )
+  const totalDecorCost = roundToCurrency(
+    decor.reduce((sum, item) => sum + item.cost * item.quantity, 0),
+  )
+
+  const totalOverheadsCost = roundToCurrency(
+    overheads.workHours * overheads.hourlyRate + overheads.fixedCosts,
+  )
+
   const weightKg = totalWeightGrams / 1000
-  const finalCostPrice = totalIngredientsCost + totalDecorationsCost + totalOverheadsCost
-  const recommendedPrice = finalCostPrice * (1 + marginPercent / 100)
+  const finalCostPrice = calculateFinalCostPrice(
+    totalIngredientsCost,
+    totalPackagingCost,
+    totalDecorCost,
+    totalOverheadsCost,
+  )
+  const recommendedPrice = roundToCurrency(finalCostPrice * (1 + marginPercent / 100))
 
   return {
     totalIngredientsCost,
-    totalDecorationsCost,
+    totalPackagingCost,
+    totalDecorCost,
     totalOverheadsCost,
     finalCostPrice,
     recommendedPrice,
     weightKg,
-    costPerKg: weightKg > 0 ? finalCostPrice / weightKg : 0,
-    recommendedPricePerKg: weightKg > 0 ? recommendedPrice / weightKg : 0,
+    costPerKg: weightKg > 0 ? roundToCurrency(finalCostPrice / weightKg) : 0,
+    recommendedPricePerKg: weightKg > 0 ? roundToCurrency(recommendedPrice / weightKg) : 0,
   }
 }
 
@@ -641,7 +799,7 @@ function CakeCard({
         <div>
           <p className="font-medium text-slate-800">{cake.name}</p>
           <p className="text-sm text-slate-500">
-            {cake.recipes.length} рецептов | {cake.decorations.length} декора
+            {cake.recipes.length} рецептов | {cake.packaging.length} упак. | {cake.decor.length} декора
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -687,9 +845,11 @@ function CakeCard({
         <Metric label="За 1 кг (продажа)" value={`${formatMoney(cake.recommendedPricePerKg)} ₽/кг`} />
         <Metric
           label="Состав"
-          value={`ингр. ${formatMoney(cake.totalIngredientsCost)} ₽ + декор ${formatMoney(
-            cake.totalDecorationsCost,
-          )} ₽ + труд ${formatMoney(cake.totalOverheadsCost)} ₽`}
+          value={`ингр. ${formatMoney(cake.totalIngredientsCost)} ₽ + упак. ${formatMoney(
+            cake.totalPackagingCost,
+          )} ₽ + декор ${formatMoney(cake.totalDecorCost)} ₽ + труд ${formatMoney(
+            cake.totalOverheadsCost,
+          )} ₽`}
         />
       </div>
 

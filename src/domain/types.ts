@@ -54,7 +54,7 @@ export interface CakeRecipeItem {
 }
 
 // Упаковка или декор (считается поштучно, не требует создания рецепта)
-export interface CakeDecorationItem {
+export interface CakeAdditionalItem {
   id: string
   name: string // Например, "Коробка 30х30", "Топпер 'С днем рождения'"
   cost: number // Стоимость за штуку
@@ -76,17 +76,19 @@ export interface Cake {
   name: string // Например: "Свадебный 3-ярусный"
 
   recipes: CakeRecipeItem[]
-  decorations: CakeDecorationItem[]
+  packaging: CakeAdditionalItem[]
+  decor: CakeAdditionalItem[]
   overheads: Overheads
 
   marginPercent: number // Желаемая наценка в процентах (например, 30%)
 
   // Итоговые расчетные поля:
   totalIngredientsCost: number // Стоимость всех полуфабрикатов
-  totalDecorationsCost: number // Стоимость коробки, подложки, декора
+  totalPackagingCost: number // Стоимость упаковки
+  totalDecorCost: number // Стоимость декора
   totalOverheadsCost: number // (workHours * hourlyRate) + fixedCosts
 
-  finalCostPrice: number // Полная себестоимость (ингредиенты + декор + расходы)
+  finalCostPrice: number // Полная себестоимость (ингредиенты + упаковка + декор + расходы)
   recommendedPrice: number // Цена продажи (finalCostPrice + marginPercent)
 }
 
@@ -97,7 +99,8 @@ export type RecipeInput = Omit<Recipe, 'totalWeight' | 'totalCost'>
 export type CakeInput = Omit<
   Cake,
   | 'totalIngredientsCost'
-  | 'totalDecorationsCost'
+  | 'totalPackagingCost'
+  | 'totalDecorCost'
   | 'totalOverheadsCost'
   | 'finalCostPrice'
   | 'recommendedPrice'

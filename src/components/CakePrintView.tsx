@@ -6,6 +6,10 @@ interface CakePrintViewProps {
   recipes: Recipe[]
 }
 
+function formatMoney(value: number): string {
+  return value.toFixed(2)
+}
+
 export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
   return (
     <div
@@ -50,21 +54,51 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
         </table>
       </section>
 
-      {cake.decorations.length > 0 && (
-        <section className="mb-6" data-testid="cake-print-decorations">
-          <h2 className="mb-2 text-lg font-semibold">Упаковка и декор</h2>
-          <table className="w-full border-collapse border border-slate-300 text-sm print:border-black" data-testid="cake-print-decorations-table">
+      {cake.packaging.length > 0 && (
+        <section className="mb-6" data-testid="cake-print-packaging">
+          <h2 className="mb-2 text-lg font-semibold">Упаковка</h2>
+          <table className="w-full border-collapse border border-slate-300 text-sm print:border-black" data-testid="cake-print-packaging-table">
             <thead>
               <tr className="bg-slate-100 print:bg-white print:text-black">
                 <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Наименование</th>
                 <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Количество</th>
+                <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Цена за шт., ₽</th>
+                <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Сумма, ₽</th>
               </tr>
             </thead>
             <tbody>
-              {cake.decorations.map((d) => (
-                <tr key={d.id} data-testid="cake-print-decoration-row">
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{d.name}</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{d.quantity} шт.</td>
+              {cake.packaging.map((item) => (
+                <tr key={item.id} data-testid="cake-print-packaging-row">
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.name}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.quantity} шт.</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.cost.toFixed(2)}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{(item.cost * item.quantity).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {cake.decor.length > 0 && (
+        <section className="mb-6" data-testid="cake-print-decor">
+          <h2 className="mb-2 text-lg font-semibold">Декор</h2>
+          <table className="w-full border-collapse border border-slate-300 text-sm print:border-black" data-testid="cake-print-decor-table">
+            <thead>
+              <tr className="bg-slate-100 print:bg-white print:text-black">
+                <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Наименование</th>
+                <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Количество</th>
+                <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Цена за шт., ₽</th>
+                <th className="border border-slate-300 px-3 py-2 text-left print:border-black">Сумма, ₽</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cake.decor.map((item) => (
+                <tr key={item.id} data-testid="cake-print-decor-row">
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.name}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.quantity} шт.</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.cost.toFixed(2)}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{(item.cost * item.quantity).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -81,16 +115,51 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
         </div>
 
         <div>
+          <p className="text-sm text-slate-600 print:text-black">Себестоимость ингредиентов</p>
+          <p className="text-xl font-bold print:text-black" data-testid="cake-print-ingredients-cost">
+            {formatMoney(cake.totalIngredientsCost)} ₽
+          </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-slate-600 print:text-black">Упаковка</p>
+          <p className="text-xl font-bold print:text-black" data-testid="cake-print-packaging-cost">
+            {formatMoney(cake.totalPackagingCost)} ₽
+          </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-slate-600 print:text-black">Декор</p>
+          <p className="text-xl font-bold print:text-black" data-testid="cake-print-decor-cost">
+            {formatMoney(cake.totalDecorCost)} ₽
+          </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-slate-600 print:text-black">Накладные расходы</p>
+          <p className="text-xl font-bold print:text-black" data-testid="cake-print-overheads-cost">
+            {formatMoney(cake.totalOverheadsCost)} ₽
+          </p>
+        </div>
+
+        <div>
+          <p className="text-sm text-slate-600 print:text-black">Полная себестоимость</p>
+          <p className="text-xl font-bold print:text-black" data-testid="cake-print-final-cost">
+            {formatMoney(cake.finalCostPrice)} ₽
+          </p>
+        </div>
+
+        <div>
           <p className="text-sm text-slate-600 print:text-black">Рекомендуемая розничная цена</p>
           <p className="text-2xl font-bold text-indigo-700 print:text-black" data-testid="cake-print-recommended-price">
-            {cake.recommendedPrice.toFixed(2)} ₽
+            {formatMoney(cake.recommendedPrice)} ₽
           </p>
         </div>
 
         <div>
           <p className="text-sm text-slate-600 print:text-black">Цена за 1 кг</p>
           <p className="text-xl font-bold print:text-black" data-testid="cake-print-price-per-kg">
-            {cake.recommendedPricePerKg.toFixed(2)} ₽/кг
+            {formatMoney(cake.recommendedPricePerKg)} ₽/кг
           </p>
         </div>
       </section>

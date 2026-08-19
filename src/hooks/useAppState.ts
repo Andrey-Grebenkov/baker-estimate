@@ -1,13 +1,16 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { buildCake, type CakeDetails } from '../domain/cake'
 import { buildIngredient } from '../domain/ingredient'
 import { buildRecipe } from '../domain/recipe'
 import { generateId } from '../lib/id'
 import type {
+  CakeAdditionalItem,
   CakeInput,
+  CakeRecipeItem,
   Ingredient,
   MeasurementUnit,
+  Overheads,
   Recipe,
   RecipeInput,
 } from '../domain/types'
@@ -43,6 +46,49 @@ export interface AppState {
   deleteCake: (id: string) => void
 }
 
+/**
+ * Фоллбэк для обратной совместимости: старые торты могут хранить
+ * единое поле `decorations`, которое нужно перенести в `decor`,
+ * а `packaging` инициализировать пустым массивом.
+ */
+function migrateCakeInput(input: unknown): CakeInput {
+  if (typeof input !== 'object' || input === null) {
+    throw new Error('Invalid cake input')
+  }
+
+  const raw = input as Record<string, unknown>
+
+  const packaging: CakeAdditionalItem[] = Array.isArray(raw.packaging)
+    ? (raw.packaging as CakeAdditionalItem[])
+    : []
+  let decor: CakeAdditionalItem[] = Array.isArray(raw.decor)
+    ? (raw.decor as CakeAdditionalItem[])
+    : []
+
+  if (Array.isArray(raw.decorations)) {
+    decor = [...decor, ...(raw.decorations as CakeAdditionalItem[])]
+  }
+
+  const recipes: CakeRecipeItem[] = Array.isArray(raw.recipes)
+    ? (raw.recipes as CakeRecipeItem[])
+    : []
+
+  const overheads: Overheads =
+    typeof raw.overheads === 'object' && raw.overheads !== null
+      ? (raw.overheads as Overheads)
+      : { workHours: 0, hourlyRate: 0, fixedCosts: 0 }
+
+  return {
+    id: String(raw.id ?? ''),
+    name: String(raw.name ?? ''),
+    recipes,
+    packaging,
+    decor,
+    overheads,
+    marginPercent: Number(raw.marginPercent ?? 0),
+  }
+}
+
 export function useAppState(): AppState {
   const [store, setStore] = useLocalStorage<Store>(STORAGE_KEY, {
     ingredients: [],
@@ -74,9 +120,14 @@ export function useAppState(): AppState {
     [recipes],
   )
 
+  const cakeInputs = useMemo(
+    () => store.cakeInputs.map(migrateCakeInput),
+    [store.cakeInputs],
+  )
+
   const cakes = useMemo(
     () =>
-      store.cakeInputs
+      cakeInputs
         .map((c) => {
           try {
             return buildCake(c, recipesById)
@@ -85,8 +136,25 @@ export function useAppState(): AppState {
           }
         })
         .filter((c): c is CakeDetails => c !== null),
-    [store.cakeInputs, recipesById],
+    [cakeInputs, recipesById],
   )
+
+  const needsMigration = useMemo(
+    () => store.cakeInputs.some((c) => 'decorations' in (c as object)),
+    [store.cakeInputs],
+  )
+
+  const hasMigratedRef = useRef(false)
+
+  useEffect(() => {
+    if (needsMigration && !hasMigratedRef.current) {
+      hasMigratedRef.current = true
+      setStore((prev) => ({
+        ...prev,
+        cakeInputs: prev.cakeInputs.map(migrateCakeInput),
+      }))
+    }
+  }, [needsMigration, setStore])
 
   const addIngredient = useCallback(
     (input) => {
@@ -121,9 +189,11 @@ export function useAppState(): AppState {
         const deletedRecipeIds = prev.recipeInputs
           .filter((r) => r.ingredients.some((ri) => ri.ingredientId === id))
           .map((r) => r.id)
-        const remainingCakeInputs = prev.cakeInputs.filter(
-          (c) => !c.recipes.some((cr) => deletedRecipeIds.includes(cr.recipeId)),
-        )
+        const remainingCakeInputs = prev.cakeInputs
+          .map(migrateCakeInput)
+          .filter(
+            (c) => !c.recipes.some((cr) => deletedRecipeIds.includes(cr.recipeId)),
+          )
 
         return {
           ...prev,
@@ -164,9 +234,9 @@ export function useAppState(): AppState {
       setStore((prev) => ({
         ...prev,
         recipeInputs: prev.recipeInputs.filter((r) => r.id !== id),
-        cakeInputs: prev.cakeInputs.filter(
-          (c) => !c.recipes.some((r) => r.recipeId === id),
-        ),
+        cakeInputs: prev.cakeInputs
+          .map(migrateCakeInput)
+          .filter((c) => !c.recipes.some((r) => r.recipeId === id)),
       }))
     },
     [setStore],
@@ -177,7 +247,7 @@ export function useAppState(): AppState {
       const cakeInput: CakeInput = { ...input, id: generateId() }
       setStore((prev) => ({
         ...prev,
-        cakeInputs: [...prev.cakeInputs, cakeInput],
+        cakeInputs: [...prev.cakeInputs.map(migrateCakeInput), cakeInput],
       }))
     },
     [setStore],
@@ -188,7 +258,7 @@ export function useAppState(): AppState {
       setStore((prev) => ({
         ...prev,
         cakeInputs: prev.cakeInputs.map((c) =>
-          c.id === id ? { ...input, id } : c,
+          c.id === id ? { ...input, id } : migrateCakeInput(c),
         ),
       }))
     },

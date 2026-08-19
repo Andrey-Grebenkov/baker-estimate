@@ -1,4 +1,4 @@
-import type { Cake, CakeDecorationItem, CakeRecipeItem, Overheads, Recipe } from './types'
+import type { Cake, CakeAdditionalItem, CakeRecipeItem, Overheads, Recipe } from './types'
 import { roundToCurrency } from './money'
 
 function assertNonNegative(value: number, message: string): void {
@@ -70,15 +70,15 @@ export function calculateCakeRecipesWeight(
   return total
 }
 
-export function calculateDecorationsCost(
-  decorations: CakeDecorationItem[],
+export function calculateAdditionalItemsCost(
+  items: CakeAdditionalItem[],
 ): number {
   let total = 0
 
-  for (const decoration of decorations) {
-    assertNonNegative(decoration.cost, 'Decoration cost cannot be negative')
-    assertNonNegative(decoration.quantity, 'Decoration quantity cannot be negative')
-    total += decoration.cost * decoration.quantity
+  for (const item of items) {
+    assertNonNegative(item.cost, 'Item cost cannot be negative')
+    assertNonNegative(item.quantity, 'Item quantity cannot be negative')
+    total += item.cost * item.quantity
   }
 
   return roundToCurrency(total)
@@ -97,11 +97,12 @@ export function gramsToKilograms(grams: number): number {
 
 export function calculateFinalCostPrice(
   totalIngredientsCost: number,
-  totalDecorationsCost: number,
+  totalPackagingCost: number,
+  totalDecorCost: number,
   totalOverheadsCost: number,
 ): number {
   return roundToCurrency(
-    totalIngredientsCost + totalDecorationsCost + totalOverheadsCost,
+    totalIngredientsCost + totalPackagingCost + totalDecorCost + totalOverheadsCost,
   )
 }
 
@@ -137,7 +138,8 @@ export function buildCake(
   input: Omit<
     Cake,
     | 'totalIngredientsCost'
-    | 'totalDecorationsCost'
+    | 'totalPackagingCost'
+    | 'totalDecorCost'
     | 'totalOverheadsCost'
     | 'finalCostPrice'
     | 'recommendedPrice'
@@ -145,13 +147,15 @@ export function buildCake(
   recipesById: Record<string, Recipe>,
 ): CakeDetails {
   const totalIngredientsCost = calculateCakeRecipesCost(input.recipes, recipesById)
-  const totalDecorationsCost = calculateDecorationsCost(input.decorations)
+  const totalPackagingCost = calculateAdditionalItemsCost(input.packaging)
+  const totalDecorCost = calculateAdditionalItemsCost(input.decor)
   const totalOverheadsCost = calculateOverheadsCost(input.overheads)
   const totalWeightGrams = calculateCakeRecipesWeight(input.recipes, recipesById)
   const weightKg = gramsToKilograms(totalWeightGrams)
   const finalCostPrice = calculateFinalCostPrice(
     totalIngredientsCost,
-    totalDecorationsCost,
+    totalPackagingCost,
+    totalDecorCost,
     totalOverheadsCost,
   )
   const recommendedPrice = calculateRecommendedPrice(finalCostPrice, input.marginPercent)
@@ -159,7 +163,8 @@ export function buildCake(
   return {
     ...input,
     totalIngredientsCost,
-    totalDecorationsCost,
+    totalPackagingCost,
+    totalDecorCost,
     totalOverheadsCost,
     finalCostPrice,
     recommendedPrice,
