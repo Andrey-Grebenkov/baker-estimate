@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useAuth } from './hooks/useAuth'
 import { useAppState } from './hooks/useAppState'
+import { AuthPage } from './components/AuthPage'
 import { IngredientsPage } from './components/IngredientsPage'
 import { RecipesPage } from './components/RecipesPage'
 import { CakesPage } from './components/CakesPage'
@@ -13,22 +15,49 @@ const tabs: { value: Tab; label: string }[] = [
 ]
 
 function App() {
+  const { session, user, loading, error, signIn, signUp, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('ingredients')
   const state = useAppState()
+
+  if (loading) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600"
+        data-testid="auth-loading"
+      >
+        Загрузка…
+      </div>
+    )
+  }
+
+  if (!session) {
+    return <AuthPage error={error} onSignIn={signIn} onSignUp={signUp} />
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 print:bg-white" data-testid="app">
       <header className="bg-white shadow-sm ring-1 ring-slate-200 print:hidden">
-        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8">
-          <h1
-            className="text-xl font-bold text-slate-900 sm:text-2xl"
-            data-testid="app-title"
+        <div className="mx-auto flex max-w-5xl flex-col items-start gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <div>
+            <h1
+              className="text-xl font-bold text-slate-900 sm:text-2xl"
+              data-testid="app-title"
+            >
+              Калькулятор себестоимости торта
+            </h1>
+            <p className="mt-1 text-sm text-slate-500" data-testid="app-subtitle">
+              {user?.email ?? 'Локальное приложение для кондитеров'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            data-testid="logout-button"
           >
-            Калькулятор себестоимости торта
-          </h1>
-          <p className="mt-1 text-sm text-slate-500" data-testid="app-subtitle">
-            Локальное приложение для кондитеров
-          </p>
+            Выйти
+          </button>
         </div>
       </header>
 
