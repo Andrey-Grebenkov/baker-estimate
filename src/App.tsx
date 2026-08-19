@@ -19,7 +19,7 @@ function App() {
   const { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount } =
     useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('ingredients')
-  const state = useAppState()
+  const state = useAppState(user)
 
   if (loading) {
     return (

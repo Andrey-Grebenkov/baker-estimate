@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 import type { CakeDetails } from '../domain/cake'
 import type {
   CakeInput,
@@ -36,7 +37,7 @@ export interface AppState {
   deleteCake: (id: string) => void
 }
 
-export function useAppState(): AppState {
+export function useAppState(user: User | null): AppState {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [cakes, setCakes] = useState<CakeDetails[]>([])
@@ -71,8 +72,16 @@ export function useAppState(): AppState {
   }, [handleError])
 
   useEffect(() => {
-    loadAll()
-  }, [loadAll])
+    if (user) {
+      loadAll()
+    } else {
+      setIngredients([])
+      setRecipes([])
+      setCakes([])
+      setInitialized(false)
+      setError(null)
+    }
+  }, [user, loadAll])
 
   const addIngredient = useCallback(
     async (input) => {
