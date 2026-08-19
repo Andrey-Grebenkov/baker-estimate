@@ -11,6 +11,7 @@ export type MeasurementUnit = 'g' | 'ml' | 'pcs'
  */
 export interface Ingredient {
   id: string
+  user_id?: string // Владелец записи (из auth.users)
   name: string // Название, например: "Сахар белый"
   pricePerPackage: number // Цена за целую упаковку
   packageQuantity: number // Размер упаковки (например, 1000)
@@ -35,6 +36,7 @@ export interface RecipeIngredient {
  */
 export interface Recipe {
   id: string
+  user_id?: string // Владелец записи (из auth.users)
   name: string
   ingredients: RecipeIngredient[]
 
@@ -73,6 +75,7 @@ export interface Overheads {
  */
 export interface Cake {
   id: string
+  user_id?: string // Владелец записи (из auth.users)
   name: string // Например: "Свадебный 3-ярусный"
 
   recipes: CakeRecipeItem[]

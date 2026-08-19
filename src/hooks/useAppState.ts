@@ -26,15 +26,15 @@ export interface AppState {
     packageQuantity: number
     unit: MeasurementUnit
   }) => void
-  updateIngredient: (id: string, input: Omit<Ingredient, 'id' | 'pricePerBaseUnit'>) => void
+  updateIngredient: (id: string, input: Omit<Ingredient, 'id' | 'pricePerBaseUnit' | 'user_id'>) => void
   deleteIngredient: (id: string) => void
 
-  addRecipe: (input: Omit<RecipeInput, 'id'>) => void
-  updateRecipe: (id: string, input: Omit<RecipeInput, 'id'>) => void
+  addRecipe: (input: Omit<RecipeInput, 'id' | 'user_id'>) => void
+  updateRecipe: (id: string, input: Omit<RecipeInput, 'id' | 'user_id'>) => void
   deleteRecipe: (id: string) => void
 
-  addCake: (input: Omit<CakeInput, 'id'>, imageFile?: File) => void
-  updateCake: (id: string, input: Omit<CakeInput, 'id'>, imageFile?: File) => void
+  addCake: (input: Omit<CakeInput, 'id' | 'user_id'>, imageFile?: File) => void
+  updateCake: (id: string, input: Omit<CakeInput, 'id' | 'user_id'>, imageFile?: File) => void
   deleteCake: (id: string) => void
 }
 
@@ -93,28 +93,32 @@ export function useAppState(user: User | null): AppState {
     }
   }, [user, loadAll])
 
+  const userId = user?.id
+
   const addIngredient = useCallback(
     async (input) => {
       try {
-        await db.addIngredient(input)
+        if (!userId) throw new Error('Пользователь не авторизован')
+        await db.addIngredient(input, userId)
         await loadAll()
       } catch (err) {
         handleError(err)
       }
     },
-    [loadAll, handleError],
+    [loadAll, handleError, userId],
   )
 
   const updateIngredient = useCallback(
     async (id, input) => {
       try {
-        await db.updateIngredient(id, input)
+        if (!userId) throw new Error('Пользователь не авторизован')
+        await db.updateIngredient(id, input, userId)
         await loadAll()
       } catch (err) {
         handleError(err)
       }
     },
-    [loadAll, handleError],
+    [loadAll, handleError, userId],
   )
 
   const deleteIngredient = useCallback(
@@ -132,27 +136,29 @@ export function useAppState(user: User | null): AppState {
   const addRecipe = useCallback(
     async (input) => {
       try {
+        if (!userId) throw new Error('Пользователь не авторизован')
         const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
-        await db.addRecipe(input, ingredientsById)
+        await db.addRecipe(input, userId, ingredientsById)
         await loadAll()
       } catch (err) {
         handleError(err)
       }
     },
-    [ingredients, loadAll, handleError],
+    [ingredients, loadAll, handleError, userId],
   )
 
   const updateRecipe = useCallback(
     async (id, input) => {
       try {
+        if (!userId) throw new Error('Пользователь не авторизован')
         const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
-        await db.updateRecipe(id, input, ingredientsById)
+        await db.updateRecipe(id, input, userId, ingredientsById)
         await loadAll()
       } catch (err) {
         handleError(err)
       }
     },
-    [ingredients, loadAll, handleError],
+    [ingredients, loadAll, handleError, userId],
   )
 
   const deleteRecipe = useCallback(
@@ -170,35 +176,37 @@ export function useAppState(user: User | null): AppState {
   const addCake = useCallback(
     async (input, imageFile?) => {
       try {
+        if (!userId) throw new Error('Пользователь не авторизован')
         let image_url = input.image_url
         if (imageFile) {
           image_url = await uploadCakeImage(imageFile)
         }
         const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
-        await db.addCake({ ...input, image_url }, recipesById)
+        await db.addCake({ ...input, image_url }, userId, recipesById)
         await loadAll()
       } catch (err) {
         handleError(err)
       }
     },
-    [recipes, loadAll, handleError],
+    [recipes, loadAll, handleError, userId],
   )
 
   const updateCake = useCallback(
     async (id, input, imageFile?) => {
       try {
+        if (!userId) throw new Error('Пользователь не авторизован')
         let image_url = input.image_url
         if (imageFile) {
           image_url = await uploadCakeImage(imageFile)
         }
         const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
-        await db.updateCake(id, { ...input, image_url }, recipesById)
+        await db.updateCake(id, { ...input, image_url }, userId, recipesById)
         await loadAll()
       } catch (err) {
         handleError(err)
       }
     },
-    [recipes, loadAll, handleError],
+    [recipes, loadAll, handleError, userId],
   )
 
   const deleteCake = useCallback(
