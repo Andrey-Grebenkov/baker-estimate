@@ -1,32 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { useLocalStorage } from './useLocalStorage'
-import { buildCake, type CakeDetails } from '../domain/cake'
-import { buildIngredient } from '../domain/ingredient'
-import { buildRecipe } from '../domain/recipe'
-import { generateId } from '../lib/id'
+import { useCallback, useEffect, useState } from 'react'
+import type { CakeDetails } from '../domain/cake'
 import type {
-  CakeAdditionalItem,
   CakeInput,
-  CakeRecipeItem,
   Ingredient,
   MeasurementUnit,
-  Overheads,
   Recipe,
   RecipeInput,
 } from '../domain/types'
-
-const STORAGE_KEY = 'baker-estimate:store'
-
-interface Store {
-  ingredients: Ingredient[]
-  recipeInputs: RecipeInput[]
-  cakeInputs: CakeInput[]
-}
+import * as db from '../lib/db'
 
 export interface AppState {
   ingredients: Ingredient[]
   recipes: Recipe[]
   cakes: CakeDetails[]
+  isLoading: boolean
+  initialized: boolean
+  error: string | null
+  clearError: () => void
 
   addIngredient: (input: {
     name: string
@@ -46,239 +36,164 @@ export interface AppState {
   deleteCake: (id: string) => void
 }
 
-/**
- * Фоллбэк для обратной совместимости: старые торты могут хранить
- * единое поле `decorations`, которое нужно перенести в `decor`,
- * а `packaging` инициализировать пустым массивом.
- */
-function migrateCakeInput(input: unknown): CakeInput {
-  if (typeof input !== 'object' || input === null) {
-    throw new Error('Invalid cake input')
-  }
-
-  const raw = input as Record<string, unknown>
-
-  const packaging: CakeAdditionalItem[] = Array.isArray(raw.packaging)
-    ? (raw.packaging as CakeAdditionalItem[])
-    : []
-  let decor: CakeAdditionalItem[] = Array.isArray(raw.decor)
-    ? (raw.decor as CakeAdditionalItem[])
-    : []
-
-  if (Array.isArray(raw.decorations)) {
-    decor = [...decor, ...(raw.decorations as CakeAdditionalItem[])]
-  }
-
-  const recipes: CakeRecipeItem[] = Array.isArray(raw.recipes)
-    ? (raw.recipes as CakeRecipeItem[])
-    : []
-
-  const overheads: Overheads =
-    typeof raw.overheads === 'object' && raw.overheads !== null
-      ? (raw.overheads as Overheads)
-      : { workHours: 0, hourlyRate: 0, fixedCosts: 0 }
-
-  return {
-    id: String(raw.id ?? ''),
-    name: String(raw.name ?? ''),
-    recipes,
-    packaging,
-    decor,
-    overheads,
-    marginPercent: Number(raw.marginPercent ?? 0),
-  }
-}
-
 export function useAppState(): AppState {
-  const [store, setStore] = useLocalStorage<Store>(STORAGE_KEY, {
-    ingredients: [],
-    recipeInputs: [],
-    cakeInputs: [],
-  })
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [cakes, setCakes] = useState<CakeDetails[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [initialized, setInitialized] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const ingredientsById = useMemo(
-    () => Object.fromEntries(store.ingredients.map((i) => [i.id, i])),
-    [store.ingredients],
-  )
+  const clearError = useCallback(() => setError(null), [])
 
-  const recipes = useMemo(
-    () =>
-      store.recipeInputs
-        .map((r) => {
-          try {
-            return buildRecipe(r, ingredientsById)
-          } catch {
-            return null
-          }
-        })
-        .filter((r): r is Recipe => r !== null),
-    [store.recipeInputs, ingredientsById],
-  )
+  const handleError = useCallback((err: unknown) => {
+    setError(err instanceof Error ? err.message : 'Произошла ошибка')
+  }, [])
 
-  const recipesById = useMemo(
-    () => Object.fromEntries(recipes.map((r) => [r.id, r])),
-    [recipes],
-  )
-
-  const cakeInputs = useMemo(
-    () => store.cakeInputs.map(migrateCakeInput),
-    [store.cakeInputs],
-  )
-
-  const cakes = useMemo(
-    () =>
-      cakeInputs
-        .map((c) => {
-          try {
-            return buildCake(c, recipesById)
-          } catch {
-            return null
-          }
-        })
-        .filter((c): c is CakeDetails => c !== null),
-    [cakeInputs, recipesById],
-  )
-
-  const needsMigration = useMemo(
-    () => store.cakeInputs.some((c) => 'decorations' in (c as object)),
-    [store.cakeInputs],
-  )
-
-  const hasMigratedRef = useRef(false)
+  const loadAll = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const [ingredientsData, recipesData, cakesData] = await Promise.all([
+        db.fetchIngredients(),
+        db.fetchRecipes(),
+        db.fetchCakes(),
+      ])
+      setIngredients(ingredientsData)
+      setRecipes(recipesData)
+      setCakes(cakesData)
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setIsLoading(false)
+      setInitialized(true)
+    }
+  }, [handleError])
 
   useEffect(() => {
-    if (needsMigration && !hasMigratedRef.current) {
-      hasMigratedRef.current = true
-      setStore((prev) => ({
-        ...prev,
-        cakeInputs: prev.cakeInputs.map(migrateCakeInput),
-      }))
-    }
-  }, [needsMigration, setStore])
+    loadAll()
+  }, [loadAll])
 
   const addIngredient = useCallback(
-    (input) => {
-      const ingredient = buildIngredient({ ...input, id: generateId() })
-      setStore((prev) => ({
-        ...prev,
-        ingredients: [...prev.ingredients, ingredient],
-      }))
+    async (input) => {
+      try {
+        await db.addIngredient(input)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [loadAll, handleError],
   )
 
   const updateIngredient = useCallback(
-    (id, input) => {
-      setStore((prev) => ({
-        ...prev,
-        ingredients: prev.ingredients.map((i) =>
-          i.id === id ? buildIngredient({ ...input, id }) : i,
-        ),
-      }))
+    async (id, input) => {
+      try {
+        await db.updateIngredient(id, input)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [loadAll, handleError],
   )
 
   const deleteIngredient = useCallback(
-    (id) => {
-      setStore((prev) => {
-        const ingredients = prev.ingredients.filter((i) => i.id !== id)
-        const remainingRecipeInputs = prev.recipeInputs.filter(
-          (r) => !r.ingredients.some((ri) => ri.ingredientId === id),
-        )
-        const deletedRecipeIds = prev.recipeInputs
-          .filter((r) => r.ingredients.some((ri) => ri.ingredientId === id))
-          .map((r) => r.id)
-        const remainingCakeInputs = prev.cakeInputs
-          .map(migrateCakeInput)
-          .filter(
-            (c) => !c.recipes.some((cr) => deletedRecipeIds.includes(cr.recipeId)),
-          )
-
-        return {
-          ...prev,
-          ingredients,
-          recipeInputs: remainingRecipeInputs,
-          cakeInputs: remainingCakeInputs,
-        }
-      })
+    async (id) => {
+      try {
+        await db.deleteIngredient(id)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [loadAll, handleError],
   )
 
   const addRecipe = useCallback(
-    (input) => {
-      const recipeInput: RecipeInput = { ...input, id: generateId() }
-      setStore((prev) => ({
-        ...prev,
-        recipeInputs: [...prev.recipeInputs, recipeInput],
-      }))
+    async (input) => {
+      try {
+        const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
+        await db.addRecipe(input, ingredientsById)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [ingredients, loadAll, handleError],
   )
 
   const updateRecipe = useCallback(
-    (id, input) => {
-      setStore((prev) => ({
-        ...prev,
-        recipeInputs: prev.recipeInputs.map((r) =>
-          r.id === id ? { ...input, id } : r,
-        ),
-      }))
+    async (id, input) => {
+      try {
+        const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
+        await db.updateRecipe(id, input, ingredientsById)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [ingredients, loadAll, handleError],
   )
 
   const deleteRecipe = useCallback(
-    (id) => {
-      setStore((prev) => ({
-        ...prev,
-        recipeInputs: prev.recipeInputs.filter((r) => r.id !== id),
-        cakeInputs: prev.cakeInputs
-          .map(migrateCakeInput)
-          .filter((c) => !c.recipes.some((r) => r.recipeId === id)),
-      }))
+    async (id) => {
+      try {
+        await db.deleteRecipe(id)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [loadAll, handleError],
   )
 
   const addCake = useCallback(
-    (input) => {
-      const cakeInput: CakeInput = { ...input, id: generateId() }
-      setStore((prev) => ({
-        ...prev,
-        cakeInputs: [...prev.cakeInputs.map(migrateCakeInput), cakeInput],
-      }))
+    async (input) => {
+      try {
+        const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
+        await db.addCake(input, recipesById)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [recipes, loadAll, handleError],
   )
 
   const updateCake = useCallback(
-    (id, input) => {
-      setStore((prev) => ({
-        ...prev,
-        cakeInputs: prev.cakeInputs.map((c) =>
-          c.id === id ? { ...input, id } : migrateCakeInput(c),
-        ),
-      }))
+    async (id, input) => {
+      try {
+        const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
+        await db.updateCake(id, input, recipesById)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [recipes, loadAll, handleError],
   )
 
   const deleteCake = useCallback(
-    (id) => {
-      setStore((prev) => ({
-        ...prev,
-        cakeInputs: prev.cakeInputs.filter((c) => c.id !== id),
-      }))
+    async (id) => {
+      try {
+        await db.deleteCake(id)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
     },
-    [setStore],
+    [loadAll, handleError],
   )
 
   return {
-    ingredients: store.ingredients,
+    ingredients,
     recipes,
     cakes,
+    isLoading,
+    initialized,
+    error,
+    clearError,
 
     addIngredient,
     updateIngredient,

@@ -34,6 +34,17 @@ function App() {
     return <AuthPage error={error} onSignIn={signIn} onSignUp={signUp} />
   }
 
+  if (!state.initialized) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600"
+        data-testid="data-loading"
+      >
+        Загрузка данных…
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 print:bg-white" data-testid="app">
       <header className="bg-white shadow-sm ring-1 ring-slate-200 print:hidden">
@@ -50,16 +61,42 @@ function App() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            data-testid="logout-button"
-          >
-            Выйти
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {state.isLoading && (
+              <span className="text-sm text-slate-500" data-testid="data-loading-indicator">
+                Сохранение…
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              data-testid="logout-button"
+            >
+              Выйти
+            </button>
+          </div>
         </div>
       </header>
+
+      {state.error && (
+        <div
+          className="mx-auto max-w-5xl px-4 pt-4 sm:px-6 lg:px-8 print:hidden"
+          data-testid="app-error-banner"
+        >
+          <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 sm:flex sm:items-start sm:justify-between">
+            <span data-testid="app-error-message">{state.error}</span>
+            <button
+              type="button"
+              onClick={state.clearError}
+              className="mt-2 font-medium text-rose-700 underline sm:mt-0"
+              data-testid="app-error-close"
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none print:p-0">
         <nav
