@@ -90,6 +90,7 @@ export interface Cake {
 
   finalCostPrice: number // Полная себестоимость (ингредиенты + упаковка + декор + расходы)
   recommendedPrice: number // Цена продажи (finalCostPrice + marginPercent)
+  image_url?: string // URL фотографии торта в Supabase Storage
 }
 
 /** Тип для сохранения рецепта — вычисляемые поля подставляются при загрузке. */

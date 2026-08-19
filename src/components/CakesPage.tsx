@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
 import { CakePrintView } from './CakePrintView'
@@ -37,6 +37,17 @@ export function CakesPage({ state }: { state: AppState }) {
   const [marginPercent, setMarginPercent] = useState('30')
   const [error, setError] = useState<string | null>(null)
   const [printingCakeId, setPrintingCakeId] = useState<string | null>(null)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
 
   const resetForm = () => {
     setEditingId(null)
@@ -54,6 +65,12 @@ export function CakesPage({ state }: { state: AppState }) {
     setDecorQuantity('1')
     setOverheads({ workHours: 0, hourlyRate: 0, fixedCosts: 0 })
     setMarginPercent('30')
+    setImageUrl(null)
+    setImageFile(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+    setPreviewUrl(null)
     setError(null)
   }
 
@@ -73,6 +90,12 @@ export function CakesPage({ state }: { state: AppState }) {
     setDecorQuantity('1')
     setOverheads(cake.overheads)
     setMarginPercent(String(cake.marginPercent))
+    setImageUrl(cake.image_url ?? null)
+    setImageFile(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+    setPreviewUrl(null)
     setError(null)
   }
 
@@ -172,6 +195,31 @@ export function CakesPage({ state }: { state: AppState }) {
     setDecor((prev) => prev.filter((d) => d.id !== id))
   }
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Выберите файл изображения')
+      return
+    }
+    if (imageFile) {
+      URL.revokeObjectURL(previewUrl ?? '')
+    }
+    setImageFile(file)
+    setImageUrl(null)
+    setPreviewUrl(URL.createObjectURL(file))
+    setError(null)
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    setImageUrl(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+    setPreviewUrl(null)
+  }
+
   const previewCake = (): CakeDetails | null => {
     const trimmedName = cakeName.trim()
     if (trimmedName.length === 0 || recipes.length === 0) {
@@ -246,12 +294,13 @@ export function CakesPage({ state }: { state: AppState }) {
       decor,
       overheads,
       marginPercent: margin,
+      image_url: imageUrl ?? undefined,
     }
 
     if (editingId) {
-      state.updateCake(editingId, payload)
+      state.updateCake(editingId, payload, imageFile ?? undefined)
     } else {
-      state.addCake(payload)
+      state.addCake(payload, imageFile ?? undefined)
     }
 
     resetForm()
@@ -294,6 +343,67 @@ export function CakesPage({ state }: { state: AppState }) {
             placeholder="Например, Свадебный 3-ярусный"
             data-testid="cake-name-input"
           />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="cake-image" className="mb-1 block text-sm font-medium text-slate-600">
+            Фотография торта
+          </label>
+
+          <input
+            id="cake-image"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+            data-testid="cake-image-input"
+          />
+
+          <div className="flex flex-wrap items-center gap-3">
+            <label
+              htmlFor="cake-image"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              data-testid="cake-image-label"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-5 w-5"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="7" width="18" height="13" rx="2" ry="2" />
+                <circle cx="12" cy="13" r="3" />
+                <path d="M8 7h8" />
+              </svg>
+              {imageUrl || previewUrl ? 'Заменить фото' : 'Выбрать фото'}
+            </label>
+
+            {(imageUrl || previewUrl) && (
+              <button
+                type="button"
+                onClick={removeImage}
+                className="text-sm text-rose-600 hover:text-rose-700"
+                data-testid="cake-remove-image-button"
+              >
+                Удалить
+              </button>
+            )}
+          </div>
+
+          {(previewUrl || imageUrl) && (
+            <div className="mt-3 aspect-video w-full max-w-md overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200">
+              <img
+                src={previewUrl ?? imageUrl ?? undefined}
+                alt="Предпросмотр фотографии торта"
+                className="h-full w-full object-cover"
+                data-testid="cake-image-preview"
+              />
+            </div>
+          )}
         </div>
 
         <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
@@ -791,10 +901,39 @@ function CakeCard({
 }) {
   return (
     <div
-      className="rounded-lg border border-slate-100 bg-slate-50 p-4 print:bg-white"
+      className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50 print:bg-white"
       data-testid="cake-row"
       data-cake-id={cake.id}
     >
+      {cake.image_url ? (
+        <div className="aspect-video w-full bg-slate-100">
+          <img
+            src={cake.image_url}
+            alt={cake.name}
+            className="h-full w-full object-cover"
+            data-testid="cake-card-image"
+          />
+        </div>
+      ) : (
+        <div className="flex aspect-video w-full items-center justify-center bg-slate-100" data-testid="cake-card-placeholder">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            className="h-12 w-12 text-slate-300"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="7" width="18" height="13" rx="2" ry="2" />
+            <circle cx="12" cy="13" r="3" />
+            <path d="M8 7h8" />
+          </svg>
+        </div>
+      )}
+
+      <div className="p-4">
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between print:hidden">
         <div>
           <p className="font-medium text-slate-800">{cake.name}</p>
@@ -855,6 +994,7 @@ function CakeCard({
 
       <div className="hidden print:block">
         <CakePrintView cake={cake} recipes={recipes} />
+      </div>
       </div>
     </div>
   )

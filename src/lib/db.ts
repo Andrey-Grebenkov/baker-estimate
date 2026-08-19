@@ -46,6 +46,7 @@ interface DbCake {
   weight_kg: number
   cost_per_kg: number
   recommended_price_per_kg: number
+  image_url: string | null
 }
 
 function toNumber(value: unknown): number {
@@ -94,6 +95,7 @@ function mapCake(row: DbCake): CakeDetails {
     weightKg: toNumber(row.weight_kg),
     costPerKg: toNumber(row.cost_per_kg),
     recommendedPricePerKg: toNumber(row.recommended_price_per_kg),
+    image_url: row.image_url ?? undefined,
   }
 }
 
@@ -210,6 +212,7 @@ export async function addCake(
     weight_kg: cake.weightKg,
     cost_per_kg: cake.costPerKg,
     recommended_price_per_kg: cake.recommendedPricePerKg,
+    image_url: cake.image_url ?? null,
   })
   if (error) throw new Error(error.message)
 }
@@ -236,6 +239,7 @@ export async function updateCake(
     weight_kg: cake.weightKg,
     cost_per_kg: cake.costPerKg,
     recommended_price_per_kg: cake.recommendedPricePerKg,
+    image_url: cake.image_url ?? null,
   }).eq('id', id)
   if (error) throw new Error(error.message)
 }

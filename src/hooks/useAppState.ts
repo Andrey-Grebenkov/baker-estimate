@@ -8,6 +8,7 @@ import type {
   Recipe,
   RecipeInput,
 } from '../domain/types'
+import { supabase } from '../lib/supabase'
 import * as db from '../lib/db'
 
 export interface AppState {
@@ -32,9 +33,18 @@ export interface AppState {
   updateRecipe: (id: string, input: Omit<RecipeInput, 'id'>) => void
   deleteRecipe: (id: string) => void
 
-  addCake: (input: Omit<CakeInput, 'id'>) => void
-  updateCake: (id: string, input: Omit<CakeInput, 'id'>) => void
+  addCake: (input: Omit<CakeInput, 'id'>, imageFile?: File) => void
+  updateCake: (id: string, input: Omit<CakeInput, 'id'>, imageFile?: File) => void
   deleteCake: (id: string) => void
+}
+
+async function uploadCakeImage(file: File): Promise<string> {
+  const extension = file.name.split('.').pop() || 'png'
+  const path = `cakes/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
+  const { error } = await supabase.storage.from('cakes').upload(path, file)
+  if (error) throw new Error(error.message)
+  const { data } = supabase.storage.from('cakes').getPublicUrl(path)
+  return data.publicUrl
 }
 
 export function useAppState(user: User | null): AppState {
@@ -158,10 +168,14 @@ export function useAppState(user: User | null): AppState {
   )
 
   const addCake = useCallback(
-    async (input) => {
+    async (input, imageFile?) => {
       try {
+        let image_url = input.image_url
+        if (imageFile) {
+          image_url = await uploadCakeImage(imageFile)
+        }
         const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
-        await db.addCake(input, recipesById)
+        await db.addCake({ ...input, image_url }, recipesById)
         await loadAll()
       } catch (err) {
         handleError(err)
@@ -171,10 +185,14 @@ export function useAppState(user: User | null): AppState {
   )
 
   const updateCake = useCallback(
-    async (id, input) => {
+    async (id, input, imageFile?) => {
       try {
+        let image_url = input.image_url
+        if (imageFile) {
+          image_url = await uploadCakeImage(imageFile)
+        }
         const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
-        await db.updateCake(id, input, recipesById)
+        await db.updateCake(id, { ...input, image_url }, recipesById)
         await loadAll()
       } catch (err) {
         handleError(err)
