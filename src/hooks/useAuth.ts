@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
-import type { Session, User, AuthError } from '@supabase/supabase-js'
+import type { Session, User, AuthError, PostgrestError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { mapAuthError } from '../lib/authErrors'
 
 export interface AuthState {
   session: Session | null
@@ -10,6 +11,8 @@ export interface AuthState {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
+  updatePassword: (password: string) => Promise<{ error: AuthError | null }>
+  deleteAccount: () => Promise<{ error: AuthError | PostgrestError | null }>
 }
 
 export function useAuth(): AuthState {
@@ -32,7 +35,7 @@ export function useAuth(): AuthState {
       .then(({ data, error: sessionError }) => {
         if (!mounted) return
         if (sessionError) {
-          setError(sessionError.message)
+          setError(mapAuthError(sessionError))
         } else {
           setSession(data.session)
           setUser(data.session?.user ?? null)
@@ -55,7 +58,7 @@ export function useAuth(): AuthState {
   const signIn = useCallback(async (email: string, password: string) => {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     if (signInError) {
-      setError(signInError.message)
+      setError(mapAuthError(signInError))
     } else {
       setError(null)
     }
@@ -65,7 +68,7 @@ export function useAuth(): AuthState {
   const signUp = useCallback(async (email: string, password: string) => {
     const { error: signUpError } = await supabase.auth.signUp({ email, password })
     if (signUpError) {
-      setError(signUpError.message)
+      setError(mapAuthError(signUpError))
     } else {
       setError(null)
     }
@@ -75,10 +78,36 @@ export function useAuth(): AuthState {
   const signOut = useCallback(async () => {
     const { error: signOutError } = await supabase.auth.signOut()
     if (signOutError) {
-      setError(signOutError.message)
+      setError(mapAuthError(signOutError))
     }
     return { error: signOutError }
   }, [])
 
-  return { session, user, loading, error, signIn, signUp, signOut }
+  const updatePassword = useCallback(async (password: string) => {
+    const { error: updateError } = await supabase.auth.updateUser({ password })
+    if (updateError) {
+      setError(mapAuthError(updateError))
+    } else {
+      setError(null)
+    }
+    return { error: updateError }
+  }, [])
+
+  const deleteAccount = useCallback(async () => {
+    const { error: rpcError } = await supabase.rpc('delete_user')
+    if (rpcError) {
+      setError(mapAuthError(rpcError))
+      return { error: rpcError }
+    }
+
+    const { error: signOutError } = await supabase.auth.signOut()
+    if (signOutError) {
+      setError(mapAuthError(signOutError))
+      return { error: signOutError }
+    }
+
+    return { error: null }
+  }, [])
+
+  return { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useAppState } from './hooks/useAppState'
 import { AuthPage } from './components/AuthPage'
+import { ProfileDropdown } from './components/ProfileDropdown'
 import { IngredientsPage } from './components/IngredientsPage'
 import { RecipesPage } from './components/RecipesPage'
 import { CakesPage } from './components/CakesPage'
@@ -15,7 +16,8 @@ const tabs: { value: Tab; label: string }[] = [
 ]
 
 function App() {
-  const { session, user, loading, error, signIn, signUp, signOut } = useAuth()
+  const { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount } =
+    useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('ingredients')
   const state = useAppState()
 
@@ -67,14 +69,12 @@ function App() {
                 Сохранение…
               </span>
             )}
-            <button
-              type="button"
-              onClick={() => signOut()}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              data-testid="logout-button"
-            >
-              Выйти
-            </button>
+            <ProfileDropdown
+              user={user}
+              onSignOut={signOut}
+              onUpdatePassword={updatePassword}
+              onDeleteAccount={deleteAccount}
+            />
           </div>
         </div>
       </header>
