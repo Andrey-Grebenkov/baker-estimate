@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { AuthError } from '@supabase/supabase-js'
+import { mapAuthError } from '../lib/authErrors'
 
 interface AuthPageProps {
   error: string | null
@@ -35,14 +36,14 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
         ? await onSignUp(trimmedEmail, password)
         : await onSignIn(trimmedEmail, password)
       if (signError) {
-        setLocalError(signError.message)
+        setLocalError(mapAuthError(signError))
       }
     } finally {
       setIsLoading(false)
     }
   }
 
-  const displayedError = localError || error
+  const displayedError = mapAuthError(localError || error)
 
   return (
     <div
@@ -91,9 +92,12 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
           </div>
 
           {displayedError && (
-            <p className="text-sm text-rose-600" data-testid="auth-error">
+            <div
+              className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+              data-testid="auth-error"
+            >
               {displayedError}
-            </p>
+            </div>
           )}
 
           <button
