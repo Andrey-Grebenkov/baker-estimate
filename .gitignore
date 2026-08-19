@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Секретные ключи
+.env
+.env.*
+!.env.example
