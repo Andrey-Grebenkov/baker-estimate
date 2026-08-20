@@ -8,7 +8,7 @@
   }
 
   .dark .card-inset {
-    @apply border-slate-700 bg-slate-800/60;
+    @apply border-slate-700/50 bg-black/20;
   }
 }
 
