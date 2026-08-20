@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, MeasurementUnit } from '../domain/types'
-import { normalizeNumberString } from '../lib/numberInput'
+import {
+  MAX_DEFAULT_PRICE,
+  MAX_DEFAULT_QUANTITY,
+  normalizeNumberString,
+} from '../lib/numberInput'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
 
@@ -125,9 +129,10 @@ export function IngredientsPage({ state }: { state: AppState }) {
               id="ingredient-price"
               type="number"
               min="0"
+              max={MAX_DEFAULT_PRICE}
               step="0.01"
               value={price}
-              onChange={(e) => setPrice(normalizeNumberString(e.target.value))}
+              onChange={(e) => setPrice(normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE))}
               className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="0"
               data-testid="ingredient-price-input"
@@ -143,9 +148,10 @@ export function IngredientsPage({ state }: { state: AppState }) {
               id="ingredient-quantity"
               type="number"
               min="0"
+              max={MAX_DEFAULT_QUANTITY}
               step="0.01"
               value={quantity}
-              onChange={(e) => setQuantity(normalizeNumberString(e.target.value))}
+              onChange={(e) => setQuantity(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
               className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="1000"
               data-testid="ingredient-quantity-input"
@@ -180,9 +186,10 @@ export function IngredientsPage({ state }: { state: AppState }) {
               id="ingredient-in-stock"
               type="number"
               min="0"
+              max={MAX_DEFAULT_QUANTITY}
               step="0.01"
               value={inStock}
-              onChange={(e) => setInStock(normalizeNumberString(e.target.value))}
+              onChange={(e) => setInStock(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
               className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder=""
               data-testid="ingredient-in-stock-input"

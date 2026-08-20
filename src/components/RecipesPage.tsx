@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, RecipeIngredient, Recipe } from '../domain/types'
-import { normalizeNumberString } from '../lib/numberInput'
+import { MAX_DEFAULT_QUANTITY, normalizeNumberString } from '../lib/numberInput'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
 
@@ -157,9 +157,10 @@ export function RecipesPage({ state }: { state: AppState }) {
                 id="recipe-quantity-input"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_QUANTITY}
                 step="0.01"
                 value={selectedQuantity}
-                onChange={(e) => setSelectedQuantity(normalizeNumberString(e.target.value))}
+                onChange={(e) => setSelectedQuantity(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="recipe-quantity-input"

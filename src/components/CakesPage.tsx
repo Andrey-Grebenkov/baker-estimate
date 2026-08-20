@@ -6,7 +6,14 @@ import { generateId } from '../lib/id'
 import type { CakeAdditionalItem, CakeRecipeItem, Ingredient, Overheads, Recipe } from '../domain/types'
 import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
 import { roundToCurrency } from '../domain/money'
-import { normalizeNumberString, parseNumberInput } from '../lib/numberInput'
+import {
+  MAX_DEFAULT_DIMENSION,
+  MAX_DEFAULT_PERCENT,
+  MAX_DEFAULT_PRICE,
+  MAX_DEFAULT_QUANTITY,
+  normalizeNumberString,
+  parseNumberInput,
+} from '../lib/numberInput'
 import {
   calculateScalingCoefficient,
   roundToDecimal,
@@ -545,9 +552,10 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="cake-recipe-multiplier"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_PERCENT}
                 step="0.01"
                 value={selectedMultiplier}
-                onChange={(e) => setSelectedMultiplier(normalizeNumberString(e.target.value))}
+                onChange={(e) => setSelectedMultiplier(normalizeNumberString(e.target.value, MAX_DEFAULT_PERCENT))}
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="cake-recipe-multiplier-input"
@@ -593,9 +601,10 @@ export function CakesPage({ state }: { state: AppState }) {
                     <input
                       type="number"
                       min="0"
+                      max={MAX_DEFAULT_DIMENSION}
                       step="0.1"
                       value={sourceDiameter}
-                      onChange={(e) => setSourceDiameter(normalizeNumberString(e.target.value))}
+                      onChange={(e) => setSourceDiameter(normalizeNumberString(e.target.value, MAX_DEFAULT_DIMENSION))}
                       placeholder="Диаметр, см"
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       data-testid="cake-source-diameter-input"
@@ -605,9 +614,10 @@ export function CakesPage({ state }: { state: AppState }) {
                       <input
                         type="number"
                         min="0"
+                        max={MAX_DEFAULT_DIMENSION}
                         step="0.1"
                         value={sourceLength}
-                        onChange={(e) => setSourceLength(normalizeNumberString(e.target.value))}
+                        onChange={(e) => setSourceLength(normalizeNumberString(e.target.value, MAX_DEFAULT_DIMENSION))}
                         placeholder="Длина, см"
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         data-testid="cake-source-length-input"
@@ -615,9 +625,10 @@ export function CakesPage({ state }: { state: AppState }) {
                       <input
                         type="number"
                         min="0"
+                        max={MAX_DEFAULT_DIMENSION}
                         step="0.1"
                         value={sourceWidth}
-                        onChange={(e) => setSourceWidth(normalizeNumberString(e.target.value))}
+                        onChange={(e) => setSourceWidth(normalizeNumberString(e.target.value, MAX_DEFAULT_DIMENSION))}
                         placeholder="Ширина, см"
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         data-testid="cake-source-width-input"
@@ -641,9 +652,10 @@ export function CakesPage({ state }: { state: AppState }) {
                     <input
                       type="number"
                       min="0"
+                      max={MAX_DEFAULT_DIMENSION}
                       step="0.1"
                       value={targetDiameter}
-                      onChange={(e) => setTargetDiameter(normalizeNumberString(e.target.value))}
+                      onChange={(e) => setTargetDiameter(normalizeNumberString(e.target.value, MAX_DEFAULT_DIMENSION))}
                       placeholder="Диаметр, см"
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       data-testid="cake-target-diameter-input"
@@ -653,9 +665,10 @@ export function CakesPage({ state }: { state: AppState }) {
                       <input
                         type="number"
                         min="0"
+                        max={MAX_DEFAULT_DIMENSION}
                         step="0.1"
                         value={targetLength}
-                        onChange={(e) => setTargetLength(normalizeNumberString(e.target.value))}
+                        onChange={(e) => setTargetLength(normalizeNumberString(e.target.value, MAX_DEFAULT_DIMENSION))}
                         placeholder="Длина, см"
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         data-testid="cake-target-length-input"
@@ -663,9 +676,10 @@ export function CakesPage({ state }: { state: AppState }) {
                       <input
                         type="number"
                         min="0"
+                        max={MAX_DEFAULT_DIMENSION}
                         step="0.1"
                         value={targetWidth}
-                        onChange={(e) => setTargetWidth(normalizeNumberString(e.target.value))}
+                        onChange={(e) => setTargetWidth(normalizeNumberString(e.target.value, MAX_DEFAULT_DIMENSION))}
                         placeholder="Ширина, см"
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         data-testid="cake-target-width-input"
@@ -763,9 +777,10 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="packaging-cost"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_PRICE}
                 step="0.01"
                 value={packagingCost}
-                onChange={(e) => setPackagingCost(normalizeNumberString(e.target.value))}
+                onChange={(e) => setPackagingCost(normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE))}
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="packaging-cost-input"
@@ -781,9 +796,10 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="packaging-quantity"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_QUANTITY}
                 step="1"
                 value={packagingQuantity}
-                onChange={(e) => setPackagingQuantity(normalizeNumberString(e.target.value))}
+                onChange={(e) => setPackagingQuantity(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="packaging-quantity-input"
@@ -856,9 +872,10 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="decor-cost"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_PRICE}
                 step="0.01"
                 value={decorCost}
-                onChange={(e) => setDecorCost(normalizeNumberString(e.target.value))}
+                onChange={(e) => setDecorCost(normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE))}
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="decor-cost-input"
@@ -874,9 +891,10 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="decor-quantity"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_QUANTITY}
                 step="1"
                 value={decorQuantity}
-                onChange={(e) => setDecorQuantity(normalizeNumberString(e.target.value))}
+                onChange={(e) => setDecorQuantity(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="decor-quantity-input"
@@ -933,10 +951,11 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="overheads-hours"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_QUANTITY}
                 step="0.5"
                 value={rawOverheads.workHours}
                 onChange={(e) => {
-                  const value = normalizeNumberString(e.target.value)
+                  const value = normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY)
                   setRawOverheads((prev) => ({ ...prev, workHours: value }))
                   setOverheads((prev) => ({ ...prev, workHours: parseNumberInput(value) }))
                 }}
@@ -954,10 +973,11 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="overheads-rate"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_PRICE}
                 step="0.01"
                 value={rawOverheads.hourlyRate}
                 onChange={(e) => {
-                  const value = normalizeNumberString(e.target.value)
+                  const value = normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE)
                   setRawOverheads((prev) => ({ ...prev, hourlyRate: value }))
                   setOverheads((prev) => ({ ...prev, hourlyRate: parseNumberInput(value) }))
                 }}
@@ -975,10 +995,11 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="overheads-fixed"
                 type="number"
                 min="0"
+                max={MAX_DEFAULT_PRICE}
                 step="0.01"
                 value={rawOverheads.fixedCosts}
                 onChange={(e) => {
-                  const value = normalizeNumberString(e.target.value)
+                  const value = normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE)
                   setRawOverheads((prev) => ({ ...prev, fixedCosts: value }))
                   setOverheads((prev) => ({ ...prev, fixedCosts: parseNumberInput(value) }))
                 }}
@@ -999,9 +1020,10 @@ export function CakesPage({ state }: { state: AppState }) {
               id="cake-margin"
               type="number"
               min="0"
+              max={MAX_DEFAULT_PERCENT}
               step="0.01"
               value={marginPercent}
-              onChange={(e) => setMarginPercent(normalizeNumberString(e.target.value))}
+              onChange={(e) => setMarginPercent(normalizeNumberString(e.target.value, MAX_DEFAULT_PERCENT))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               data-testid="cake-margin-input"
             />
