@@ -23,6 +23,22 @@ export interface BackupResult {
   cakes: number
 }
 
+export interface ImportConflict<T> {
+  item: T
+  current: T
+}
+
+export interface ImportAnalysisCategory<T> {
+  new: T[]
+  conflicts: ImportConflict<T>[]
+}
+
+export interface ImportAnalysis {
+  ingredients: ImportAnalysisCategory<Ingredient>
+  recipes: ImportAnalysisCategory<Recipe>
+  cakes: ImportAnalysisCategory<CakeDetails>
+}
+
 export function createBackup(
   ingredients: Ingredient[],
   recipes: Recipe[],
@@ -47,6 +63,15 @@ export async function exportBackup(userId?: string): Promise<BackupData> {
     db.fetchCakes(),
   ])
   return createBackup(ingredients, recipes, cakes, userId)
+}
+
+export async function fetchCurrentData(): Promise<{ ingredients: Ingredient[]; recipes: Recipe[]; cakes: CakeDetails[] }> {
+  const [ingredients, recipes, cakes] = await Promise.all([
+    db.fetchIngredients(),
+    db.fetchRecipes(),
+    db.fetchCakes(),
+  ])
+  return { ingredients, recipes, cakes }
 }
 
 export function downloadBackupFile(backup: BackupData): void {
@@ -179,10 +204,8 @@ function toDbCake(cake: CakeDetails, userId: string) {
   }
 }
 
-export async function importBackup(data: unknown, userId: string): Promise<BackupResult> {
-  const backup = validateBackup(data)
-
-  const ingredients = backup.ingredients.map((i) =>
+function buildDomainIngredients(backup: BackupData, userId: string): Ingredient[] {
+  return backup.ingredients.map((i) =>
     buildIngredient({
       id: i.id,
       user_id: userId,
@@ -192,17 +215,24 @@ export async function importBackup(data: unknown, userId: string): Promise<Backu
       unit: i.unit,
     }),
   )
-  const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
+}
 
+function buildDomainRecipes(
+  backup: BackupData,
+  ingredientsById: Record<string, Ingredient>,
+  userId: string,
+): Recipe[] {
   for (const recipe of backup.recipes) {
     for (const ri of recipe.ingredients) {
       if (!ingredientsById[ri.ingredientId]) {
-        throw new Error(`В рецепте "${recipe.name}" ссылкается несуществующий ингредиент ${ri.ingredientId}`)
+        throw new Error(
+          `В рецепте "${recipe.name}" ссылкается несуществующий ингредиент ${ri.ingredientId}`,
+        )
       }
     }
   }
 
-  const recipes = backup.recipes.map((r) =>
+  return backup.recipes.map((r) =>
     buildRecipe(
       {
         id: r.id,
@@ -213,8 +243,13 @@ export async function importBackup(data: unknown, userId: string): Promise<Backu
       ingredientsById,
     ),
   )
-  const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
+}
 
+function buildDomainCakes(
+  backup: BackupData,
+  recipesById: Record<string, Recipe>,
+  userId: string,
+): CakeDetails[] {
   for (const cake of backup.cakes) {
     for (const cr of cake.recipes) {
       if (!recipesById[cr.recipeId]) {
@@ -223,7 +258,7 @@ export async function importBackup(data: unknown, userId: string): Promise<Backu
     }
   }
 
-  const cakes = backup.cakes.map((c) =>
+  return backup.cakes.map((c) =>
     buildCake(
       {
         id: c.id,
@@ -239,10 +274,81 @@ export async function importBackup(data: unknown, userId: string): Promise<Backu
       recipesById,
     ),
   )
+}
 
-  const dbIngredients = ingredients.map((i) => toDbIngredient(i, userId))
-  const dbRecipes = recipes.map((r) => toDbRecipe(r, userId))
-  const dbCakes = cakes.map((c) => toDbCake(c, userId))
+export function analyzeBackup(
+  data: unknown,
+  current: { ingredients: Ingredient[]; recipes: Recipe[]; cakes: CakeDetails[] },
+  userId: string,
+): ImportAnalysis {
+  const backup = validateBackup(data)
+
+  const ingredients = buildDomainIngredients(backup, userId)
+  const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
+  const recipes = buildDomainRecipes(backup, ingredientsById, userId)
+  const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
+  const cakes = buildDomainCakes(backup, recipesById, userId)
+
+  const currentIngredientsById = Object.fromEntries(current.ingredients.map((i) => [i.id, i]))
+  const currentRecipesById = Object.fromEntries(current.recipes.map((r) => [r.id, r]))
+  const currentCakesById = Object.fromEntries(current.cakes.map((c) => [c.id, c]))
+
+  const analyzeCategory = <T extends { id: string }>(items: T[], currentById: Record<string, T>) => {
+    const newItems: T[] = []
+    const conflicts: ImportConflict<T>[] = []
+    for (const item of items) {
+      const existing = currentById[item.id]
+      if (existing) {
+        conflicts.push({ item, current: existing })
+      } else {
+        newItems.push(item)
+      }
+    }
+    return { new: newItems, conflicts }
+  }
+
+  return {
+    ingredients: analyzeCategory(ingredients, currentIngredientsById),
+    recipes: analyzeCategory(recipes, currentRecipesById),
+    cakes: analyzeCategory(cakes, currentCakesById),
+  }
+}
+
+export async function importBackupWithSelection(
+  data: unknown,
+  userId: string,
+  selectedIds: Set<string>,
+  current: { ingredients: Ingredient[]; recipes: Recipe[]; cakes: CakeDetails[] },
+): Promise<BackupResult> {
+  const backup = validateBackup(data)
+
+  const ingredients = buildDomainIngredients(backup, userId)
+  const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
+  const recipes = buildDomainRecipes(backup, ingredientsById, userId)
+  const recipesById = Object.fromEntries(recipes.map((r) => [r.id, r]))
+  const cakes = buildDomainCakes(backup, recipesById, userId)
+
+  const currentIngredientsById = Object.fromEntries(current.ingredients.map((i) => [i.id, i]))
+  const currentRecipesById = Object.fromEntries(current.recipes.map((r) => [r.id, r]))
+  const currentCakesById = Object.fromEntries(current.cakes.map((c) => [c.id, c]))
+
+  const shouldImport = <T extends { id: string }>(
+    items: T[],
+    currentById: Record<string, T>,
+  ): T[] => {
+    return items.filter((item) => {
+      const exists = currentById[item.id]
+      return !exists || selectedIds.has(item.id)
+    })
+  }
+
+  const ingredientsToImport = shouldImport(ingredients, currentIngredientsById)
+  const recipesToImport = shouldImport(recipes, currentRecipesById)
+  const cakesToImport = shouldImport(cakes, currentCakesById)
+
+  const dbIngredients = ingredientsToImport.map((i) => toDbIngredient(i, userId))
+  const dbRecipes = recipesToImport.map((r) => toDbRecipe(r, userId))
+  const dbCakes = cakesToImport.map((c) => toDbCake(c, userId))
 
   const { error: ingredientsError } = await supabase
     .from('ingredients')

@@ -1,7 +1,15 @@
 import { useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import type { AppState } from '../hooks/useAppState'
-import { exportBackup, downloadBackupFile, importBackup } from '../lib/backup'
+import {
+  exportBackup,
+  downloadBackupFile,
+  importBackupWithSelection,
+  analyzeBackup,
+  fetchCurrentData,
+  type ImportAnalysis,
+} from '../lib/backup'
+import { ImportConflictModal } from './ImportConflictModal'
 
 interface SettingsPageProps {
   user: User | null
@@ -16,8 +24,13 @@ interface Toast {
 export function SettingsPage({ user, state }: SettingsPageProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isExporting, setIsExporting] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
+  const [showConflictModal, setShowConflictModal] = useState(false)
+  const [importData, setImportData] = useState<unknown | null>(null)
+  const [importAnalysis, setImportAnalysis] = useState<ImportAnalysis | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const showToast = (type: Toast['type'], message: string) => {
     setToast({ type, message })
@@ -42,14 +55,6 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const confirmed = window.confirm(
-      'Восстановление из файла заменит или дополнит существующие данные в облаке. Продолжить?',
-    )
-    if (!confirmed) {
-      e.target.value = ''
-      return
-    }
-
     if (!user?.id) {
       showToast('error', 'Пользователь не авторизован')
       e.target.value = ''
@@ -57,22 +62,87 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
     }
 
     try {
-      setIsImporting(true)
+      setIsAnalyzing(true)
       setToast(null)
       const text = await file.text()
       const data = JSON.parse(text) as unknown
-      const result = await importBackup(data, user.id)
+      const current = await fetchCurrentData()
+      const analysis = analyzeBackup(data, current, user.id)
+
+      setImportData(data)
+      setImportAnalysis(analysis)
+      setSelectedIds(new Set())
+      setShowConflictModal(true)
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Ошибка при анализе резервной копии')
+    } finally {
+      setIsAnalyzing(false)
+      e.target.value = ''
+    }
+  }
+
+  const getAllConflictIds = (): string[] => {
+    if (!importAnalysis) return []
+    return [
+      ...importAnalysis.ingredients.conflicts.map((c) => c.item.id),
+      ...importAnalysis.recipes.conflicts.map((c) => c.item.id),
+      ...importAnalysis.cakes.conflicts.map((c) => c.item.id),
+    ]
+  }
+
+  const toggleId = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const selectAll = () => {
+    setSelectedIds(new Set(getAllConflictIds()))
+  }
+
+  const deselectAll = () => {
+    setSelectedIds(new Set())
+  }
+
+  const handleImport = async () => {
+    if (!importData || !user?.id || !importAnalysis) return
+
+    const confirmed = window.confirm(
+      'Импорт заменит выбранные элементы в облаке и добавит новые. Продолжить?',
+    )
+    if (!confirmed) return
+
+    try {
+      setIsImporting(true)
+      const current = await fetchCurrentData()
+      const result = await importBackupWithSelection(importData, user.id, selectedIds, current)
+      setShowConflictModal(false)
+      setImportData(null)
+      setImportAnalysis(null)
+      setSelectedIds(new Set())
       await state.reload()
       showToast(
         'success',
-        `Восстановление завершено: ${result.ingredients} ингредиентов, ${result.recipes} рецептов, ${result.cakes} тортов`,
+        `Импорт завершен: ${result.ingredients} ингредиентов, ${result.recipes} рецептов, ${result.cakes} тортов`,
       )
     } catch (err) {
-      showToast('error', err instanceof Error ? err.message : 'Ошибка при восстановлении')
+      showToast('error', err instanceof Error ? err.message : 'Ошибка при импорте')
     } finally {
       setIsImporting(false)
-      e.target.value = ''
     }
+  }
+
+  const handleCancelImport = () => {
+    setShowConflictModal(false)
+    setImportData(null)
+    setImportAnalysis(null)
+    setSelectedIds(new Set())
   }
 
   return (
@@ -99,7 +169,7 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
           <button
             type="button"
             onClick={handleExport}
-            disabled={isExporting || isImporting}
+            disabled={isExporting || isAnalyzing || isImporting}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             data-testid="settings-export-button"
           >
@@ -109,11 +179,11 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isExporting || isImporting}
+            disabled={isExporting || isAnalyzing || isImporting}
             className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             data-testid="settings-import-button"
           >
-            {isImporting ? 'Восстановление…' : 'Загрузить из файла'}
+            {isAnalyzing ? 'Анализ…' : isImporting ? 'Импорт…' : 'Загрузить из файла'}
           </button>
 
           <input
@@ -139,6 +209,19 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
           </div>
         )}
       </div>
+
+      {showConflictModal && importAnalysis && (
+        <ImportConflictModal
+          analysis={importAnalysis}
+          selectedIds={selectedIds}
+          isLoading={isImporting}
+          onToggle={toggleId}
+          onSelectAll={selectAll}
+          onDeselectAll={deselectAll}
+          onImport={handleImport}
+          onCancel={handleCancelImport}
+        />
+      )}
     </div>
   )
 }

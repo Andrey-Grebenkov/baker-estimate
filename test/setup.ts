@@ -15,13 +15,25 @@ vi.mock('@supabase/supabase-js', () => ({
       signUp: vi.fn(),
       signOut: vi.fn(),
     },
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({ data: [], error: null })),
-      insert: vi.fn(() => ({ data: null, error: null })),
-      update: vi.fn(() => ({ data: null, error: null })),
-      delete: vi.fn(() => ({ data: null, error: null })),
-      eq: vi.fn(() => ({ data: [], error: null })),
-      order: vi.fn(() => ({ data: [], error: null })),
-    })),
+    from: vi.fn(() => {
+      const emptyData = { data: [], error: null }
+      const emptyPromise = Promise.resolve({ data: [], error: null })
+      return {
+        select: vi.fn(() => ({
+          ...emptyData,
+          order: vi.fn(() => emptyPromise),
+        })),
+        insert: vi.fn(() => ({ data: null, error: null })),
+        update: vi.fn(() => ({
+          eq: vi.fn(() => ({ data: null, error: null })),
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(() => ({ data: null, error: null })),
+        })),
+        eq: vi.fn(() => ({ data: [], error: null })),
+        order: vi.fn(() => emptyPromise),
+        upsert: vi.fn(() => Promise.resolve({ error: null })),
+      }
+    }),
   })),
 }))
