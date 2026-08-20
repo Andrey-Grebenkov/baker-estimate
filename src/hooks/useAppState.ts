@@ -19,6 +19,7 @@ export interface AppState {
   initialized: boolean
   error: string | null
   clearError: () => void
+  reload: () => Promise<void>
 
   addIngredient: (input: {
     name: string
@@ -229,6 +230,7 @@ export function useAppState(user: User | null): AppState {
     initialized,
     error,
     clearError,
+    reload: loadAll,
 
     addIngredient,
     updateIngredient,
