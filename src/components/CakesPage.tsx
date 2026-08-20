@@ -7,6 +7,12 @@ import type { CakeAdditionalItem, CakeRecipeItem, Overheads, Recipe } from '../d
 import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
 import { roundToCurrency } from '../domain/money'
 import { normalizeNumberString, parseNumberInput } from '../lib/numberInput'
+import {
+  calculateScalingCoefficient,
+  roundToDecimal,
+  type Pan,
+  type PanShape,
+} from '../domain/recipeScaling'
 
 function formatMoney(value: number): string {
   return roundToCurrency(value).toFixed(2)
@@ -18,6 +24,16 @@ export function CakesPage({ state }: { state: AppState }) {
   const [recipes, setRecipes] = useState<CakeRecipeItem[]>([])
   const [selectedRecipeId, setSelectedRecipeId] = useState('')
   const [selectedMultiplier, setSelectedMultiplier] = useState('1')
+
+  const [showScaling, setShowScaling] = useState(false)
+  const [sourceShape, setSourceShape] = useState<PanShape>('round')
+  const [sourceDiameter, setSourceDiameter] = useState('16')
+  const [sourceLength, setSourceLength] = useState('')
+  const [sourceWidth, setSourceWidth] = useState('')
+  const [targetShape, setTargetShape] = useState<PanShape>('round')
+  const [targetDiameter, setTargetDiameter] = useState('20')
+  const [targetLength, setTargetLength] = useState('')
+  const [targetWidth, setTargetWidth] = useState('')
 
   const [packaging, setPackaging] = useState<CakeAdditionalItem[]>([])
   const [packagingName, setPackagingName] = useState('')
@@ -61,6 +77,15 @@ export function CakesPage({ state }: { state: AppState }) {
     setRecipes([])
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
     setSelectedMultiplier('1')
+    setShowScaling(false)
+    setSourceShape('round')
+    setSourceDiameter('16')
+    setSourceLength('')
+    setSourceWidth('')
+    setTargetShape('round')
+    setTargetDiameter('20')
+    setTargetLength('')
+    setTargetWidth('')
     setPackaging([])
     setPackagingName('')
     setPackagingCost('')
@@ -132,6 +157,59 @@ export function CakesPage({ state }: { state: AppState }) {
     }
 
     setSelectedMultiplier('1')
+    setError(null)
+  }
+
+  function buildPan(shape: PanShape, diameter: string, length: string, width: string): Pan | null {
+    if (shape === 'round') {
+      const d = parseNumberInput(diameter)
+      return d > 0 ? { shape: 'round', diameter: d } : null
+    }
+    const l = parseNumberInput(length)
+    const w = parseNumberInput(width)
+    return l > 0 && w > 0 ? { shape: 'rectangular', length: l, width: w } : null
+  }
+
+  const sourcePan = buildPan(sourceShape, sourceDiameter, sourceLength, sourceWidth)
+  const targetPan = buildPan(targetShape, targetDiameter, targetLength, targetWidth)
+  const scalingCoefficient =
+    sourcePan && targetPan ? roundToDecimal(calculateScalingCoefficient(sourcePan, targetPan), 4) : 0
+
+  const applyRecipeScaling = () => {
+    if (!selectedRecipeId) {
+      setError('Выберите рецепт')
+      return
+    }
+    if (!sourcePan || !targetPan) {
+      setError('Введите положительные размеры обеих форм')
+      return
+    }
+    if (scalingCoefficient <= 0) {
+      setError('Некорректные размеры форм')
+      return
+    }
+
+    const baseMultiplier =
+      recipes.find((r) => r.recipeId === selectedRecipeId)?.multiplier ||
+      Number(selectedMultiplier) ||
+      1
+    const newMultiplier = roundToDecimal(baseMultiplier * scalingCoefficient, 2)
+
+    if (Number.isNaN(newMultiplier) || newMultiplier <= 0) {
+      setError('Коэффициент должен быть положительным числом')
+      return
+    }
+
+    setRecipes((prev) => {
+      const exists = prev.some((r) => r.recipeId === selectedRecipeId)
+      if (exists) {
+        return prev.map((r) =>
+          r.recipeId === selectedRecipeId ? { ...r, multiplier: newMultiplier } : r,
+        )
+      }
+      return [...prev, { recipeId: selectedRecipeId, multiplier: newMultiplier }]
+    })
+    setSelectedMultiplier(String(newMultiplier))
     setError(null)
   }
 
@@ -469,6 +547,135 @@ export function CakesPage({ state }: { state: AppState }) {
                 Добавить
               </button>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
+            <button
+              type="button"
+              onClick={() => setShowScaling((prev) => !prev)}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-700 focus:outline-none"
+              data-testid="cake-toggle-scaling-button"
+            >
+              {showScaling ? '▾ Скрыть пересчет по форме' : '▸ Пересчитать по форме'}
+            </button>
+
+            {showScaling && (
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-slate-700">Исходная форма</p>
+                  <select
+                    value={sourceShape}
+                    onChange={(e) => setSourceShape(e.target.value as PanShape)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    data-testid="cake-source-shape-select"
+                  >
+                    <option value="round">Круглая</option>
+                    <option value="rectangular">Прямоугольная</option>
+                  </select>
+                  {sourceShape === 'round' ? (
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={sourceDiameter}
+                      onChange={(e) => setSourceDiameter(normalizeNumberString(e.target.value))}
+                      placeholder="Диаметр, см"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      data-testid="cake-source-diameter-input"
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={sourceLength}
+                        onChange={(e) => setSourceLength(normalizeNumberString(e.target.value))}
+                        placeholder="Длина, см"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        data-testid="cake-source-length-input"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={sourceWidth}
+                        onChange={(e) => setSourceWidth(normalizeNumberString(e.target.value))}
+                        placeholder="Ширина, см"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        data-testid="cake-source-width-input"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-slate-700">Целевая форма</p>
+                  <select
+                    value={targetShape}
+                    onChange={(e) => setTargetShape(e.target.value as PanShape)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    data-testid="cake-target-shape-select"
+                  >
+                    <option value="round">Круглая</option>
+                    <option value="rectangular">Прямоугольная</option>
+                  </select>
+                  {targetShape === 'round' ? (
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={targetDiameter}
+                      onChange={(e) => setTargetDiameter(normalizeNumberString(e.target.value))}
+                      placeholder="Диаметр, см"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      data-testid="cake-target-diameter-input"
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={targetLength}
+                        onChange={(e) => setTargetLength(normalizeNumberString(e.target.value))}
+                        placeholder="Длина, см"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        data-testid="cake-target-length-input"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={targetWidth}
+                        onChange={(e) => setTargetWidth(normalizeNumberString(e.target.value))}
+                        placeholder="Ширина, см"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        data-testid="cake-target-width-input"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
+                  <span className="text-sm text-slate-700" data-testid="cake-scaling-coefficient">
+                    Коэффициент:{' '}
+                    <span className="font-semibold text-slate-900">
+                      {sourcePan && targetPan ? scalingCoefficient.toFixed(4) : '—'}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={applyRecipeScaling}
+                    disabled={!sourcePan || !targetPan}
+                    className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    data-testid="cake-apply-scaling-button"
+                  >
+                    Применить
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {recipes.length > 0 && (
