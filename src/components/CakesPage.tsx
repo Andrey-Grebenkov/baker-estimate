@@ -508,7 +508,7 @@ export function CakesPage({ state }: { state: AppState }) {
           )}
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/50 dark:shadow-slate-950/20">
+        <div className="mb-4 card-inset p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Полуфабрикаты</h3>
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -729,7 +729,7 @@ export function CakesPage({ state }: { state: AppState }) {
           </button>
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/50 dark:shadow-slate-950/20">
+        <div className="mb-4 card-inset p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Упаковка</h3>
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -819,7 +819,7 @@ export function CakesPage({ state }: { state: AppState }) {
           )}
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/50 dark:shadow-slate-950/20">
+        <div className="mb-4 card-inset p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Декор</h3>
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -909,7 +909,7 @@ export function CakesPage({ state }: { state: AppState }) {
           )}
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/50 dark:shadow-slate-950/20">
+        <div className="mb-4 card-inset p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Накладные расходы</h3>
 
           <div className="grid gap-3 sm:grid-cols-3">
@@ -1256,7 +1256,7 @@ function CakeCard({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-white p-3 ring-1 ring-slate-200">
+    <div className="card-inset p-3">
       <p className="text-xs text-slate-500">{label}</p>
       <p className="font-semibold text-slate-800">{value}</p>
     </div>

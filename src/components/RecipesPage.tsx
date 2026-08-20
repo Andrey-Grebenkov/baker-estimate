@@ -120,7 +120,7 @@ export function RecipesPage({ state }: { state: AppState }) {
           />
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/50 dark:shadow-slate-950/20">
+        <div className="mb-4 card-inset p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Состав рецепта</h3>
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -246,7 +246,7 @@ export function RecipesPage({ state }: { state: AppState }) {
             {state.recipes.map((recipe) => (
               <div
                 key={recipe.id}
-                className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+                className="card-inset p-3"
                 data-testid="recipe-row"
                 data-recipe-id={recipe.id}
               >

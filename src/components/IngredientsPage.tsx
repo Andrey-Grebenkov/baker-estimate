@@ -227,7 +227,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
             {state.ingredients.map((ingredient) => (
               <div
                 key={ingredient.id}
-                className="flex flex-col gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                className="card-inset p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                 data-testid="ingredient-row"
                 data-ingredient-id={ingredient.id}
               >
