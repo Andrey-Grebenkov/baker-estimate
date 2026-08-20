@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
 import { CakePrintView } from './CakePrintView'
 import { generateId } from '../lib/id'
-import type { CakeAdditionalItem, CakeRecipeItem, Overheads, Recipe } from '../domain/types'
+import type { CakeAdditionalItem, CakeRecipeItem, Ingredient, Overheads, Recipe } from '../domain/types'
 import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
 import { roundToCurrency } from '../domain/money'
 import { normalizeNumberString, parseNumberInput } from '../lib/numberInput'
@@ -13,6 +13,8 @@ import {
   type Pan,
   type PanShape,
 } from '../domain/recipeScaling'
+import { generateShoppingList } from '../domain/shoppingList'
+import { ShoppingListModal } from './ShoppingListModal'
 
 function formatMoney(value: number): string {
   return roundToCurrency(value).toFixed(2)
@@ -58,6 +60,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
   const [marginPercent, setMarginPercent] = useState('30')
   const [error, setError] = useState<string | null>(null)
+  const [showShoppingList, setShowShoppingList] = useState(false)
   const [printingCakeId, setPrintingCakeId] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -335,6 +338,19 @@ export function CakesPage({ state }: { state: AppState }) {
       return null
     }
   }
+
+  const recipesById = useMemo(
+    () => Object.fromEntries(state.recipes.map((r) => [r.id, r])) as Record<string, Recipe>,
+    [state.recipes],
+  )
+  const ingredientsById = useMemo(
+    () => Object.fromEntries(state.ingredients.map((i) => [i.id, i])) as Record<string, Ingredient>,
+    [state.ingredients],
+  )
+  const shoppingListItems = useMemo(
+    () => generateShoppingList(recipes, recipesById, ingredientsById),
+    [recipes, recipesById, ingredientsById],
+  )
 
   const handlePrint = (cakeId: string) => {
     const cake = state.cakes.find((c) => c.id === cakeId)
@@ -702,10 +718,19 @@ export function CakesPage({ state }: { state: AppState }) {
               })}
             </ul>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowShoppingList(true)}
+            className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            data-testid="cake-shopping-list-button"
+          >
+            Сформировать список покупок
+          </button>
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-slate-700">Упаковка</h3>
+        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+          <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Упаковка</h3>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1 lg:col-span-2">
@@ -1023,6 +1048,14 @@ export function CakesPage({ state }: { state: AppState }) {
           </div>
         )}
       </div>
+
+      {showShoppingList && (
+        <ShoppingListModal
+          items={shoppingListItems}
+          cakeName={cakeName.trim() || 'Новый торт'}
+          onClose={() => setShowShoppingList(false)}
+        />
+      )}
     </div>
   )
 }

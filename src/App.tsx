@@ -7,6 +7,8 @@ import { IngredientsPage } from './components/IngredientsPage'
 import { RecipesPage } from './components/RecipesPage'
 import { CakesPage } from './components/CakesPage'
 import { SettingsPage } from './components/SettingsPage'
+import { useTheme } from './hooks/useTheme'
+import { ThemeToggle } from './components/ThemeToggle'
 
 type Tab = 'ingredients' | 'recipes' | 'cakes' | 'settings'
 
@@ -18,6 +20,7 @@ const tabs: { value: Tab; label: string }[] = [
 ]
 
 function App() {
+  const { theme, toggleTheme } = useTheme()
   const { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount } =
     useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('ingredients')
@@ -71,6 +74,7 @@ function App() {
                 Сохранение…
               </span>
             )}
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <ProfileDropdown
               user={user}
               onSignOut={signOut}

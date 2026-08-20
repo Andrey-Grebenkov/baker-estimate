@@ -14,3 +14,142 @@ input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Dark mode overrides ------------------------------------------------------ */
+/* Using exact token matching so it does not affect print: or explicit dark: classes. */
+
+.dark,
+.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark [class~='bg-white'] {
+  background-color: #1e293b;
+}
+
+.dark [class~='bg-slate-50'] {
+  background-color: #0f172a;
+}
+
+.dark [class~='bg-slate-100'] {
+  background-color: #1e293b;
+}
+
+.dark [class~='bg-slate-200'] {
+  background-color: #334155;
+}
+
+.dark [class~='bg-slate-300'] {
+  background-color: #475569;
+}
+
+.dark [class~='bg-slate-800'] {
+  background-color: #334155;
+}
+
+.dark [class~='bg-slate-900'] {
+  background-color: #0f172a;
+}
+
+.dark [class~='text-slate-900'] {
+  color: #f8fafc;
+}
+
+.dark [class~='text-slate-800'] {
+  color: #f1f5f9;
+}
+
+.dark [class~='text-slate-700'] {
+  color: #e2e8f0;
+}
+
+.dark [class~='text-slate-600'] {
+  color: #cbd5e1;
+}
+
+.dark [class~='text-slate-500'] {
+  color: #94a3b8;
+}
+
+.dark [class~='text-slate-400'] {
+  color: #cbd5e1;
+}
+
+.dark [class~='text-rose-700'],
+.dark [class~='text-rose-600'] {
+  color: #fca5a5;
+}
+
+.dark [class~='text-emerald-700'],
+.dark [class~='text-emerald-600'] {
+  color: #86efac;
+}
+
+.dark [class~='border-slate-100'],
+.dark [class~='border-slate-200'] {
+  border-color: #334155;
+}
+
+.dark [class~='border-slate-300'] {
+  border-color: #475569;
+}
+
+.dark [class~='ring-slate-100'],
+.dark [class~='ring-slate-200'],
+.dark [class~='ring-slate-300'] {
+  --tw-ring-color: #334155;
+}
+
+/* Status backgrounds */
+.dark [class~='bg-rose-50'] {
+  background-color: rgba(127, 29, 29, 0.3);
+}
+
+.dark [class~='bg-emerald-50'] {
+  background-color: rgba(6, 78, 59, 0.3);
+}
+
+/* Hovers */
+.dark [class~='hover:bg-slate-50']:hover,
+.dark [class~='hover:bg-slate-100']:hover {
+  background-color: #334155;
+}
+
+.dark [class~='hover:bg-slate-800']:hover {
+  background-color: #475569;
+}
+
+.dark [class~='hover:bg-slate-900']:hover {
+  background-color: #475569;
+}
+
+.dark [class~='hover:bg-rose-50']:hover {
+  background-color: rgba(127, 29, 29, 0.4);
+}
+
+.dark [class~='hover:text-rose-700']:hover,
+.dark [class~='hover:text-rose-600']:hover {
+  color: #fca5a5;
+}
+
+/* Disabled states */
+.dark [class~='disabled:bg-slate-300']:disabled {
+  background-color: #475569;
+}
+
+/* Focus ring offset in dark */
+.dark [class~='focus:ring-offset-2'] {
+  --tw-ring-offset-color: #0f172a;
+}
+
+/* Print must always be light, regardless of dark mode */
+@media print {
+  .dark,
+  .dark body,
+  .dark * {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+  }
+}
