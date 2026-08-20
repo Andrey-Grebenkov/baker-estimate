@@ -120,8 +120,8 @@ export function RecipesPage({ state }: { state: AppState }) {
           />
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-slate-700">Состав рецепта</h3>
+        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:shadow-slate-950/20">
+          <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Состав рецепта</h3>
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1 lg:col-span-2">
