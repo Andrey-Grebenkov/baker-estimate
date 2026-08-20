@@ -3,6 +3,7 @@ import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, RecipeIngredient, Recipe } from '../domain/types'
 import { normalizeNumberString } from '../lib/numberInput'
 import { confirmDelete } from '../lib/confirmDelete'
+import { RequiredMark } from './RequiredMark'
 
 const unitLabels: Record<Ingredient['unit'], string> = {
   g: 'г',
@@ -109,6 +110,7 @@ export function RecipesPage({ state }: { state: AppState }) {
         <div className="mb-4">
           <label htmlFor="recipe-name" className="mb-1 block text-sm font-medium text-slate-600">
             Название рецепта
+            <RequiredMark />
           </label>
           <input
             id="recipe-name"
@@ -128,6 +130,7 @@ export function RecipesPage({ state }: { state: AppState }) {
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="recipe-ingredient-select" className="text-sm text-slate-600">
                 Ингредиент
+                <RequiredMark />
               </label>
               <select
                 id="recipe-ingredient-select"
@@ -148,6 +151,7 @@ export function RecipesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="recipe-quantity-input" className="text-sm text-slate-600">
                 Количество
+                <RequiredMark />
               </label>
               <input
                 id="recipe-quantity-input"

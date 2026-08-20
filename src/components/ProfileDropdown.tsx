@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { mapAuthError } from '../lib/authErrors'
+import { RequiredMark } from './RequiredMark'
 
 interface ProfileDropdownProps {
   user: User | null
@@ -187,6 +188,7 @@ export function ProfileDropdown({
                   className="mb-1 block text-sm font-medium text-slate-600"
                 >
                   Новый пароль
+                  <RequiredMark />
                 </label>
                 <input
                   id="new-password"

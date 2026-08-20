@@ -3,6 +3,7 @@ import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, MeasurementUnit } from '../domain/types'
 import { normalizeNumberString } from '../lib/numberInput'
 import { confirmDelete } from '../lib/confirmDelete'
+import { RequiredMark } from './RequiredMark'
 
 const units: { value: MeasurementUnit; label: string }[] = [
   { value: 'g', label: 'г' },
@@ -102,6 +103,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           <div className="space-y-1 lg:col-span-2">
             <label htmlFor="ingredient-name" className="text-sm font-medium text-slate-600">
               Название
+              <RequiredMark />
             </label>
             <input
               id="ingredient-name"
@@ -117,6 +119,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           <div className="space-y-1">
             <label htmlFor="ingredient-price" className="text-sm font-medium text-slate-600">
               Цена за упаковку, ₽
+              <RequiredMark />
             </label>
             <input
               id="ingredient-price"
@@ -134,6 +137,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           <div className="space-y-1">
             <label htmlFor="ingredient-quantity" className="text-sm font-medium text-slate-600">
               Размер упаковки
+              <RequiredMark />
             </label>
             <input
               id="ingredient-quantity"
@@ -151,6 +155,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           <div className="space-y-1">
             <label htmlFor="ingredient-unit" className="text-sm font-medium text-slate-600">
               Единица
+              <RequiredMark />
             </label>
             <select
               id="ingredient-unit"
@@ -179,7 +184,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               value={inStock}
               onChange={(e) => setInStock(normalizeNumberString(e.target.value))}
               className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="Опционально"
+              placeholder=""
               data-testid="ingredient-in-stock-input"
             />
           </div>

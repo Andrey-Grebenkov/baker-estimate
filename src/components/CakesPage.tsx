@@ -16,6 +16,7 @@ import {
 import { generateShoppingList } from '../domain/shoppingList'
 import { ShoppingListModal } from './ShoppingListModal'
 import { confirmDelete } from '../lib/confirmDelete'
+import { RequiredMark } from './RequiredMark'
 
 function formatMoney(value: number): string {
   return roundToCurrency(value).toFixed(2)
@@ -436,6 +437,7 @@ export function CakesPage({ state }: { state: AppState }) {
         <div className="mb-4">
           <label htmlFor="cake-name" className="mb-1 block text-sm font-medium text-slate-600">
             Название торта
+            <RequiredMark />
           </label>
           <input
             id="cake-name"
@@ -516,6 +518,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="cake-recipe-select" className="text-sm text-slate-600">
                 Рецепт
+                <RequiredMark />
               </label>
               <select
                 id="cake-recipe-select"
@@ -536,6 +539,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="cake-recipe-multiplier" className="text-sm text-slate-600">
                 Коэффициент
+                <RequiredMark />
               </label>
               <input
                 id="cake-recipe-multiplier"
@@ -737,6 +741,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="packaging-name" className="text-sm text-slate-600">
                 Название
+                <RequiredMark />
               </label>
               <input
                 id="packaging-name"
@@ -752,6 +757,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="packaging-cost" className="text-sm text-slate-600">
                 Стоимость, ₽
+                <RequiredMark />
               </label>
               <input
                 id="packaging-cost"
@@ -769,6 +775,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="packaging-quantity" className="text-sm text-slate-600">
                 Количество
+                <RequiredMark />
               </label>
               <input
                 id="packaging-quantity"
@@ -827,6 +834,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="decor-name" className="text-sm text-slate-600">
                 Название
+                <RequiredMark />
               </label>
               <input
                 id="decor-name"
@@ -842,6 +850,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="decor-cost" className="text-sm text-slate-600">
                 Стоимость, ₽
+                <RequiredMark />
               </label>
               <input
                 id="decor-cost"
@@ -859,6 +868,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="decor-quantity" className="text-sm text-slate-600">
                 Количество
+                <RequiredMark />
               </label>
               <input
                 id="decor-quantity"
@@ -917,6 +927,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="overheads-hours" className="text-sm text-slate-600">
                 Часы работы
+                <RequiredMark />
               </label>
               <input
                 id="overheads-hours"
@@ -937,6 +948,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="overheads-rate" className="text-sm text-slate-600">
                 Ставка за час, ₽
+                <RequiredMark />
               </label>
               <input
                 id="overheads-rate"
@@ -957,6 +969,7 @@ export function CakesPage({ state }: { state: AppState }) {
             <div className="space-y-1">
               <label htmlFor="overheads-fixed" className="text-sm text-slate-600">
                 Фиксированные расходы, ₽
+                <RequiredMark />
               </label>
               <input
                 id="overheads-fixed"
@@ -980,6 +993,7 @@ export function CakesPage({ state }: { state: AppState }) {
           <div className="space-y-1">
             <label htmlFor="cake-margin" className="text-sm font-medium text-slate-600">
               Желаемая наценка, %
+              <RequiredMark />
             </label>
             <input
               id="cake-margin"

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { AuthError } from '@supabase/supabase-js'
 import { mapAuthError } from '../lib/authErrors'
+import { RequiredMark } from './RequiredMark'
 
 interface AuthPageProps {
   error: string | null
@@ -62,6 +63,7 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
           <div>
             <label htmlFor="auth-email" className="mb-1 block text-sm font-medium text-slate-600">
               Email
+              <RequiredMark />
             </label>
             <input
               id="auth-email"
@@ -78,6 +80,7 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
           <div>
             <label htmlFor="auth-password" className="mb-1 block text-sm font-medium text-slate-600">
               Пароль
+              <RequiredMark />
             </label>
             <input
               id="auth-password"
