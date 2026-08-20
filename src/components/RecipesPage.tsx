@@ -123,7 +123,7 @@ export function RecipesPage({ state }: { state: AppState }) {
         <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700">Состав рецепта</h3>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="recipe-ingredient-select" className="text-sm text-slate-600">
                 Ингредиент
@@ -132,7 +132,7 @@ export function RecipesPage({ state }: { state: AppState }) {
                 id="recipe-ingredient-select"
                 value={selectedIngredientId}
                 onChange={(e) => setSelectedIngredientId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 data-testid="recipe-ingredient-select"
               >
                 <option value="">Выберите продукт</option>
@@ -155,7 +155,7 @@ export function RecipesPage({ state }: { state: AppState }) {
                 step="0.01"
                 value={selectedQuantity}
                 onChange={(e) => setSelectedQuantity(normalizeNumberString(e.target.value))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="recipe-quantity-input"
               />
@@ -165,7 +165,7 @@ export function RecipesPage({ state }: { state: AppState }) {
               <button
                 type="button"
                 onClick={addIngredientToRecipe}
-                className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                className="h-10 w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                 data-testid="recipe-add-ingredient-button"
               >
                 Добавить

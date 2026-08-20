@@ -511,7 +511,7 @@ export function CakesPage({ state }: { state: AppState }) {
         <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700">Полуфабрикаты</h3>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="cake-recipe-select" className="text-sm text-slate-600">
                 Рецепт
@@ -520,7 +520,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 id="cake-recipe-select"
                 value={selectedRecipeId}
                 onChange={(e) => setSelectedRecipeId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 data-testid="cake-recipe-select"
               >
                 <option value="">Выберите рецепт</option>
@@ -543,7 +543,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 step="0.01"
                 value={selectedMultiplier}
                 onChange={(e) => setSelectedMultiplier(normalizeNumberString(e.target.value))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="cake-recipe-multiplier-input"
               />
@@ -553,7 +553,7 @@ export function CakesPage({ state }: { state: AppState }) {
               <button
                 type="button"
                 onClick={addRecipeToCake}
-                className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                className="h-10 w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                 data-testid="cake-add-recipe-button"
               >
                 Добавить
@@ -732,7 +732,7 @@ export function CakesPage({ state }: { state: AppState }) {
         <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
           <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Упаковка</h3>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="packaging-name" className="text-sm text-slate-600">
                 Название
@@ -742,7 +742,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 type="text"
                 value={packagingName}
                 onChange={(e) => setPackagingName(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="Коробка, подложка..."
                 data-testid="packaging-name-input"
               />
@@ -759,7 +759,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 step="0.01"
                 value={packagingCost}
                 onChange={(e) => setPackagingCost(normalizeNumberString(e.target.value))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="packaging-cost-input"
               />
@@ -776,7 +776,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 step="1"
                 value={packagingQuantity}
                 onChange={(e) => setPackagingQuantity(normalizeNumberString(e.target.value))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="packaging-quantity-input"
               />
@@ -786,7 +786,7 @@ export function CakesPage({ state }: { state: AppState }) {
               <button
                 type="button"
                 onClick={addPackaging}
-                className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                className="h-10 w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                 data-testid="cake-add-packaging-button"
               >
                 Добавить
@@ -822,7 +822,7 @@ export function CakesPage({ state }: { state: AppState }) {
         <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700">Декор</h3>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1 lg:col-span-2">
               <label htmlFor="decor-name" className="text-sm text-slate-600">
                 Название
@@ -832,7 +832,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 type="text"
                 value={decorName}
                 onChange={(e) => setDecorName(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="Топпер, свежие ягоды..."
                 data-testid="decor-name-input"
               />
@@ -849,7 +849,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 step="0.01"
                 value={decorCost}
                 onChange={(e) => setDecorCost(normalizeNumberString(e.target.value))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="decor-cost-input"
               />
@@ -866,7 +866,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 step="1"
                 value={decorQuantity}
                 onChange={(e) => setDecorQuantity(normalizeNumberString(e.target.value))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="decor-quantity-input"
               />
@@ -876,7 +876,7 @@ export function CakesPage({ state }: { state: AppState }) {
               <button
                 type="button"
                 onClick={addDecor}
-                className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                className="h-10 w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                 data-testid="cake-add-decor-button"
               >
                 Добавить
