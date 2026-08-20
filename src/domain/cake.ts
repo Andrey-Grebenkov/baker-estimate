@@ -45,7 +45,8 @@ export function calculateCakeRecipesCost(
   for (const item of items) {
     const recipe = recipesById[item.recipeId]
     if (!recipe) {
-      throw new Error(`Recipe with id "${item.recipeId}" not found`)
+      // Пропускаем рецепты, которые были удалены из базы.
+      continue
     }
     total += calculateCakeRecipeCost(item, recipe)
   }
@@ -62,7 +63,8 @@ export function calculateCakeRecipesWeight(
   for (const item of items) {
     const recipe = recipesById[item.recipeId]
     if (!recipe) {
-      throw new Error(`Recipe with id "${item.recipeId}" not found`)
+      // Пропускаем рецепты, которые были удалены из базы.
+      continue
     }
     total += calculateCakeRecipeWeight(item, recipe)
   }

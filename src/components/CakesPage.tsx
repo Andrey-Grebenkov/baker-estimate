@@ -709,7 +709,27 @@ export function CakesPage({ state }: { state: AppState }) {
             <ul className="mt-4 space-y-2" data-testid="cake-recipe-list">
               {recipes.map((cr) => {
                 const recipe = state.recipes.find((r) => r.id === cr.recipeId)
-                if (!recipe) return null
+                if (!recipe) {
+                  return (
+                    <li
+                      key={cr.recipeId}
+                      className="flex items-center justify-between rounded-md bg-rose-50 p-2 ring-1 ring-rose-200"
+                      data-testid="cake-recipe-row"
+                    >
+                      <span className="text-sm text-rose-700">
+                        Удалённый рецепт — {cr.multiplier}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipeFromCake(cr.recipeId)}
+                        className="text-sm text-rose-700 hover:text-rose-800"
+                        data-testid="cake-remove-recipe-button"
+                      >
+                        Удалить
+                      </button>
+                    </li>
+                  )
+                }
 
                 return (
                   <li
@@ -1107,7 +1127,8 @@ function calculateDerivedCake(
   for (const item of recipes) {
     const recipe = recipesById[item.recipeId]
     if (!recipe) {
-      throw new Error(`Recipe with id "${item.recipeId}" not found`)
+      // Пропускаем рецепты, которые были удалены из базы.
+      continue
     }
     totalIngredientsCost += roundToCurrency(recipe.totalCost * item.multiplier)
     totalWeightGrams += recipe.totalWeight * item.multiplier

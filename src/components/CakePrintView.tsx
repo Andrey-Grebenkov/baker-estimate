@@ -38,7 +38,17 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
           <tbody>
             {cake.recipes.map((cr) => {
               const recipe = recipes.find((r) => r.id === cr.recipeId)
-              if (!recipe) return null
+              if (!recipe) {
+                return (
+                  <tr key={cr.recipeId} data-testid="cake-print-recipe-row" className="text-rose-600">
+                    <td className="border border-slate-300 px-3 py-2 print:border-black">
+                      Удалённый рецепт
+                    </td>
+                    <td className="border border-slate-300 px-3 py-2 print:border-black">{cr.multiplier}</td>
+                    <td className="border border-slate-300 px-3 py-2 print:border-black">—</td>
+                  </tr>
+                )
+              }
 
               return (
                 <tr key={cr.recipeId} data-testid="cake-print-recipe-row">

@@ -258,7 +258,11 @@ export async function addCake(
   userId: string,
   recipesById: Record<string, Recipe>,
 ): Promise<void> {
-  const cake = buildCake({ ...input, id: generateId(), user_id: userId }, recipesById)
+  const validRecipes = input.recipes.filter((cr) => recipesById[cr.recipeId])
+  const cake = buildCake(
+    { ...input, id: generateId(), user_id: userId, recipes: validRecipes },
+    recipesById,
+  )
   const { error } = await supabase.from('cakes').insert({
     id: cake.id,
     user_id: userId,
@@ -288,7 +292,8 @@ export async function updateCake(
   userId: string,
   recipesById: Record<string, Recipe>,
 ): Promise<void> {
-  const cake = buildCake({ ...input, id, user_id: userId }, recipesById)
+  const validRecipes = input.recipes.filter((cr) => recipesById[cr.recipeId])
+  const cake = buildCake({ ...input, id, user_id: userId, recipes: validRecipes }, recipesById)
   const { error } = await supabase.from('cakes').update({
     name: cake.name,
     user_id: userId,

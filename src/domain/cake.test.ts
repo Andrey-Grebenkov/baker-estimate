@@ -240,21 +240,25 @@ describe('buildCake', () => {
     expect(cake.recommendedPricePerKg).toBe(0)
   })
 
-  it('throws on missing recipe', () => {
-    expect(() =>
-      buildCake(
-        {
-          id: 'cake-missing',
-          name: 'Ошибочный торт',
-          recipes: [{ recipeId: 'missing', multiplier: 1 }],
-          packaging: [],
-          decor: [],
-          overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
-          marginPercent: 0,
-        },
-        recipesById,
-      ),
-    ).toThrow('Recipe with id "missing" not found')
+  it('skips missing recipe references', () => {
+    const cake = buildCake(
+      {
+        id: 'cake-missing',
+        name: 'Торт с удалённым рецептом',
+        recipes: [
+          { recipeId: 'missing', multiplier: 1 },
+          { recipeId: 'biscuit-1', multiplier: 1 },
+        ],
+        packaging: [],
+        decor: [],
+        overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
+        marginPercent: 0,
+      },
+      recipesById,
+    )
+
+    expect(cake.totalIngredientsCost).toBe(biscuit.totalCost)
+    expect(cake.weightKg).toBe(biscuit.totalWeight / 1000)
   })
 
   it('throws on negative recipe multiplier', () => {
