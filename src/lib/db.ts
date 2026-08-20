@@ -124,7 +124,7 @@ export async function addIngredient(
   userId: string,
 ): Promise<void> {
   const ingredient = buildIngredient({ ...input, id: generateId(), user_id: userId })
-  const { error } = await supabase.from('ingredients').insert({
+  const payload: Record<string, unknown> = {
     id: ingredient.id,
     user_id: userId,
     name: ingredient.name,
@@ -132,8 +132,11 @@ export async function addIngredient(
     package_quantity: ingredient.packageQuantity,
     unit: ingredient.unit,
     price_per_base_unit: ingredient.pricePerBaseUnit,
-    in_stock: ingredient.inStock ?? null,
-  })
+  }
+  if (ingredient.inStock != null) {
+    payload.in_stock = ingredient.inStock
+  }
+  const { error } = await supabase.from('ingredients').insert(payload)
   if (error) throw new Error(error.message)
 }
 
@@ -143,15 +146,18 @@ export async function updateIngredient(
   userId: string,
 ): Promise<void> {
   const ingredient = buildIngredient({ ...input, id, user_id: userId })
-  const { error } = await supabase.from('ingredients').update({
+  const payload: Record<string, unknown> = {
     name: ingredient.name,
     user_id: userId,
     price_per_package: ingredient.pricePerPackage,
     package_quantity: ingredient.packageQuantity,
     unit: ingredient.unit,
     price_per_base_unit: ingredient.pricePerBaseUnit,
-    in_stock: ingredient.inStock ?? null,
-  }).eq('id', id)
+  }
+  if (ingredient.inStock != null) {
+    payload.in_stock = ingredient.inStock
+  }
+  const { error } = await supabase.from('ingredients').update(payload).eq('id', id)
   if (error) throw new Error(error.message)
 }
 

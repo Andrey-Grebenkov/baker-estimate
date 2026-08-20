@@ -179,7 +179,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               value={inStock}
               onChange={(e) => setInStock(normalizeNumberString(e.target.value))}
               className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="0"
+              placeholder="Оставьте пустым"
               data-testid="ingredient-in-stock-input"
             />
           </div>

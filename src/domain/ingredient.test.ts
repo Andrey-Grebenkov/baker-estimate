@@ -77,6 +77,50 @@ describe('buildIngredient', () => {
       pricePerBaseUnit: 0.25,
     })
   })
+
+  it('keeps inStock undefined when not provided', () => {
+    const input = {
+      id: 'sugar-1',
+      name: 'Сахар белый',
+      pricePerPackage: 250,
+      packageQuantity: 1000,
+      unit: 'g' as const,
+    }
+
+    const ingredient = buildIngredient(input)
+
+    expect(ingredient.inStock).toBeUndefined()
+  })
+
+  it('preserves inStock value when provided', () => {
+    const input = {
+      id: 'sugar-1',
+      name: 'Сахар белый',
+      pricePerPackage: 250,
+      packageQuantity: 1000,
+      unit: 'g' as const,
+      inStock: 500,
+    }
+
+    const ingredient = buildIngredient(input)
+
+    expect(ingredient.inStock).toBe(500)
+  })
+
+  it('preserves a zero inStock value', () => {
+    const input = {
+      id: 'sugar-1',
+      name: 'Сахар белый',
+      pricePerPackage: 250,
+      packageQuantity: 1000,
+      unit: 'g' as const,
+      inStock: 0,
+    }
+
+    const ingredient = buildIngredient(input)
+
+    expect(ingredient.inStock).toBe(0)
+  })
 })
 
 describe('calculateIngredientCost', () => {
