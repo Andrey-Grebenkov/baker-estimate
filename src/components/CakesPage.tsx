@@ -6,6 +6,7 @@ import { generateId } from '../lib/id'
 import type { CakeAdditionalItem, CakeRecipeItem, Overheads, Recipe } from '../domain/types'
 import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
 import { roundToCurrency } from '../domain/money'
+import { normalizeNumberString, parseNumberInput } from '../lib/numberInput'
 
 function formatMoney(value: number): string {
   return roundToCurrency(value).toFixed(2)
@@ -32,6 +33,11 @@ export function CakesPage({ state }: { state: AppState }) {
     workHours: 0,
     hourlyRate: 0,
     fixedCosts: 0,
+  })
+  const [rawOverheads, setRawOverheads] = useState({
+    workHours: '0',
+    hourlyRate: '0',
+    fixedCosts: '0',
   })
 
   const [marginPercent, setMarginPercent] = useState('30')
@@ -64,6 +70,7 @@ export function CakesPage({ state }: { state: AppState }) {
     setDecorCost('')
     setDecorQuantity('1')
     setOverheads({ workHours: 0, hourlyRate: 0, fixedCosts: 0 })
+    setRawOverheads({ workHours: '0', hourlyRate: '0', fixedCosts: '0' })
     setMarginPercent('30')
     setImageUrl(null)
     setImageFile(null)
@@ -89,6 +96,11 @@ export function CakesPage({ state }: { state: AppState }) {
     setDecorCost('')
     setDecorQuantity('1')
     setOverheads(cake.overheads)
+    setRawOverheads({
+      workHours: String(cake.overheads.workHours),
+      hourlyRate: String(cake.overheads.hourlyRate),
+      fixedCosts: String(cake.overheads.fixedCosts),
+    })
     setMarginPercent(String(cake.marginPercent))
     setImageUrl(cake.image_url ?? null)
     setImageFile(null)
@@ -440,7 +452,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 min="0"
                 step="0.01"
                 value={selectedMultiplier}
-                onChange={(e) => setSelectedMultiplier(e.target.value)}
+                onChange={(e) => setSelectedMultiplier(normalizeNumberString(e.target.value))}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="cake-recipe-multiplier-input"
@@ -518,7 +530,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 min="0"
                 step="0.01"
                 value={packagingCost}
-                onChange={(e) => setPackagingCost(e.target.value)}
+                onChange={(e) => setPackagingCost(normalizeNumberString(e.target.value))}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="packaging-cost-input"
@@ -535,7 +547,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 min="0"
                 step="1"
                 value={packagingQuantity}
-                onChange={(e) => setPackagingQuantity(e.target.value)}
+                onChange={(e) => setPackagingQuantity(normalizeNumberString(e.target.value))}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="packaging-quantity-input"
@@ -608,7 +620,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 min="0"
                 step="0.01"
                 value={decorCost}
-                onChange={(e) => setDecorCost(e.target.value)}
+                onChange={(e) => setDecorCost(normalizeNumberString(e.target.value))}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="0"
                 data-testid="decor-cost-input"
@@ -625,7 +637,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 min="0"
                 step="1"
                 value={decorQuantity}
-                onChange={(e) => setDecorQuantity(e.target.value)}
+                onChange={(e) => setDecorQuantity(normalizeNumberString(e.target.value))}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 placeholder="1"
                 data-testid="decor-quantity-input"
@@ -682,10 +694,12 @@ export function CakesPage({ state }: { state: AppState }) {
                 type="number"
                 min="0"
                 step="0.5"
-                value={overheads.workHours}
-                onChange={(e) =>
-                  setOverheads((prev) => ({ ...prev, workHours: Number(e.target.value) }))
-                }
+                value={rawOverheads.workHours}
+                onChange={(e) => {
+                  const value = normalizeNumberString(e.target.value)
+                  setRawOverheads((prev) => ({ ...prev, workHours: value }))
+                  setOverheads((prev) => ({ ...prev, workHours: parseNumberInput(value) }))
+                }}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 data-testid="overheads-hours-input"
               />
@@ -700,10 +714,12 @@ export function CakesPage({ state }: { state: AppState }) {
                 type="number"
                 min="0"
                 step="0.01"
-                value={overheads.hourlyRate}
-                onChange={(e) =>
-                  setOverheads((prev) => ({ ...prev, hourlyRate: Number(e.target.value) }))
-                }
+                value={rawOverheads.hourlyRate}
+                onChange={(e) => {
+                  const value = normalizeNumberString(e.target.value)
+                  setRawOverheads((prev) => ({ ...prev, hourlyRate: value }))
+                  setOverheads((prev) => ({ ...prev, hourlyRate: parseNumberInput(value) }))
+                }}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 data-testid="overheads-rate-input"
               />
@@ -718,10 +734,12 @@ export function CakesPage({ state }: { state: AppState }) {
                 type="number"
                 min="0"
                 step="0.01"
-                value={overheads.fixedCosts}
-                onChange={(e) =>
-                  setOverheads((prev) => ({ ...prev, fixedCosts: Number(e.target.value) }))
-                }
+                value={rawOverheads.fixedCosts}
+                onChange={(e) => {
+                  const value = normalizeNumberString(e.target.value)
+                  setRawOverheads((prev) => ({ ...prev, fixedCosts: value }))
+                  setOverheads((prev) => ({ ...prev, fixedCosts: parseNumberInput(value) }))
+                }}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 data-testid="overheads-fixed-input"
               />
@@ -740,7 +758,7 @@ export function CakesPage({ state }: { state: AppState }) {
               min="0"
               step="0.01"
               value={marginPercent}
-              onChange={(e) => setMarginPercent(e.target.value)}
+              onChange={(e) => setMarginPercent(normalizeNumberString(e.target.value))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               data-testid="cake-margin-input"
             />

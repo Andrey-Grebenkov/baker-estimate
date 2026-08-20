@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, MeasurementUnit } from '../domain/types'
+import { normalizeNumberString } from '../lib/numberInput'
 
 const units: { value: MeasurementUnit; label: string }[] = [
   { value: 'g', label: 'г' },
@@ -111,7 +112,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               min="0"
               step="0.01"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => setPrice(normalizeNumberString(e.target.value))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="0"
               data-testid="ingredient-price-input"
@@ -128,7 +129,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               min="0"
               step="0.01"
               value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              onChange={(e) => setQuantity(normalizeNumberString(e.target.value))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="1000"
               data-testid="ingredient-quantity-input"
