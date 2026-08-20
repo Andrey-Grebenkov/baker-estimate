@@ -9,10 +9,12 @@ import { CakesPage } from './components/CakesPage'
 import { SettingsPage } from './components/SettingsPage'
 import { useTheme } from './hooks/useTheme'
 import { ThemeToggle } from './components/ThemeToggle'
+import { DashboardPage } from './components/DashboardPage'
 
-type Tab = 'ingredients' | 'recipes' | 'cakes' | 'settings'
+type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'cakes' | 'settings'
 
 const tabs: { value: Tab; label: string }[] = [
+  { value: 'dashboard', label: 'Дашборд' },
   { value: 'ingredients', label: 'Ингредиенты' },
   { value: 'recipes', label: 'Рецепты' },
   { value: 'cakes', label: 'Торты' },
@@ -23,7 +25,7 @@ function App() {
   const { theme, toggleTheme } = useTheme()
   const { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount } =
     useAuth()
-  const [activeTab, setActiveTab] = useState<Tab>('ingredients')
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const state = useAppState(user)
 
   if (loading) {
@@ -129,6 +131,9 @@ function App() {
           ))}
         </nav>
 
+        {activeTab === 'dashboard' && (
+          <DashboardPage state={state} theme={theme} onOpenCakes={() => setActiveTab('cakes')} />
+        )}
         {activeTab === 'ingredients' && <IngredientsPage state={state} />}
         {activeTab === 'recipes' && <RecipesPage state={state} />}
         {activeTab === 'cakes' && <CakesPage state={state} />}
