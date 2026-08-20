@@ -1155,7 +1155,7 @@ function CakeCard({
 }) {
   return (
     <div
-      className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50 print:bg-white"
+      className="card-inset overflow-hidden print:bg-white"
       data-testid="cake-row"
       data-cake-id={cake.id}
     >
