@@ -96,7 +96,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="Например, Сахар белый"
               data-testid="ingredient-name-input"
             />
@@ -113,7 +113,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               step="0.01"
               value={price}
               onChange={(e) => setPrice(normalizeNumberString(e.target.value))}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="0"
               data-testid="ingredient-price-input"
             />
@@ -130,7 +130,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               step="0.01"
               value={quantity}
               onChange={(e) => setQuantity(normalizeNumberString(e.target.value))}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="1000"
               data-testid="ingredient-quantity-input"
             />
@@ -144,7 +144,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
               id="ingredient-unit"
               value={unit}
               onChange={(e) => setUnit(e.target.value as MeasurementUnit)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               data-testid="ingredient-unit-select"
             >
               {units.map((u) => (
