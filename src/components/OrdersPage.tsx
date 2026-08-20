@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
+import { formatMoney } from '../domain/money'
 import { OrderModal } from './OrderModal'
 
 function formatDate(iso: string): string {
@@ -9,10 +10,6 @@ function formatDate(iso: string): string {
     month: 'long',
     year: 'numeric',
   })
-}
-
-function formatMoney(value: number): string {
-  return value.toFixed(2)
 }
 
 export function OrdersPage({ state }: { state: AppState }) {
@@ -114,7 +111,7 @@ export function OrdersPage({ state }: { state: AppState }) {
         </div>
       )}
 
-      <OrderModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <OrderModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} state={state} />
     </div>
   )
 }

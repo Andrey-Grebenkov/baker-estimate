@@ -5,7 +5,7 @@ import { CakePrintView } from './CakePrintView'
 import { generateId } from '../lib/id'
 import type { CakeAdditionalItem, CakeRecipeItem, Ingredient, Overheads, Recipe } from '../domain/types'
 import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
-import { roundToCurrency } from '../domain/money'
+import { formatMoney, roundToCurrency } from '../domain/money'
 import {
   MAX_DEFAULT_DIMENSION,
   MAX_DEFAULT_PERCENT,
@@ -24,10 +24,6 @@ import { generateShoppingList } from '../domain/shoppingList'
 import { ShoppingListModal } from './ShoppingListModal'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
-
-function formatMoney(value: number): string {
-  return roundToCurrency(value).toFixed(2)
-}
 
 export function CakesPage({ state }: { state: AppState }) {
   const [editingId, setEditingId] = useState<string | null>(null)
