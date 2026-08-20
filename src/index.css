@@ -22,6 +22,7 @@ input[type='number'] {
 .dark body {
   background-color: #0f172a;
   color: #e2e8f0;
+  color-scheme: dark;
 }
 
 .dark [class~='bg-white'] {
@@ -101,6 +102,21 @@ input[type='number'] {
   --tw-ring-color: #334155;
 }
 
+/* Indigo accent text */
+.dark [class~='text-indigo-700'] {
+  color: #a5b4fc;
+}
+
+.dark [class~='text-indigo-600'] {
+  color: #818cf8;
+}
+
+.dark [class~='hover:text-indigo-700']:hover,
+.dark [class~='hover:text-indigo-600']:hover,
+.dark [class~='hover:text-indigo-500']:hover {
+  color: #a5b4fc;
+}
+
 /* Status backgrounds */
 .dark [class~='bg-rose-50'] {
   background-color: rgba(127, 29, 29, 0.3);
@@ -108,6 +124,17 @@ input[type='number'] {
 
 .dark [class~='bg-emerald-50'] {
   background-color: rgba(6, 78, 59, 0.3);
+}
+
+.dark [class~='bg-indigo-50'],
+.dark [class~='bg-indigo-100'] {
+  background-color: rgba(49, 46, 129, 0.3);
+}
+
+.dark [class~='hover:bg-indigo-50']:hover,
+.dark [class~='hover:bg-indigo-100']:hover,
+.dark [class~='hover:bg-indigo-200']:hover {
+  background-color: rgba(49, 46, 129, 0.4);
 }
 
 /* Hovers */
@@ -136,6 +163,24 @@ input[type='number'] {
 /* Disabled states */
 .dark [class~='disabled:bg-slate-300']:disabled {
   background-color: #475569;
+}
+
+/* Form controls in dark */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+.dark select option {
+  background-color: #1e293b;
+  color: #f1f5f9;
 }
 
 /* Focus ring offset in dark */
