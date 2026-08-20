@@ -15,7 +15,8 @@ export function calculateRecipeTotals(
 
     const ingredient = ingredientsById[item.ingredientId]
     if (!ingredient) {
-      throw new Error(`Ingredient with id "${item.ingredientId}" not found`)
+      // Пропускаем ингредиенты, которые были удалены из базы.
+      continue
     }
 
     if (ingredient.unit === 'g' || ingredient.unit === 'ml') {

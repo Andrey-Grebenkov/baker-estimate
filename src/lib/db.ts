@@ -205,7 +205,11 @@ export async function addRecipe(
   userId: string,
   ingredientsById: Record<string, Ingredient>,
 ): Promise<void> {
-  const recipe = buildRecipe({ ...input, id: generateId(), user_id: userId }, ingredientsById)
+  const validIngredients = input.ingredients.filter((ri) => ingredientsById[ri.ingredientId])
+  const recipe = buildRecipe(
+    { ...input, id: generateId(), user_id: userId, ingredients: validIngredients },
+    ingredientsById,
+  )
   const { error } = await supabase.from('recipes').insert({
     id: recipe.id,
     user_id: userId,
@@ -223,7 +227,11 @@ export async function updateRecipe(
   userId: string,
   ingredientsById: Record<string, Ingredient>,
 ): Promise<void> {
-  const recipe = buildRecipe({ ...input, id, user_id: userId }, ingredientsById)
+  const validIngredients = input.ingredients.filter((ri) => ingredientsById[ri.ingredientId])
+  const recipe = buildRecipe(
+    { ...input, id, user_id: userId, ingredients: validIngredients },
+    ingredientsById,
+  )
   const { error } = await supabase.from('recipes').update({
     name: recipe.name,
     user_id: userId,

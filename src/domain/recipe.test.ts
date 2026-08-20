@@ -82,14 +82,17 @@ describe('calculateRecipeTotals', () => {
     expect(result.totalCost).toBe(32.97)
   })
 
-  it('throws on missing ingredient', () => {
+  it('skips missing ingredient without throwing', () => {
     const recipeIngredients = [
+      { ingredientId: 'sugar-1', quantityUsed: 100 },
       { ingredientId: 'missing', quantityUsed: 100 },
+      { ingredientId: 'milk-1', quantityUsed: 200 },
     ]
 
-    expect(() => calculateRecipeTotals(recipeIngredients, ingredientsById)).toThrow(
-      'Ingredient with id "missing" not found',
-    )
+    const result = calculateRecipeTotals(recipeIngredients, ingredientsById)
+
+    expect(result.totalWeight).toBe(300)
+    expect(result.totalCost).toBe(73)
   })
 
   it('throws on negative quantity', () => {

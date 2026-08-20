@@ -183,7 +183,28 @@ export function RecipesPage({ state }: { state: AppState }) {
             <ul className="mt-4 space-y-2" data-testid="recipe-ingredient-list">
               {recipeIngredients.map((ri) => {
                 const ingredient = state.ingredients.find((i) => i.id === ri.ingredientId)
-                if (!ingredient) return null
+                if (!ingredient) {
+                  return (
+                    <li
+                      key={ri.ingredientId}
+                      className="flex items-center justify-between rounded-md bg-rose-50 p-2 ring-1 ring-rose-200"
+                      data-testid="recipe-ingredient-row"
+                    >
+                      <span className="text-sm text-rose-700">
+                        Удалённый продукт — {ri.quantityUsed}
+                        <span className="ml-1 text-xs text-rose-500">(ед. изм. неизвестна)</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipeIngredient(ri.ingredientId)}
+                        className="text-sm text-rose-700 hover:text-rose-800"
+                        data-testid="recipe-remove-ingredient-button"
+                      >
+                        Удалить
+                      </button>
+                    </li>
+                  )
+                }
 
                 return (
                   <li
@@ -266,7 +287,13 @@ export function RecipesPage({ state }: { state: AppState }) {
                     <ul className="mt-1 text-xs text-slate-500">
                       {recipe.ingredients.map((ri) => {
                         const ingredient = state.ingredients.find((i) => i.id === ri.ingredientId)
-                        if (!ingredient) return null
+                        if (!ingredient) {
+                          return (
+                            <li key={ri.ingredientId} className="text-rose-600">
+                              Удалённый продукт — {ri.quantityUsed} (ед. изм. неизвестна)
+                            </li>
+                          )
+                        }
                         return (
                           <li key={ri.ingredientId}>
                             {ingredient.name} — {ri.quantityUsed} {unitLabels[ingredient.unit]}
