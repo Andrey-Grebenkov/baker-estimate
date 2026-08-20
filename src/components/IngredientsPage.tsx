@@ -118,7 +118,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
 
           <div className="space-y-1">
             <label htmlFor="ingredient-price" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
-              Цена за упаковку, ₽
+              Цена за упак., ₽
               <RequiredMark />
             </label>
             <input
