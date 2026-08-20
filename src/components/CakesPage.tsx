@@ -189,11 +189,7 @@ export function CakesPage({ state }: { state: AppState }) {
       return
     }
 
-    const baseMultiplier =
-      recipes.find((r) => r.recipeId === selectedRecipeId)?.multiplier ||
-      Number(selectedMultiplier) ||
-      1
-    const newMultiplier = roundToDecimal(baseMultiplier * scalingCoefficient, 2)
+    const newMultiplier = roundToDecimal(scalingCoefficient, 4)
 
     if (Number.isNaN(newMultiplier) || newMultiplier <= 0) {
       setError('Коэффициент должен быть положительным числом')
