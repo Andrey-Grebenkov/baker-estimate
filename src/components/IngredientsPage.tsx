@@ -97,8 +97,8 @@ export function IngredientsPage({ state }: { state: AppState }) {
           {editingId ? 'Редактировать продукт' : 'Добавить продукт'}
         </h2>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="space-y-1">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="space-y-1 lg:col-span-2">
             <label htmlFor="ingredient-name" className="text-sm font-medium text-slate-600">
               Название
             </label>
