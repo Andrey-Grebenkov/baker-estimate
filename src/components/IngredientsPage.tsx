@@ -101,7 +101,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <div className="space-y-1 lg:col-span-2">
-            <label htmlFor="ingredient-name" className="text-sm font-medium text-slate-600">
+            <label htmlFor="ingredient-name" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Название
               <RequiredMark />
             </label>
@@ -117,7 +117,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="ingredient-price" className="text-sm font-medium text-slate-600">
+            <label htmlFor="ingredient-price" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Цена за упаковку, ₽
               <RequiredMark />
             </label>
@@ -135,7 +135,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="ingredient-quantity" className="text-sm font-medium text-slate-600">
+            <label htmlFor="ingredient-quantity" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Размер упаковки
               <RequiredMark />
             </label>
@@ -153,7 +153,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="ingredient-unit" className="text-sm font-medium text-slate-600">
+            <label htmlFor="ingredient-unit" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Единица
               <RequiredMark />
             </label>
@@ -173,7 +173,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="ingredient-in-stock" className="text-sm font-medium text-slate-600">
+            <label htmlFor="ingredient-in-stock" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               В наличии
             </label>
             <input

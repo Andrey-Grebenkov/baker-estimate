@@ -185,7 +185,7 @@ export function ProfileDropdown({
               <div>
                 <label
                   htmlFor="new-password"
-                  className="mb-1 block text-sm font-medium text-slate-600"
+                  className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600"
                 >
                   Новый пароль
                   <RequiredMark />

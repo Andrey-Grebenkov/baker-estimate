@@ -61,7 +61,7 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4" data-testid="auth-form">
           <div>
-            <label htmlFor="auth-email" className="mb-1 block text-sm font-medium text-slate-600">
+            <label htmlFor="auth-email" className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Email
               <RequiredMark />
             </label>
@@ -78,7 +78,7 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
           </div>
 
           <div>
-            <label htmlFor="auth-password" className="mb-1 block text-sm font-medium text-slate-600">
+            <label htmlFor="auth-password" className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Пароль
               <RequiredMark />
             </label>

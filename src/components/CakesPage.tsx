@@ -435,7 +435,7 @@ export function CakesPage({ state }: { state: AppState }) {
         </h2>
 
         <div className="mb-4">
-          <label htmlFor="cake-name" className="mb-1 block text-sm font-medium text-slate-600">
+          <label htmlFor="cake-name" className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600">
             Название торта
             <RequiredMark />
           </label>
@@ -516,7 +516,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1 lg:col-span-2">
-              <label htmlFor="cake-recipe-select" className="text-sm text-slate-600">
+              <label htmlFor="cake-recipe-select" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Рецепт
                 <RequiredMark />
               </label>
@@ -537,7 +537,7 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="cake-recipe-multiplier" className="text-sm text-slate-600">
+              <label htmlFor="cake-recipe-multiplier" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Коэффициент
                 <RequiredMark />
               </label>
@@ -739,7 +739,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1 lg:col-span-2">
-              <label htmlFor="packaging-name" className="text-sm text-slate-600">
+              <label htmlFor="packaging-name" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Название
                 <RequiredMark />
               </label>
@@ -755,7 +755,7 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="packaging-cost" className="text-sm text-slate-600">
+              <label htmlFor="packaging-cost" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Стоимость, ₽
                 <RequiredMark />
               </label>
@@ -773,7 +773,7 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="packaging-quantity" className="text-sm text-slate-600">
+              <label htmlFor="packaging-quantity" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Количество
                 <RequiredMark />
               </label>
@@ -832,7 +832,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1 lg:col-span-2">
-              <label htmlFor="decor-name" className="text-sm text-slate-600">
+              <label htmlFor="decor-name" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Название
                 <RequiredMark />
               </label>
@@ -848,7 +848,7 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="decor-cost" className="text-sm text-slate-600">
+              <label htmlFor="decor-cost" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Стоимость, ₽
                 <RequiredMark />
               </label>
@@ -866,7 +866,7 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="decor-quantity" className="text-sm text-slate-600">
+              <label htmlFor="decor-quantity" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Количество
                 <RequiredMark />
               </label>
@@ -925,7 +925,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1">
-              <label htmlFor="overheads-hours" className="text-sm text-slate-600">
+              <label htmlFor="overheads-hours" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Часы работы
                 <RequiredMark />
               </label>
@@ -946,7 +946,7 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="overheads-rate" className="text-sm text-slate-600">
+              <label htmlFor="overheads-rate" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Ставка за час, ₽
                 <RequiredMark />
               </label>
@@ -967,7 +967,7 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="overheads-fixed" className="text-sm text-slate-600">
+              <label htmlFor="overheads-fixed" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Фиксированные расходы, ₽
                 <RequiredMark />
               </label>
@@ -991,7 +991,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
         <div className="mb-4 grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
-            <label htmlFor="cake-margin" className="text-sm font-medium text-slate-600">
+            <label htmlFor="cake-margin" className="inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Желаемая наценка, %
               <RequiredMark />
             </label>

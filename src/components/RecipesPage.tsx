@@ -108,7 +108,7 @@ export function RecipesPage({ state }: { state: AppState }) {
         </h2>
 
         <div className="mb-4">
-          <label htmlFor="recipe-name" className="mb-1 block text-sm font-medium text-slate-600">
+          <label htmlFor="recipe-name" className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600">
             Название рецепта
             <RequiredMark />
           </label>
@@ -128,7 +128,7 @@ export function RecipesPage({ state }: { state: AppState }) {
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1 lg:col-span-2">
-              <label htmlFor="recipe-ingredient-select" className="text-sm text-slate-600">
+              <label htmlFor="recipe-ingredient-select" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Ингредиент
                 <RequiredMark />
               </label>
@@ -149,7 +149,7 @@ export function RecipesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="recipe-quantity-input" className="text-sm text-slate-600">
+              <label htmlFor="recipe-quantity-input" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Количество
                 <RequiredMark />
               </label>
