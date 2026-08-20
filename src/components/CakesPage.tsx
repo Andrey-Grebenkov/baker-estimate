@@ -508,8 +508,8 @@ export function CakesPage({ state }: { state: AppState }) {
           )}
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-slate-700">Полуфабрикаты</h3>
+        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+          <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Полуфабрикаты</h3>
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1 lg:col-span-2">
@@ -819,8 +819,8 @@ export function CakesPage({ state }: { state: AppState }) {
           )}
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-slate-700">Декор</h3>
+        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+          <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Декор</h3>
 
           <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1 lg:col-span-2">
@@ -909,8 +909,8 @@ export function CakesPage({ state }: { state: AppState }) {
           )}
         </div>
 
-        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-slate-700">Накладные расходы</h3>
+        <div className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+          <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Накладные расходы</h3>
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1">
