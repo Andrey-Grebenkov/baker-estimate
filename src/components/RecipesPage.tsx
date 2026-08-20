@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, RecipeIngredient, Recipe } from '../domain/types'
 import { normalizeNumberString } from '../lib/numberInput'
+import { confirmDelete } from '../lib/confirmDelete'
 
 const unitLabels: Record<Ingredient['unit'], string> = {
   g: 'г',
@@ -281,7 +282,7 @@ export function RecipesPage({ state }: { state: AppState }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => state.deleteRecipe(recipe.id)}
+                      onClick={() => confirmDelete(() => state.deleteRecipe(recipe.id))}
                       className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-rose-600 ring-1 ring-inset ring-rose-200 hover:bg-rose-50"
                       data-testid="recipe-delete-button"
                     >

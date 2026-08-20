@@ -15,6 +15,7 @@ import {
 } from '../domain/recipeScaling'
 import { generateShoppingList } from '../domain/shoppingList'
 import { ShoppingListModal } from './ShoppingListModal'
+import { confirmDelete } from '../lib/confirmDelete'
 
 function formatMoney(value: number): string {
   return roundToCurrency(value).toFixed(2)
@@ -1041,7 +1042,7 @@ export function CakesPage({ state }: { state: AppState }) {
                 cake={cake}
                 recipes={state.recipes}
                 onEdit={() => startEdit(cake)}
-                onDelete={() => state.deleteCake(cake.id)}
+                onDelete={() => confirmDelete(() => state.deleteCake(cake.id))}
                 onPrint={() => handlePrint(cake.id)}
               />
             ))}

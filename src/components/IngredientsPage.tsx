@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, MeasurementUnit } from '../domain/types'
 import { normalizeNumberString } from '../lib/numberInput'
+import { confirmDelete } from '../lib/confirmDelete'
 
 const units: { value: MeasurementUnit; label: string }[] = [
   { value: 'g', label: 'г' },
@@ -258,7 +259,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => state.deleteIngredient(ingredient.id)}
+                    onClick={() => confirmDelete(() => state.deleteIngredient(ingredient.id))}
                     className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-rose-600 ring-1 ring-inset ring-rose-200 hover:bg-rose-50"
                     data-testid="ingredient-delete-button"
                   >
