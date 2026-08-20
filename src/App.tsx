@@ -6,18 +6,20 @@ import { ProfileDropdown } from './components/ProfileDropdown'
 import { IngredientsPage } from './components/IngredientsPage'
 import { RecipesPage } from './components/RecipesPage'
 import { CakesPage } from './components/CakesPage'
+import { OrdersPage } from './components/OrdersPage'
 import { SettingsPage } from './components/SettingsPage'
 import { useTheme } from './hooks/useTheme'
 import { ThemeToggle } from './components/ThemeToggle'
 import { DashboardPage } from './components/DashboardPage'
 
-type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'cakes' | 'settings'
+type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'cakes' | 'orders' | 'settings'
 
 const tabs: { value: Tab; label: string }[] = [
   { value: 'dashboard', label: 'Дашборд' },
   { value: 'ingredients', label: 'Ингредиенты' },
   { value: 'recipes', label: 'Рецепты' },
   { value: 'cakes', label: 'Торты' },
+  { value: 'orders', label: 'Учет' },
   { value: 'settings', label: 'Настройки' },
 ]
 
@@ -137,6 +139,7 @@ function App() {
         {activeTab === 'ingredients' && <IngredientsPage state={state} />}
         {activeTab === 'recipes' && <RecipesPage state={state} />}
         {activeTab === 'cakes' && <CakesPage state={state} />}
+        {activeTab === 'orders' && <OrdersPage state={state} />}
         {activeTab === 'settings' && <SettingsPage user={user} state={state} />}
       </main>
     </div>

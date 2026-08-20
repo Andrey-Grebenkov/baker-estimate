@@ -7,6 +7,8 @@ import type {
   CakeInput,
   Ingredient,
   MeasurementUnit,
+  Order,
+  OrderInput,
   Overheads,
   Recipe,
   RecipeInput,
@@ -30,6 +32,18 @@ interface DbRecipe {
   ingredients: Recipe['ingredients']
   total_weight: number
   total_cost: number
+}
+
+interface DbOrder {
+  id: string
+  user_id: string
+  cake_id: string | null
+  client_name: string
+  delivery_date: string
+  actual_weight_kg: number
+  actual_cost: number
+  paid_amount: number
+  created_at: string
 }
 
 interface DbCake {
@@ -78,6 +92,20 @@ function mapRecipe(row: DbRecipe): Recipe {
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
     totalWeight: toNumber(row.total_weight),
     totalCost: toNumber(row.total_cost),
+  }
+}
+
+function mapOrder(row: DbOrder): Order {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    cake_id: row.cake_id ?? undefined,
+    client_name: row.client_name,
+    delivery_date: row.delivery_date,
+    actual_weight_kg: toNumber(row.actual_weight_kg),
+    actual_cost: toNumber(row.actual_cost),
+    paid_amount: toNumber(row.paid_amount),
+    created_at: row.created_at,
   }
 }
 
@@ -277,5 +305,43 @@ export async function updateCake(
 
 export async function deleteCake(id: string): Promise<void> {
   const { error } = await supabase.from('cakes').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function fetchOrders(): Promise<Order[]> {
+  const { data, error } = await supabase.from('orders').select('*').order('delivery_date', { ascending: false })
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((row) => mapOrder(row as DbOrder))
+}
+
+export async function addOrder(input: OrderInput, userId: string): Promise<void> {
+  const { error } = await supabase.from('orders').insert({
+    id: generateId(),
+    user_id: userId,
+    cake_id: input.cake_id ?? null,
+    client_name: input.client_name,
+    delivery_date: input.delivery_date,
+    actual_weight_kg: input.actual_weight_kg,
+    actual_cost: input.actual_cost,
+    paid_amount: input.paid_amount,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function updateOrder(id: string, input: OrderInput, userId: string): Promise<void> {
+  const { error } = await supabase.from('orders').update({
+    user_id: userId,
+    cake_id: input.cake_id ?? null,
+    client_name: input.client_name,
+    delivery_date: input.delivery_date,
+    actual_weight_kg: input.actual_weight_kg,
+    actual_cost: input.actual_cost,
+    paid_amount: input.paid_amount,
+  }).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteOrder(id: string): Promise<void> {
+  const { error } = await supabase.from('orders').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }

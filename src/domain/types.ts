@@ -112,3 +112,21 @@ export type CakeInput = Omit<
   | 'finalCostPrice'
   | 'recommendedPrice'
 >
+
+/**
+ * TASK: УЧЕТ ПРОДАЖ / ЗАКАЗОВ
+ */
+export interface Order {
+  id: string
+  user_id?: string
+  cake_id?: string // Ссылка на сохранённый торт (может стать null при удалении торта)
+  client_name: string
+  delivery_date: string // ISO-строка даты/времени
+  actual_weight_kg: number // Фактический вес в кг
+  actual_cost: number // Реальная себестоимость
+  paid_amount: number // Сколько оплатил клиент
+  created_at?: string
+}
+
+export type OrderInput = Omit<Order, 'id' | 'user_id' | 'created_at'>
+

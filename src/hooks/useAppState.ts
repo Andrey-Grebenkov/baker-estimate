@@ -5,6 +5,8 @@ import type {
   CakeInput,
   Ingredient,
   MeasurementUnit,
+  Order,
+  OrderInput,
   Recipe,
   RecipeInput,
 } from '../domain/types'
@@ -15,6 +17,7 @@ export interface AppState {
   ingredients: Ingredient[]
   recipes: Recipe[]
   cakes: CakeDetails[]
+  orders: Order[]
   isLoading: boolean
   initialized: boolean
   error: string | null
@@ -38,6 +41,10 @@ export interface AppState {
   addCake: (input: Omit<CakeInput, 'id' | 'user_id'>, imageFile?: File) => void
   updateCake: (id: string, input: Omit<CakeInput, 'id' | 'user_id'>, imageFile?: File) => void
   deleteCake: (id: string) => void
+
+  addOrder: (input: OrderInput) => void
+  updateOrder: (id: string, input: OrderInput) => void
+  deleteOrder: (id: string) => void
 }
 
 async function uploadCakeImage(file: File): Promise<string> {
@@ -53,6 +60,7 @@ export function useAppState(user: User | null): AppState {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [cakes, setCakes] = useState<CakeDetails[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,14 +75,16 @@ export function useAppState(user: User | null): AppState {
     setIsLoading(true)
     setError(null)
     try {
-      const [ingredientsData, recipesData, cakesData] = await Promise.all([
+      const [ingredientsData, recipesData, cakesData, ordersData] = await Promise.all([
         db.fetchIngredients(),
         db.fetchRecipes(),
         db.fetchCakes(),
+        db.fetchOrders(),
       ])
       setIngredients(ingredientsData)
       setRecipes(recipesData)
       setCakes(cakesData)
+      setOrders(ordersData)
     } catch (err) {
       handleError(err)
     } finally {
@@ -90,6 +100,7 @@ export function useAppState(user: User | null): AppState {
       setIngredients([])
       setRecipes([])
       setCakes([])
+      setOrders([])
       setInitialized(false)
       setError(null)
     }
@@ -223,10 +234,49 @@ export function useAppState(user: User | null): AppState {
     [loadAll, handleError],
   )
 
+  const addOrder = useCallback(
+    async (input: OrderInput) => {
+      try {
+        if (!userId) throw new Error('Пользователь не авторизован')
+        await db.addOrder(input, userId)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
+    },
+    [loadAll, handleError, userId],
+  )
+
+  const updateOrder = useCallback(
+    async (id: string, input: OrderInput) => {
+      try {
+        if (!userId) throw new Error('Пользователь не авторизован')
+        await db.updateOrder(id, input, userId)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
+    },
+    [loadAll, handleError, userId],
+  )
+
+  const deleteOrder = useCallback(
+    async (id: string) => {
+      try {
+        await db.deleteOrder(id)
+        await loadAll()
+      } catch (err) {
+        handleError(err)
+      }
+    },
+    [loadAll, handleError],
+  )
+
   return {
     ingredients,
     recipes,
     cakes,
+    orders,
     isLoading,
     initialized,
     error,
@@ -244,5 +294,9 @@ export function useAppState(user: User | null): AppState {
     addCake,
     updateCake,
     deleteCake,
+
+    addOrder,
+    updateOrder,
+    deleteOrder,
   }
 }
