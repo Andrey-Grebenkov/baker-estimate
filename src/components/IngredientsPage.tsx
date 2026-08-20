@@ -14,6 +14,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [quantity, setQuantity] = useState('')
+  const [inStock, setInStock] = useState('')
   const [unit, setUnit] = useState<MeasurementUnit>('g')
   const [error, setError] = useState<string | null>(null)
 
@@ -22,6 +23,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
     setName('')
     setPrice('')
     setQuantity('')
+    setInStock('')
     setUnit('g')
     setError(null)
   }
@@ -31,6 +33,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
     setName(ingredient.name)
     setPrice(String(ingredient.pricePerPackage))
     setQuantity(String(ingredient.packageQuantity))
+    setInStock(ingredient.inStock != null ? String(ingredient.inStock) : '')
     setUnit(ingredient.unit)
     setError(null)
   }
@@ -56,12 +59,19 @@ export function IngredientsPage({ state }: { state: AppState }) {
       return
     }
 
+    const inStockNum = inStock.trim() === '' ? undefined : Number(inStock)
+    if (inStockNum !== undefined && (Number.isNaN(inStockNum) || inStockNum < 0)) {
+      setError('Остаток на складе не может быть отрицательным')
+      return
+    }
+
     if (editingId) {
       state.updateIngredient(editingId, {
         name: trimmedName,
         pricePerPackage: priceNum,
         packageQuantity: quantityNum,
         unit,
+        inStock: inStockNum,
       })
     } else {
       state.addIngredient({
@@ -69,6 +79,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
         pricePerPackage: priceNum,
         packageQuantity: quantityNum,
         unit,
+        inStock: inStockNum,
       })
     }
 
@@ -86,7 +97,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           {editingId ? 'Редактировать продукт' : 'Добавить продукт'}
         </h2>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1">
             <label htmlFor="ingredient-name" className="text-sm font-medium text-slate-600">
               Название
@@ -154,6 +165,23 @@ export function IngredientsPage({ state }: { state: AppState }) {
               ))}
             </select>
           </div>
+
+          <div className="space-y-1">
+            <label htmlFor="ingredient-in-stock" className="text-sm font-medium text-slate-600">
+              В наличии
+            </label>
+            <input
+              id="ingredient-in-stock"
+              type="number"
+              min="0"
+              step="0.01"
+              value={inStock}
+              onChange={(e) => setInStock(normalizeNumberString(e.target.value))}
+              className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              placeholder="0"
+              data-testid="ingredient-in-stock-input"
+            />
+          </div>
         </div>
 
         {error && (
@@ -210,6 +238,12 @@ export function IngredientsPage({ state }: { state: AppState }) {
                     {units.find((u) => u.value === ingredient.unit)?.label} (
                     {ingredient.pricePerBaseUnit.toFixed(2)} ₽/{' '}
                     {units.find((u) => u.value === ingredient.unit)?.label})
+                    {ingredient.inStock != null && (
+                      <span className="ml-2 text-emerald-600" data-testid="ingredient-in-stock-value">
+                        В наличии: {ingredient.inStock}{' '}
+                        {units.find((u) => u.value === ingredient.unit)?.label}
+                      </span>
+                    )}
                   </p>
                 </div>
 

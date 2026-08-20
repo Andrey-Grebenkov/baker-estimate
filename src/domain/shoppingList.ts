@@ -1,4 +1,5 @@
 import { roundToCurrency } from './money'
+import { roundToDecimal } from './recipeScaling'
 import type { CakeRecipeItem, Ingredient, MeasurementUnit, Recipe } from './types'
 
 export interface ShoppingListItem {
@@ -41,13 +42,18 @@ export function generateShoppingList(
   }
 
   return Object.values(quantities)
-    .map(({ ingredient, quantity }) => ({
-      ingredientId: ingredient.id,
-      name: ingredient.name,
-      totalQuantity: roundToCurrency(quantity),
-      unit: ingredient.unit,
-      estimatedCost: roundToCurrency(quantity * ingredient.pricePerBaseUnit),
-    }))
+    .map(({ ingredient, quantity }) => {
+      const inStock = ingredient.inStock ?? 0
+      const deficit = Math.max(0, quantity - inStock)
+      return {
+        ingredientId: ingredient.id,
+        name: ingredient.name,
+        totalQuantity: roundToDecimal(deficit, 1),
+        unit: ingredient.unit,
+        estimatedCost: roundToCurrency(deficit * ingredient.pricePerBaseUnit),
+      }
+    })
+    .filter((item) => item.totalQuantity > 0)
     .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
 }
 

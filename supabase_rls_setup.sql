@@ -11,7 +11,8 @@
 -- Примечание: NOT NULL без DEFAULT корректно сработает только для пустых таблиц
 -- или если предварительно заполнить существующие строки.
 ALTER TABLE IF EXISTS public.ingredients
-  ADD COLUMN IF NOT EXISTS user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE;
+  ADD COLUMN IF NOT EXISTS user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS in_stock NUMERIC(12, 3) DEFAULT NULL;
 
 ALTER TABLE IF EXISTS public.recipes
   ADD COLUMN IF NOT EXISTS user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE;

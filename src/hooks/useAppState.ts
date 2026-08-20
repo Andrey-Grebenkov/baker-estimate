@@ -26,6 +26,7 @@ export interface AppState {
     pricePerPackage: number
     packageQuantity: number
     unit: MeasurementUnit
+    inStock?: number
   }) => void
   updateIngredient: (id: string, input: Omit<Ingredient, 'id' | 'pricePerBaseUnit' | 'user_id'>) => void
   deleteIngredient: (id: string) => void

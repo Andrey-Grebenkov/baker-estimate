@@ -20,6 +20,7 @@ interface DbIngredient {
   package_quantity: number
   unit: string
   price_per_base_unit: number
+  in_stock: number | null
 }
 
 interface DbRecipe {
@@ -65,6 +66,7 @@ function mapIngredient(row: DbIngredient): Ingredient {
     packageQuantity: toNumber(row.package_quantity),
     unit: row.unit as MeasurementUnit,
     pricePerBaseUnit: toNumber(row.price_per_base_unit),
+    inStock: row.in_stock == null ? undefined : toNumber(row.in_stock),
   }
 }
 
@@ -117,6 +119,7 @@ export async function addIngredient(
     pricePerPackage: number
     packageQuantity: number
     unit: MeasurementUnit
+    inStock?: number
   },
   userId: string,
 ): Promise<void> {
@@ -129,6 +132,7 @@ export async function addIngredient(
     package_quantity: ingredient.packageQuantity,
     unit: ingredient.unit,
     price_per_base_unit: ingredient.pricePerBaseUnit,
+    in_stock: ingredient.inStock ?? null,
   })
   if (error) throw new Error(error.message)
 }
@@ -146,6 +150,7 @@ export async function updateIngredient(
     package_quantity: ingredient.packageQuantity,
     unit: ingredient.unit,
     price_per_base_unit: ingredient.pricePerBaseUnit,
+    in_stock: ingredient.inStock ?? null,
   }).eq('id', id)
   if (error) throw new Error(error.message)
 }

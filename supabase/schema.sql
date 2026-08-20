@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.ingredients (
   package_quantity NUMERIC(12, 3) NOT NULL,
   unit TEXT NOT NULL CHECK (unit IN ('g', 'ml', 'pcs')),
   price_per_base_unit NUMERIC(12, 6) NOT NULL,
+  in_stock NUMERIC(12, 3) DEFAULT NULL,
 
   created_at TIMESTAMPTZ DEFAULT now()
 );

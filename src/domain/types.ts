@@ -20,6 +20,9 @@ export interface Ingredient {
   // Рассчитываемое поле (pricePerPackage / packageQuantity).
   // Можно вычислять на лету, но удобно хранить в объекте.
   pricePerBaseUnit: number
+
+  // Текущий остаток на складе (г/мл/шт).
+  inStock?: number
 }
 
 /**

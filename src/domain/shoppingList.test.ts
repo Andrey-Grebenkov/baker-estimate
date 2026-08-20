@@ -3,7 +3,13 @@ import { buildIngredient } from './ingredient'
 import { buildRecipe } from './recipe'
 import { generateShoppingList, formatShoppingList } from './shoppingList'
 
-function makeIngredient(id: string, name: string, price = 100, quantity = 1000) {
+function makeIngredient(
+  id: string,
+  name: string,
+  price = 100,
+  quantity = 1000,
+  inStock?: number,
+) {
   return buildIngredient({
     id,
     user_id: 'user',
@@ -11,6 +17,7 @@ function makeIngredient(id: string, name: string, price = 100, quantity = 1000) 
     pricePerPackage: price,
     packageQuantity: quantity,
     unit: 'g',
+    inStock,
   })
 }
 
@@ -128,6 +135,109 @@ describe('generateShoppingList', () => {
 
     expect(items[0].name).toBe('Абрикос')
     expect(items[1].name).toBe('Банан')
+  })
+
+  it('omits ingredient when stock fully covers required amount', () => {
+    const sugar = makeIngredient('ing-1', 'Сахар', 100, 1000, 200)
+    const recipe = buildRecipe(
+      {
+        id: 'rec-1',
+        user_id: 'user',
+        name: 'Бисквит',
+        ingredients: [{ ingredientId: sugar.id, quantityUsed: 150 }],
+      },
+      { [sugar.id]: sugar },
+    )
+
+    const items = generateShoppingList(
+      [{ recipeId: recipe.id, multiplier: 1 }],
+      { [recipe.id]: recipe },
+      { [sugar.id]: sugar },
+    )
+
+    expect(items).toHaveLength(0)
+  })
+
+  it('adds only deficit when stock partially covers the need', () => {
+    const sugar = makeIngredient('ing-1', 'Сахар', 100, 1000, 50)
+    const recipe = buildRecipe(
+      {
+        id: 'rec-1',
+        user_id: 'user',
+        name: 'Бисквит',
+        ingredients: [{ ingredientId: sugar.id, quantityUsed: 150 }],
+      },
+      { [sugar.id]: sugar },
+    )
+
+    const items = generateShoppingList(
+      [{ recipeId: recipe.id, multiplier: 1 }],
+      { [recipe.id]: recipe },
+      { [sugar.id]: sugar },
+    )
+
+    expect(items).toHaveLength(1)
+    expect(items[0].totalQuantity).toBe(100)
+    expect(items[0].estimatedCost).toBe(10)
+  })
+
+  it('treats undefined stock as zero and lists the full required quantity', () => {
+    const sugar = makeIngredient('ing-1', 'Сахар', 100, 1000)
+    const recipe = buildRecipe(
+      {
+        id: 'rec-1',
+        user_id: 'user',
+        name: 'Бисквит',
+        ingredients: [{ ingredientId: sugar.id, quantityUsed: 80 }],
+      },
+      { [sugar.id]: sugar },
+    )
+
+    const items = generateShoppingList(
+      [{ recipeId: recipe.id, multiplier: 1 }],
+      { [recipe.id]: recipe },
+      { [sugar.id]: sugar },
+    )
+
+    expect(items[0].totalQuantity).toBe(80)
+    expect(items[0].estimatedCost).toBe(8)
+  })
+
+  it('deducts stock across multiple recipes for the same ingredient', () => {
+    const sugar = makeIngredient('ing-1', 'Сахар', 100, 1000, 80)
+
+    const recipe1 = buildRecipe(
+      {
+        id: 'rec-1',
+        user_id: 'user',
+        name: 'Бисквит',
+        ingredients: [{ ingredientId: sugar.id, quantityUsed: 100 }],
+      },
+      { [sugar.id]: sugar },
+    )
+
+    const recipe2 = buildRecipe(
+      {
+        id: 'rec-2',
+        user_id: 'user',
+        name: 'Крем',
+        ingredients: [{ ingredientId: sugar.id, quantityUsed: 50 }],
+      },
+      { [sugar.id]: sugar },
+    )
+
+    const items = generateShoppingList(
+      [
+        { recipeId: recipe1.id, multiplier: 1 },
+        { recipeId: recipe2.id, multiplier: 1 },
+      ],
+      { [recipe1.id]: recipe1, [recipe2.id]: recipe2 },
+      { [sugar.id]: sugar },
+    )
+
+    expect(items).toHaveLength(1)
+    expect(items[0].totalQuantity).toBe(70)
+    expect(items[0].estimatedCost).toBe(7)
   })
 })
 
