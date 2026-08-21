@@ -157,13 +157,11 @@ export function CakesPage({ state }: { state: AppState }) {
     }
 
     if (recipes.some((r) => r.recipeId === selectedRecipeId)) {
-      setRecipes((prev) =>
-        prev.map((r) => (r.recipeId === selectedRecipeId ? { ...r, multiplier } : r)),
-      )
-    } else {
-      setRecipes((prev) => [...prev, { recipeId: selectedRecipeId, multiplier }])
+      setError('Этот рецепт уже добавлен. Удалите старый или выберите другой.')
+      return
     }
 
+    setRecipes((prev) => [...prev, { recipeId: selectedRecipeId, multiplier }])
     setSelectedMultiplier('1')
     setError(null)
   }
@@ -1212,7 +1210,10 @@ function CakeCard({
 
   const handleStartReplace = (missingRecipeId: string) => {
     setEditingRecipeId(missingRecipeId)
-    setSelectedReplacementId(state.recipes[0]?.id ?? '')
+    const available = state.recipes.filter(
+      (r) => !cake.recipes.some((cr) => cr.recipeId === r.id && cr.recipeId !== missingRecipeId),
+    )
+    setSelectedReplacementId(available[0]?.id ?? '')
   }
 
   const handleCancelReplace = () => {
@@ -1298,11 +1299,13 @@ function CakeCard({
                     className="h-9 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     data-testid="cake-replace-recipe-select"
                   >
-                    {state.recipes.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name} ({r.totalWeight} г, {formatMoney(r.totalCost)} ₽)
-                      </option>
-                    ))}
+                    {state.recipes
+                      .filter((r) => !cake.recipes.some((cr) => cr.recipeId === r.id))
+                      .map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name} ({r.totalWeight} г, {formatMoney(r.totalCost)} ₽)
+                        </option>
+                      ))}
                   </select>
                   <button
                     type="button"

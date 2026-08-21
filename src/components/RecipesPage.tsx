@@ -28,11 +28,16 @@ export function RecipesPage({ state }: { state: AppState }) {
     setError(null)
   }
 
+  const firstUnusedIngredient = (used: RecipeIngredient[]): string => {
+    const usedIds = new Set(used.map((ri) => ri.ingredientId))
+    return state.ingredients.find((i) => !usedIds.has(i.id))?.id ?? ''
+  }
+
   const startEdit = (recipe: Recipe) => {
     setEditingId(recipe.id)
     setRecipeName(recipe.name)
     setRecipeIngredients(recipe.ingredients)
-    setSelectedIngredientId(state.ingredients[0]?.id ?? '')
+    setSelectedIngredientId(firstUnusedIngredient(recipe.ingredients))
     setSelectedQuantity('')
     setError(null)
   }
@@ -50,21 +55,28 @@ export function RecipesPage({ state }: { state: AppState }) {
     }
 
     if (recipeIngredients.some((ri) => ri.ingredientId === selectedIngredientId)) {
-      setRecipeIngredients((prev) =>
-        prev.map((ri) =>
-          ri.ingredientId === selectedIngredientId ? { ...ri, quantityUsed: quantity } : ri,
-        ),
-      )
-    } else {
-      setRecipeIngredients((prev) => [...prev, { ingredientId: selectedIngredientId, quantityUsed: quantity }])
+      setError('Этот ингредиент уже добавлен. Удалите старый или выберите другой.')
+      return
     }
 
+    const nextIngredients = [...recipeIngredients, { ingredientId: selectedIngredientId, quantityUsed: quantity }]
+    setRecipeIngredients(nextIngredients)
+
+    const usedIds = new Set(nextIngredients.map((ri) => ri.ingredientId))
+    const next = state.ingredients.find((i) => !usedIds.has(i.id))
+    setSelectedIngredientId(next?.id ?? '')
     setSelectedQuantity('')
     setError(null)
   }
 
   const removeRecipeIngredient = (ingredientId: string) => {
-    setRecipeIngredients((prev) => prev.filter((ri) => ri.ingredientId !== ingredientId))
+    setRecipeIngredients((prev) => {
+      const next = prev.filter((ri) => ri.ingredientId !== ingredientId)
+      const usedIds = new Set(next.map((ri) => ri.ingredientId))
+      const first = state.ingredients.find((i) => !usedIds.has(i.id))
+      setSelectedIngredientId(first?.id ?? '')
+      return next
+    })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -140,11 +152,13 @@ export function RecipesPage({ state }: { state: AppState }) {
                 data-testid="recipe-ingredient-select"
               >
                 <option value="">Выберите продукт</option>
-                {state.ingredients.map((ingredient) => (
-                  <option key={ingredient.id} value={ingredient.id}>
-                    {ingredient.name}
-                  </option>
-                ))}
+                {state.ingredients
+                  .filter((ingredient) => !recipeIngredients.some((ri) => ri.ingredientId === ingredient.id))
+                  .map((ingredient) => (
+                    <option key={ingredient.id} value={ingredient.id}>
+                      {ingredient.name}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -302,7 +316,10 @@ function RecipeCard({
 
   const handleStartReplace = (missingIngredientId: string) => {
     setEditingIngredientId(missingIngredientId)
-    setSelectedReplacementId(state.ingredients[0]?.id ?? '')
+    const available = state.ingredients.filter(
+      (i) => !recipe.ingredients.some((ri) => ri.ingredientId === i.id && ri.ingredientId !== missingIngredientId),
+    )
+    setSelectedReplacementId(available[0]?.id ?? '')
   }
 
   const handleCancelReplace = () => {
@@ -356,11 +373,13 @@ function RecipeCard({
                           className="h-9 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           data-testid="recipe-replace-ingredient-select"
                         >
-                          {state.ingredients.map((i) => (
-                            <option key={i.id} value={i.id}>
-                              {i.name} ({unitLabels[i.unit]})
-                            </option>
-                          ))}
+                          {state.ingredients
+                            .filter((i) => !recipe.ingredients.some((ri) => ri.ingredientId === i.id))
+                            .map((i) => (
+                              <option key={i.id} value={i.id}>
+                                {i.name} ({unitLabels[i.unit]})
+                              </option>
+                            ))}
                         </select>
                         <button
                           type="button"
