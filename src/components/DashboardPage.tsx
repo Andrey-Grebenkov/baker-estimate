@@ -39,8 +39,8 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
   const tooltipColor = isDark ? '#e2e8f0' : '#1e293b'
 
   const metrics = useMemo(
-    () => calculateDashboardMetrics(state.cakes, state.recipes),
-    [state.cakes, state.recipes],
+    () => calculateDashboardMetrics(state.cakes, state.recipes, state.orders),
+    [state.cakes, state.recipes, state.orders],
   )
   const recentCosts = useMemo(() => getRecentCakeCosts(state.cakes, 5), [state.cakes])
   const costBreakdown = useMemo(() => calculateAverageCostBreakdown(state.cakes), [state.cakes])
@@ -58,7 +58,7 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
       <div className="space-y-6" data-testid="dashboard-page">
         <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Дашборд</h2>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className={statCardClass}>
             <p className="text-sm text-slate-500 dark:text-slate-400">Всего смет</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-total-cakes">
@@ -74,6 +74,12 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
           <div className={statCardClass}>
             <p className="text-sm text-slate-500 dark:text-slate-400">Средняя себестоимость</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-average-cost">
+              0 ₽
+            </p>
+          </div>
+          <div className={statCardClass}>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Выручка (выдано)</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-total-revenue">
               0 ₽
             </p>
           </div>
@@ -103,7 +109,7 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
     <div className="space-y-6" data-testid="dashboard-page">
       <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Дашборд</h2>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className={statCardClass}>
           <p className="text-sm text-slate-500 dark:text-slate-400">Всего смет</p>
           <p className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-total-cakes">
@@ -120,6 +126,12 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
           <p className="text-sm text-slate-500 dark:text-slate-400">Средняя себестоимость</p>
           <p className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-average-cost">
             {metrics.averageCost.toFixed(2)} ₽
+          </p>
+        </div>
+        <div className={statCardClass}>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Выручка (выдано)</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-total-revenue">
+            {metrics.totalRevenue.toFixed(2)} ₽
           </p>
         </div>
       </div>

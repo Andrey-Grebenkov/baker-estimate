@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { Calendar, List } from 'lucide-react'
 import type { AppState } from '../hooks/useAppState'
 import { formatMoney } from '../domain/money'
 import { OrderModal } from './OrderModal'
 import { ClientReceiptModal } from './ClientReceiptModal'
-import type { Order } from '../domain/types'
+import { OrderCalendarView } from './OrderCalendarView'
+import type { Order, OrderStatus } from '../domain/types'
 
 function formatDate(iso: string): string {
   const date = new Date(iso)
@@ -14,117 +16,208 @@ function formatDate(iso: string): string {
   })
 }
 
+const statusStyles: Record<OrderStatus, string> = {
+  'Новый': 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600',
+  'В работе': 'bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:ring-blue-700',
+  'Выдан': 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:ring-emerald-700',
+}
+
+type ViewMode = 'list' | 'calendar'
+
 export function OrdersPage({ state }: { state: AppState }) {
+  const [view, setView] = useState<ViewMode>('list')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
 
   const receiptCake = receiptOrder
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
     : undefined
 
+  const openAdd = () => {
+    setEditingOrder(null)
+    setIsModalOpen(true)
+  }
+
+  const openEdit = (order: Order) => {
+    setEditingOrder(order)
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setEditingOrder(null)
+  }
+
+  const openReceipt = (order: Order) => {
+    setReceiptOrder(order)
+  }
+
   return (
     <div data-testid="orders-page">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-slate-800">Учет продаж</h2>
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          data-testid="record-sale-button"
-        >
-          Отметить продажу
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg border border-slate-300 bg-white p-1 dark:border-slate-600 dark:bg-slate-800">
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              className={[
+                'inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                view === 'list'
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
+              ].join(' ')}
+              data-testid="orders-view-list"
+            >
+              <List className="h-4 w-4" />
+              Список
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('calendar')}
+              className={[
+                'inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                view === 'calendar'
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
+              ].join(' ')}
+              data-testid="orders-view-calendar"
+            >
+              <Calendar className="h-4 w-4" />
+              Календарь
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={openAdd}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            data-testid="record-sale-button"
+          >
+            Отметить продажу
+          </button>
+        </div>
       </div>
 
       {state.orders.length === 0 ? (
         <p className="text-sm text-slate-500" data-testid="orders-empty-state">
           Пока нет заказов. Нажмите «Отметить продажу», чтобы создать первую запись.
         </p>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+      ) : view === 'list' ? (
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead className="bg-slate-50 dark:bg-slate-900/50">
               <tr>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
+                  Статус
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Клиент
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Дата доставки
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Вес, кг
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
-                  Себест.
+                  Сумма
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
-                  Оплачено
+                  Аванс
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
-                  Прибыль
+                  Остаток
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500"
+                  className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
-                  Чек
+                  Действия
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
+            <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
               {state.orders.map((order) => {
-                const profit = order.paid_amount - order.actual_cost
+                const remaining = Math.max(0, order.paid_amount - order.advance_payment)
                 return (
                   <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-800">
-                      {order.client_name}
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${statusStyles[order.status]}`}
+                      >
+                        {order.status}
+                      </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        {order.client_name}
+                      </div>
+                      {order.client_phone && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {order.client_phone}
+                        </div>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                       {formatDate(order.delivery_date)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                       {order.actual_weight_kg.toFixed(3)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
-                      {formatMoney(order.actual_cost)} ₽
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                       {formatMoney(order.paid_amount)} ₽
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      {formatMoney(order.advance_payment)} ₽
                     </td>
                     <td
                       className={`whitespace-nowrap px-4 py-3 text-sm font-medium ${
-                        profit >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                        remaining > 0 ? 'text-amber-600' : 'text-emerald-600'
                       }`}
                     >
-                      {formatMoney(profit)} ₽
+                      {formatMoney(remaining)} ₽
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setReceiptOrder(order)}
-                        className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-50"
-                        data-testid="order-receipt-button"
-                      >
-                        Чек
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(order)}
+                          className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600 dark:hover:bg-slate-600"
+                          data-testid="order-edit-button"
+                        >
+                          Изменить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openReceipt(order)}
+                          className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-50 dark:bg-slate-700 dark:text-emerald-300 dark:ring-emerald-800 dark:hover:bg-emerald-900/30"
+                          data-testid="order-receipt-button"
+                        >
+                          Чек
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -132,9 +225,24 @@ export function OrdersPage({ state }: { state: AppState }) {
             </tbody>
           </table>
         </div>
+      ) : (
+        <OrderCalendarView
+          orders={state.orders}
+          cakes={state.cakes}
+          onEdit={(order) => {
+            setEditingOrder(order)
+            setIsModalOpen(true)
+          }}
+          onReceipt={openReceipt}
+        />
       )}
 
-      <OrderModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} state={state} />
+      <OrderModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        state={state}
+        orderToEdit={editingOrder}
+      />
 
       {receiptOrder && (
         <ClientReceiptModal

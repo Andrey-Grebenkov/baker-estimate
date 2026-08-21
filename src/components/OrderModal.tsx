@@ -1,39 +1,70 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import { formatMoney, roundToCurrency } from '../domain/money'
+import type { Order, OrderStatus } from '../domain/types'
 import { MAX_DEFAULT_PRICE, MAX_DEFAULT_QUANTITY, normalizeNumberString } from '../lib/numberInput'
 import { RequiredMark } from './RequiredMark'
+
+const ORDER_STATUSES: OrderStatus[] = ['Новый', 'В работе', 'Выдан']
 
 interface OrderModalProps {
   isOpen: boolean
   onClose: () => void
   state: AppState
+  orderToEdit?: Order | null
 }
 
 function getTodayDateString(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
+function formatDateForInput(iso: string): string {
+  try {
+    return new Date(iso).toISOString().slice(0, 10)
+  } catch {
+    return getTodayDateString()
+  }
+}
+
+export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalProps) {
+  const isEditing = Boolean(orderToEdit)
+
   const [cakeId, setCakeId] = useState('')
   const [clientName, setClientName] = useState('')
+  const [clientPhone, setClientPhone] = useState('')
+  const [status, setStatus] = useState<OrderStatus>('Новый')
   const [deliveryDate, setDeliveryDate] = useState(getTodayDateString)
   const [actualWeight, setActualWeight] = useState('')
   const [paidAmount, setPaidAmount] = useState('')
+  const [advancePayment, setAdvancePayment] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
-      setCakeId('')
-      setClientName('')
-      setDeliveryDate(getTodayDateString())
-      setActualWeight('')
-      setPaidAmount('')
+      if (orderToEdit) {
+        setCakeId(orderToEdit.cake_id ?? '')
+        setClientName(orderToEdit.client_name)
+        setClientPhone(orderToEdit.client_phone ?? '')
+        setStatus(orderToEdit.status)
+        setDeliveryDate(formatDateForInput(orderToEdit.delivery_date))
+        setActualWeight(String(orderToEdit.actual_weight_kg))
+        setPaidAmount(String(orderToEdit.paid_amount))
+        setAdvancePayment(String(orderToEdit.advance_payment))
+      } else {
+        setCakeId('')
+        setClientName('')
+        setClientPhone('')
+        setStatus('Новый')
+        setDeliveryDate(getTodayDateString())
+        setActualWeight('')
+        setPaidAmount('')
+        setAdvancePayment('')
+      }
       setError(null)
       setSubmitting(false)
     }
-  }, [isOpen])
+  }, [isOpen, orderToEdit])
 
   const selectedCake = useMemo(
     () => state.cakes.find((cake) => cake.id === cakeId) || null,
@@ -45,16 +76,26 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
     return value === '' ? 0 : Number(value)
   }, [actualWeight])
 
+  const paidAmountNum = useMemo(() => {
+    const value = paidAmount.trim()
+    return value === '' ? 0 : Number(value)
+  }, [paidAmount])
+
+  const advancePaymentNum = useMemo(() => {
+    const value = advancePayment.trim()
+    return value === '' ? 0 : Number(value)
+  }, [advancePayment])
+
   const actualCost = useMemo(() => {
     if (!selectedCake || actualWeightNum <= 0) return 0
     if (selectedCake.weightKg <= 0) return 0
     return roundToCurrency((actualWeightNum / selectedCake.weightKg) * selectedCake.finalCostPrice)
   }, [selectedCake, actualWeightNum])
 
-  const paidAmountNum = useMemo(() => {
-    const value = paidAmount.trim()
-    return value === '' ? 0 : Number(value)
-  }, [paidAmount])
+  const remainingBalance = useMemo(
+    () => Math.max(0, roundToCurrency(paidAmountNum - advancePaymentNum)),
+    [paidAmountNum, advancePaymentNum],
+  )
 
   const netProfit = useMemo(
     () => roundToCurrency(paidAmountNum - actualCost),
@@ -71,6 +112,10 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
       setError('Выберите торт')
       return
     }
+    if (clientName.trim().length === 0) {
+      setError('Введите имя клиента')
+      return
+    }
     if (actualWeightNum <= 0) {
       setError('Укажите фактический вес больше 0')
       return
@@ -79,21 +124,38 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
       setError('Сумма оплаты не может быть отрицательной')
       return
     }
+    if (advancePaymentNum < 0) {
+      setError('Аванс не может быть отрицательным')
+      return
+    }
+    if (advancePaymentNum > paidAmountNum) {
+      setError('Аванс не может превышать общую сумму')
+      return
+    }
     if (!deliveryDate) {
       setError('Укажите дату доставки')
       return
     }
 
+    const input = {
+      cake_id: selectedCake.id,
+      client_name: clientName.trim(),
+      client_phone: clientPhone.trim() || undefined,
+      status,
+      delivery_date: new Date(deliveryDate).toISOString(),
+      actual_weight_kg: actualWeightNum,
+      actual_cost: actualCost,
+      paid_amount: paidAmountNum,
+      advance_payment: advancePaymentNum,
+    }
+
     setSubmitting(true)
     try {
-      await state.addOrder({
-        cake_id: selectedCake.id,
-        client_name: clientName.trim(),
-        delivery_date: new Date(deliveryDate).toISOString(),
-        actual_weight_kg: actualWeightNum,
-        actual_cost: actualCost,
-        paid_amount: paidAmountNum,
-      })
+      if (orderToEdit) {
+        await state.updateOrder(orderToEdit.id, input)
+      } else {
+        await state.addOrder(input)
+      }
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Произошла ошибка при сохранении')
@@ -110,7 +172,7 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
       <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
         <div className="mb-4 flex items-start justify-between">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            Отметить продажу
+            {isEditing ? 'Редактировать заказ' : 'Отметить продажу'}
           </h2>
           <button
             type="button"
@@ -152,9 +214,10 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
             <div className="space-y-1">
               <label
                 htmlFor="order-client"
-                className="text-sm font-medium text-slate-600 dark:text-slate-300"
+                className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300"
               >
                 Имя клиента
+                <RequiredMark />
               </label>
               <input
                 id="order-client"
@@ -165,6 +228,46 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
                 placeholder="Например, Анна"
                 data-testid="order-client-input"
               />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="order-phone"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300"
+              >
+                Телефон клиента
+              </label>
+              <input
+                id="order-phone"
+                type="tel"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                placeholder="+7 (999) 123-45-67"
+                data-testid="order-phone-input"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="order-status"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300"
+              >
+                Статус
+              </label>
+              <select
+                id="order-status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as OrderStatus)}
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                data-testid="order-status-select"
+              >
+                {ORDER_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1">
@@ -212,7 +315,7 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
                 htmlFor="order-paid"
                 className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300"
               >
-                Оплачено, ₽
+                Общая сумма, ₽
                 <RequiredMark />
               </label>
               <input
@@ -226,6 +329,27 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                 placeholder="0"
                 data-testid="order-paid-input"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="order-advance"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300"
+              >
+                Аванс, ₽
+              </label>
+              <input
+                id="order-advance"
+                type="number"
+                min="0"
+                max={MAX_DEFAULT_PRICE}
+                step="0.01"
+                value={advancePayment}
+                onChange={(e) => setAdvancePayment(normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE))}
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                placeholder="0"
+                data-testid="order-advance-input"
               />
             </div>
           </div>
@@ -242,6 +366,24 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
                 </p>
               </div>
               <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Общая сумма</p>
+                <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  {formatMoney(paidAmountNum)} ₽
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Аванс</p>
+                <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  {formatMoney(advancePaymentNum)} ₽
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Остаток к оплате</p>
+                <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  {formatMoney(remainingBalance)} ₽
+                </p>
+              </div>
+              <div className="sm:col-span-2">
                 <p className="text-xs text-slate-500 dark:text-slate-400">Чистая прибыль</p>
                 <p
                   className={`text-lg font-semibold ${
@@ -275,7 +417,7 @@ export function OrderModal({ isOpen, onClose, state }: OrderModalProps) {
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="order-modal-submit"
             >
-              {submitting ? 'Сохранение…' : 'Сохранить продажу'}
+              {submitting ? 'Сохранение…' : isEditing ? 'Сохранить изменения' : 'Сохранить заказ'}
             </button>
           </div>
         </form>

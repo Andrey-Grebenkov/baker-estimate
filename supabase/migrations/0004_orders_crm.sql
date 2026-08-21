@@ -1,0 +1,5 @@
+-- CRM fields for orders
+ALTER TABLE public.orders
+ADD COLUMN IF NOT EXISTS client_phone TEXT,
+ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Новый',
+ADD COLUMN IF NOT EXISTS advance_payment NUMERIC(12, 2) NOT NULL DEFAULT 0;

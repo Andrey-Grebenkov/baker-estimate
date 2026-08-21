@@ -116,15 +116,20 @@ export type CakeInput = Omit<
 /**
  * TASK: УЧЕТ ПРОДАЖ / ЗАКАЗОВ
  */
+export type OrderStatus = 'Новый' | 'В работе' | 'Выдан'
+
 export interface Order {
   id: string
   user_id?: string
   cake_id?: string // Ссылка на сохранённый торт (может стать null при удалении торта)
   client_name: string
+  client_phone?: string
+  status: OrderStatus
   delivery_date: string // ISO-строка даты/времени
   actual_weight_kg: number // Фактический вес в кг
   actual_cost: number // Реальная себестоимость
-  paid_amount: number // Сколько оплатил клиент
+  paid_amount: number // Итоговая сумма к оплате
+  advance_payment: number // Предоплата / аванс
   created_at?: string
 }
 

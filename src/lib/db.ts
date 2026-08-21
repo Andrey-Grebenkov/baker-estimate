@@ -39,10 +39,13 @@ interface DbOrder {
   user_id: string
   cake_id: string | null
   client_name: string
+  client_phone: string | null
+  status: string
   delivery_date: string
   actual_weight_kg: number
   actual_cost: number
   paid_amount: number
+  advance_payment: number
   created_at: string
 }
 
@@ -101,10 +104,13 @@ function mapOrder(row: DbOrder): Order {
     user_id: row.user_id,
     cake_id: row.cake_id ?? undefined,
     client_name: row.client_name,
+    client_phone: row.client_phone ?? undefined,
+    status: (row.status as Order['status']) || 'Новый',
     delivery_date: row.delivery_date,
     actual_weight_kg: toNumber(row.actual_weight_kg),
     actual_cost: toNumber(row.actual_cost),
     paid_amount: toNumber(row.paid_amount),
+    advance_payment: toNumber(row.advance_payment),
     created_at: row.created_at,
   }
 }
@@ -333,10 +339,13 @@ export async function addOrder(input: OrderInput, userId: string): Promise<void>
     user_id: userId,
     cake_id: input.cake_id ?? null,
     client_name: input.client_name,
+    client_phone: input.client_phone?.trim() || null,
+    status: input.status,
     delivery_date: input.delivery_date,
     actual_weight_kg: input.actual_weight_kg,
     actual_cost: input.actual_cost,
     paid_amount: input.paid_amount,
+    advance_payment: input.advance_payment,
   })
   if (error) throw new Error(error.message)
 }
@@ -346,10 +355,13 @@ export async function updateOrder(id: string, input: OrderInput, userId: string)
     user_id: userId,
     cake_id: input.cake_id ?? null,
     client_name: input.client_name,
+    client_phone: input.client_phone?.trim() || null,
+    status: input.status,
     delivery_date: input.delivery_date,
     actual_weight_kg: input.actual_weight_kg,
     actual_cost: input.actual_cost,
     paid_amount: input.paid_amount,
+    advance_payment: input.advance_payment,
   }).eq('id', id)
   if (error) throw new Error(error.message)
 }

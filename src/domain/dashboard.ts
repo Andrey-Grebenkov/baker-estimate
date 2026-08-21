@@ -1,10 +1,12 @@
 import { roundToCurrency } from './money'
 import type { CakeDetails } from './cake'
+import type { Order } from './types'
 
 export interface DashboardMetrics {
   totalCakes: number
   totalRecipes: number
   averageCost: number
+  totalRevenue: number
 }
 
 export interface CakeCostPoint {
@@ -33,6 +35,7 @@ function truncateCakeName(name: string): string {
 export function calculateDashboardMetrics(
   cakes: CakeDetails[],
   recipes: { id?: string }[] | undefined,
+  orders: Order[] | undefined,
 ): DashboardMetrics {
   const totalCakes = cakes.length
   const totalRecipes = recipes?.length ?? 0
@@ -40,8 +43,10 @@ export function calculateDashboardMetrics(
     totalCakes > 0
       ? roundToCurrency(cakes.reduce((sum, cake) => sum + cake.finalCostPrice, 0) / totalCakes)
       : 0
+  const totalRevenue =
+    orders?.filter((o) => o.status === 'Выдан').reduce((sum, o) => sum + o.paid_amount, 0) ?? 0
 
-  return { totalCakes, totalRecipes, averageCost }
+  return { totalCakes, totalRecipes, averageCost, totalRevenue: roundToCurrency(totalRevenue) }
 }
 
 /**

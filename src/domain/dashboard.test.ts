@@ -51,31 +51,43 @@ function makeCake(name: string, costOverrides: Partial<Parameters<typeof buildCa
 
 describe('calculateDashboardMetrics', () => {
   it('returns zeros for empty data', () => {
-    const metrics = calculateDashboardMetrics([], [])
+    const metrics = calculateDashboardMetrics([], [], [])
     expect(metrics.totalCakes).toBe(0)
     expect(metrics.totalRecipes).toBe(0)
     expect(metrics.averageCost).toBe(0)
+    expect(metrics.totalRevenue).toBe(0)
   })
 
   it('calculates totals and average cost', () => {
-    const cakes = [
-      makeCake('Торт 1'),
-      makeCake('Торт 2'),
-    ]
+    const cakes = [makeCake('Торт 1'), makeCake('Торт 2')]
     const recipes = [{ id: 'rec-1' }, { id: 'rec-2' }]
 
-    const metrics = calculateDashboardMetrics(cakes, recipes)
+    const metrics = calculateDashboardMetrics(cakes, recipes, [])
 
     expect(metrics.totalCakes).toBe(2)
     expect(metrics.totalRecipes).toBe(2)
     expect(metrics.averageCost).toBeGreaterThan(0)
     expect(metrics.averageCost).toBe(
-      Math.round((cakes[0].finalCostPrice + cakes[1].finalCostPrice) / 2 * 100) / 100,
+      Math.round(((cakes[0].finalCostPrice + cakes[1].finalCostPrice) / 2) * 100) / 100,
     )
+    expect(metrics.totalRevenue).toBe(0)
+  })
+
+  it('calculates revenue only from delivered orders', () => {
+    const cakes = [makeCake('Торт 1')]
+    const recipes = [{ id: 'rec-1' }]
+    const orders = [
+      { id: 'o-1', status: 'Выдан', paid_amount: 2500 },
+      { id: 'o-2', status: 'В работе', paid_amount: 1000 },
+      { id: 'o-3', status: 'Новый', paid_amount: 500 },
+    ] as const
+
+    const metrics = calculateDashboardMetrics(cakes, recipes, orders as any)
+    expect(metrics.totalRevenue).toBe(2500)
   })
 
   it('handles missing recipes array', () => {
-    const metrics = calculateDashboardMetrics([makeCake('Торт 1')], undefined)
+    const metrics = calculateDashboardMetrics([makeCake('Торт 1')], undefined, [])
     expect(metrics.totalRecipes).toBe(0)
   })
 })
