@@ -90,19 +90,15 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
       }}
       data-testid="client-receipt-modal-overlay"
     >
-      <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl p-6 shadow-xl"
-        style={{ backgroundColor: receiptTheme.bg }}
-      >
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-slate-50 p-6 shadow-xl dark:bg-slate-900">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold" style={{ color: receiptTheme.text }}>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             Чек для клиента
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 hover:bg-slate-100"
-            style={{ color: receiptTheme.text }}
+            className="rounded-md p-1 text-slate-900 hover:bg-slate-100 dark:text-white"
             data-testid="client-receipt-close-button"
           >
             <svg
@@ -121,11 +117,8 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           </button>
         </div>
 
-        <div
-          className="mb-5 flex items-center justify-between rounded-xl p-3"
-          style={{ backgroundColor: receiptTheme.blockBg }}
-        >
-          <label className="flex cursor-pointer items-center gap-2 text-sm" style={{ color: receiptTheme.text }}>
+        <div className="mb-5 flex items-center justify-between rounded-xl bg-slate-100 p-3 dark:bg-slate-800">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-900 dark:text-white">
             <input
               type="checkbox"
               checked={showPhoto}
