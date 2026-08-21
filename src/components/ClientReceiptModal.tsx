@@ -30,6 +30,15 @@ function formatKg(weightKg: number): string {
   return `${trimmed} кг`
 }
 
+const receiptTheme = {
+  bg: '#ffffff',
+  blockBg: '#f8fafc',
+  itemBg: '#ffffff',
+  text: '#0f172a',
+  muted: '#64748b',
+  border: '#f1f5f9',
+}
+
 export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: ClientReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null)
   const [showPhoto, setShowPhoto] = useState(false)
@@ -81,13 +90,19 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
       }}
       data-testid="client-receipt-modal-overlay"
     >
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+      <div
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl p-6 shadow-xl"
+        style={{ backgroundColor: receiptTheme.bg }}
+      >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Чек для клиента</h2>
+          <h2 className="text-lg font-semibold" style={{ color: receiptTheme.text }}>
+            Чек для клиента
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 text-slate-900 hover:bg-slate-100"
+            className="rounded-md p-1 hover:bg-slate-100"
+            style={{ color: receiptTheme.text }}
             data-testid="client-receipt-close-button"
           >
             <svg
@@ -106,8 +121,11 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           </button>
         </div>
 
-        <div className="mb-5 flex items-center justify-between rounded-xl bg-slate-50 p-3">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-900">
+        <div
+          className="mb-5 flex items-center justify-between rounded-xl p-3"
+          style={{ backgroundColor: receiptTheme.blockBg }}
+        >
+          <label className="flex cursor-pointer items-center gap-2 text-sm" style={{ color: receiptTheme.text }}>
             <input
               type="checkbox"
               checked={showPhoto}
@@ -131,17 +149,25 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
 
         <div
           ref={receiptRef}
-          className="overflow-hidden rounded-2xl bg-white p-8 shadow-lg ring-1 ring-slate-100"
+          className="overflow-hidden rounded-2xl p-8 shadow-lg border"
+          style={{
+            backgroundColor: receiptTheme.bg,
+            borderColor: receiptTheme.border,
+            color: receiptTheme.text,
+          }}
           data-testid="client-receipt-node"
         >
           <div className="mb-6 text-center">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-900">
+            <p
+              className="mb-1 text-xs font-semibold uppercase tracking-widest"
+              style={{ color: receiptTheme.muted }}
+            >
               Чек на заказ
             </p>
-            <h3 className="font-serif text-2xl font-bold text-slate-900">
+            <h3 className="font-serif text-2xl font-bold" style={{ color: receiptTheme.text }}>
               {cake?.name ?? 'Заказ'}
             </h3>
-            <p className="mt-1 text-sm font-medium text-slate-900">
+            <p className="mt-1 text-sm font-medium" style={{ color: receiptTheme.text }}>
               {formatDeliveryDate(order.delivery_date)}
             </p>
 
@@ -150,7 +176,8 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
                 <img
                   src={cake.image_url}
                   alt={cake.name}
-                  className="h-40 w-40 rounded-2xl object-cover shadow-md ring-4 ring-slate-100"
+                  className="h-40 w-40 rounded-2xl object-cover shadow-md border-4"
+                  style={{ borderColor: receiptTheme.border }}
                   crossOrigin="anonymous"
                 />
               </div>
@@ -158,23 +185,45 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-4">
-            <div className="rounded-xl bg-slate-50 p-4 text-center shadow-sm">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-900">Вес</p>
-              <p className="text-xl font-semibold text-slate-900">
+            <div
+              className="rounded-xl p-4 text-center shadow-sm border"
+              style={{ backgroundColor: receiptTheme.blockBg, borderColor: receiptTheme.border }}
+            >
+              <p
+                className="mb-1 text-xs font-semibold uppercase tracking-wider"
+                style={{ color: receiptTheme.muted }}
+              >
+                Вес
+              </p>
+              <p className="text-xl font-semibold" style={{ color: receiptTheme.text }}>
                 {formatKg(order.actual_weight_kg)}
               </p>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4 text-center shadow-sm">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-900">Оплачено</p>
-              <p className="text-xl font-semibold text-slate-900">
+            <div
+              className="rounded-xl p-4 text-center shadow-sm border"
+              style={{ backgroundColor: receiptTheme.blockBg, borderColor: receiptTheme.border }}
+            >
+              <p
+                className="mb-1 text-xs font-semibold uppercase tracking-wider"
+                style={{ color: receiptTheme.muted }}
+              >
+                Оплачено
+              </p>
+              <p className="text-xl font-semibold" style={{ color: receiptTheme.text }}>
                 {formatMoney(order.paid_amount)} ₽
               </p>
             </div>
           </div>
 
           {cake && (
-            <div className="rounded-xl bg-slate-50 p-5 shadow-sm">
-              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-slate-900">
+            <div
+              className="rounded-xl p-5 shadow-sm border"
+              style={{ backgroundColor: receiptTheme.blockBg, borderColor: receiptTheme.border }}
+            >
+              <p
+                className="mb-3 text-center text-xs font-semibold uppercase tracking-widest"
+                style={{ color: receiptTheme.muted }}
+              >
                 Состав
               </p>
 
@@ -183,11 +232,12 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
                   {recipeItems.map((item, idx) => (
                     <li
                       key={idx}
-                      className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                      className="flex items-center justify-between rounded-lg px-3 py-2 text-sm shadow-sm"
+                      style={{ backgroundColor: receiptTheme.itemBg, color: receiptTheme.text }}
                     >
                       <span>{item.name}</span>
                       {item.multiplier !== 1 && (
-                        <span className="text-slate-900">× {item.multiplier}</span>
+                        <span style={{ color: receiptTheme.muted }}>× {item.multiplier}</span>
                       )}
                     </li>
                   ))}
@@ -196,16 +246,21 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
 
               {packagingItems.length > 0 && (
                 <div className="mb-4">
-                  <p className="mb-2 text-xs font-semibold text-slate-900">Упаковка</p>
+                  <p className="mb-2 text-xs font-semibold" style={{ color: receiptTheme.muted }}>
+                    Упаковка
+                  </p>
                   <ul className="space-y-2">
                     {packagingItems.map((item, idx) => (
                       <li
                         key={idx}
-                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                        className="rounded-lg px-3 py-2 text-sm shadow-sm"
+                        style={{ backgroundColor: receiptTheme.itemBg, color: receiptTheme.text }}
                       >
                         {item.name}
                         {item.quantity !== 1 && (
-                          <span className="ml-1 text-slate-900">× {item.quantity}</span>
+                          <span className="ml-1" style={{ color: receiptTheme.muted }}>
+                            × {item.quantity}
+                          </span>
                         )}
                       </li>
                     ))}
@@ -215,16 +270,21 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
 
               {decorItems.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-semibold text-slate-900">Декор</p>
+                  <p className="mb-2 text-xs font-semibold" style={{ color: receiptTheme.muted }}>
+                    Декор
+                  </p>
                   <ul className="space-y-2">
                     {decorItems.map((item, idx) => (
                       <li
                         key={idx}
-                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                        className="rounded-lg px-3 py-2 text-sm shadow-sm"
+                        style={{ backgroundColor: receiptTheme.itemBg, color: receiptTheme.text }}
                       >
                         {item.name}
                         {item.quantity !== 1 && (
-                          <span className="ml-1 text-slate-900">× {item.quantity}</span>
+                          <span className="ml-1" style={{ color: receiptTheme.muted }}>
+                            × {item.quantity}
+                          </span>
                         )}
                       </li>
                     ))}
@@ -235,13 +295,22 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           )}
 
           {!cake && (
-            <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-900 shadow-sm">
+            <p
+              className="rounded-xl p-4 text-center text-sm shadow-sm border"
+              style={{
+                backgroundColor: receiptTheme.blockBg,
+                borderColor: receiptTheme.border,
+                color: receiptTheme.text,
+              }}
+            >
               Торт, указанный в заказе, был удалён. Состав недоступен.
             </p>
           )}
 
           <div className="mt-6 text-center">
-            <p className="font-serif text-sm font-medium text-slate-900">Спасибо за заказ!</p>
+            <p className="font-serif text-sm font-medium" style={{ color: receiptTheme.muted }}>
+              Спасибо за заказ!
+            </p>
           </div>
         </div>
       </div>
