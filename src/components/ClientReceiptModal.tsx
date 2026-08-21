@@ -87,7 +87,7 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-md p-1 text-slate-900 hover:bg-slate-100"
             data-testid="client-receipt-close-button"
           >
             <svg
@@ -107,7 +107,7 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
         </div>
 
         <div className="mb-5 flex items-center justify-between rounded-xl bg-slate-50 p-3">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-900">
             <input
               type="checkbox"
               checked={showPhoto}
@@ -131,50 +131,50 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
 
         <div
           ref={receiptRef}
-          className="overflow-hidden rounded-2xl bg-pink-50 p-8 shadow-lg ring-1 ring-pink-100"
+          className="overflow-hidden rounded-2xl bg-white p-8 shadow-lg ring-1 ring-slate-100"
           data-testid="client-receipt-node"
         >
           <div className="mb-6 text-center">
-            <p className="mb-1 text-xs font-medium uppercase tracking-widest text-pink-400">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-slate-900">
               Чек на заказ
             </p>
             <h3 className="font-serif text-2xl font-bold text-slate-900">
               {cake?.name ?? 'Заказ'}
             </h3>
-            <p className="mt-1 text-sm text-slate-700">
+            <p className="mt-1 text-sm font-medium text-slate-900">
               {formatDeliveryDate(order.delivery_date)}
             </p>
 
             {showPhoto && cake?.image_url && (
               <div className="mt-4 flex justify-center">
                 <img
-                src={cake.image_url}
-                alt={cake.name}
-                className="h-40 w-40 rounded-2xl object-cover shadow-md ring-4 ring-white"
-                crossOrigin="anonymous"
-              />
+                  src={cake.image_url}
+                  alt={cake.name}
+                  className="h-40 w-40 rounded-2xl object-cover shadow-md ring-4 ring-slate-100"
+                  crossOrigin="anonymous"
+                />
               </div>
             )}
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-4">
-            <div className="rounded-xl bg-white p-4 text-center shadow-sm">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">Вес</p>
+            <div className="rounded-xl bg-slate-50 p-4 text-center shadow-sm">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-900">Вес</p>
               <p className="text-xl font-semibold text-slate-900">
                 {formatKg(order.actual_weight_kg)}
               </p>
             </div>
-            <div className="rounded-xl bg-white p-4 text-center shadow-sm">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">Оплачено</p>
-              <p className="text-xl font-semibold text-pink-700">
+            <div className="rounded-xl bg-slate-50 p-4 text-center shadow-sm">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-900">Оплачено</p>
+              <p className="text-xl font-semibold text-slate-900">
                 {formatMoney(order.paid_amount)} ₽
               </p>
             </div>
           </div>
 
           {cake && (
-            <div className="rounded-xl bg-white p-5 shadow-sm">
-              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+            <div className="rounded-xl bg-slate-50 p-5 shadow-sm">
+              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-slate-900">
                 Состав
               </p>
 
@@ -183,11 +183,11 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
                   {recipeItems.map((item, idx) => (
                     <li
                       key={idx}
-                      className="flex items-center justify-between rounded-lg bg-pink-50 px-3 py-2 text-sm text-slate-900"
+                      className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
                     >
                       <span>{item.name}</span>
                       {item.multiplier !== 1 && (
-                        <span className="text-slate-500">× {item.multiplier}</span>
+                        <span className="text-slate-900">× {item.multiplier}</span>
                       )}
                     </li>
                   ))}
@@ -196,16 +196,16 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
 
               {packagingItems.length > 0 && (
                 <div className="mb-4">
-                  <p className="mb-2 text-xs font-medium text-slate-400">Упаковка</p>
+                  <p className="mb-2 text-xs font-semibold text-slate-900">Упаковка</p>
                   <ul className="space-y-2">
                     {packagingItems.map((item, idx) => (
                       <li
                         key={idx}
-                        className="rounded-lg bg-pink-50 px-3 py-2 text-sm text-slate-900"
+                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
                       >
                         {item.name}
                         {item.quantity !== 1 && (
-                          <span className="ml-1 text-slate-500">× {item.quantity}</span>
+                          <span className="ml-1 text-slate-900">× {item.quantity}</span>
                         )}
                       </li>
                     ))}
@@ -215,16 +215,16 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
 
               {decorItems.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-medium text-slate-400">Декор</p>
+                  <p className="mb-2 text-xs font-semibold text-slate-900">Декор</p>
                   <ul className="space-y-2">
                     {decorItems.map((item, idx) => (
                       <li
                         key={idx}
-                        className="rounded-lg bg-pink-50 px-3 py-2 text-sm text-slate-900"
+                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
                       >
                         {item.name}
                         {item.quantity !== 1 && (
-                          <span className="ml-1 text-slate-500">× {item.quantity}</span>
+                          <span className="ml-1 text-slate-900">× {item.quantity}</span>
                         )}
                       </li>
                     ))}
@@ -235,13 +235,13 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           )}
 
           {!cake && (
-            <p className="rounded-xl bg-white p-4 text-center text-sm text-slate-500 shadow-sm">
+            <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-900 shadow-sm">
               Торт, указанный в заказе, был удалён. Состав недоступен.
             </p>
           )}
 
           <div className="mt-6 text-center">
-            <p className="font-serif text-sm text-slate-500">Спасибо за заказ!</p>
+            <p className="font-serif text-sm font-medium text-slate-900">Спасибо за заказ!</p>
           </div>
         </div>
       </div>
