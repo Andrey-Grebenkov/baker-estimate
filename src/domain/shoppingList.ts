@@ -88,14 +88,18 @@ export function generateShoppingList(
   return { toBuy, inStock, hasIngredients: allItems.length > 0 }
 }
 
-export function formatShoppingList(items: ShoppingListItem[]): string {
-  return items
-    .filter((item) => item.toBuy > 0)
-    .map((item) => {
-      const unitLabel = unitLabelFor(item.unit)
-      return `${item.name}: ${item.packagesToBuy} упак. (${item.purchaseQuantity} ${unitLabel}) — ${item.purchasePrice.toFixed(2)} ₽`
-    })
-    .join('\n')
+export function formatShoppingList(items: ShoppingListItem[], cakeName?: string): string {
+  const toBuy = items.filter((item) => item.toBuy > 0)
+  if (toBuy.length === 0) return ''
+
+  const total = toBuy.reduce((sum, item) => sum + item.purchasePrice, 0)
+  const lines = toBuy.map((item) => {
+    const unit = unitLabelFor(item.unit)
+    return `✅ ${item.name}: ${item.packagesToBuy} упак. (${item.purchaseQuantity} ${unit}) — ${item.purchasePrice.toFixed(2)} ₽`
+  })
+
+  const header = cakeName ? `🛒 Список покупок: ${cakeName}` : '🛒 Список покупок'
+  return [header, '', ...lines, '', `💰 Итого: ${total.toFixed(2)} ₽`].join('\n')
 }
 
 function unitLabelFor(unit: MeasurementUnit): string {

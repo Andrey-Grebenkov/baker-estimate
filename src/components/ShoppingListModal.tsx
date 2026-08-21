@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Share } from 'lucide-react'
 import { formatShoppingList, type ShoppingListResult } from '../domain/shoppingList'
 import type { ShoppingListItem } from '../domain/shoppingList'
 
@@ -32,8 +33,19 @@ export function ShoppingListModal({ result, cakeName, onClose }: ShoppingListMod
     })
   }
 
-  const handleCopy = async () => {
-    const text = formatShoppingList(result.toBuy)
+  const handleShare = async () => {
+    const text = formatShoppingList(result.toBuy, cakeName)
+    if (!text) return
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Список покупок', text })
+        return
+      }
+    } catch {
+      // Native share failed or was cancelled — fall back to clipboard.
+    }
+
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)
@@ -165,11 +177,12 @@ export function ShoppingListModal({ result, cakeName, onClose }: ShoppingListMod
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <button
             type="button"
-            onClick={handleCopy}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
-            data-testid="shopping-list-copy"
+            onClick={handleShare}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            data-testid="shopping-list-share"
           >
-            {copied ? 'Скопировано!' : 'Скопировать в буфер'}
+            <Share className="h-4 w-4" />
+            {copied ? 'Скопировано в буфер' : 'Поделиться'}
           </button>
           <button
             type="button"

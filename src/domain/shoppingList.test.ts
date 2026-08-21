@@ -291,7 +291,7 @@ describe('generateShoppingList', () => {
 })
 
 describe('formatShoppingList', () => {
-  it('formats shopping list as whole packages', () => {
+  it('formats shopping list as whole packages with header and total', () => {
     const items: ShoppingListItem[] = [
       {
         ingredientId: '1',
@@ -316,9 +316,11 @@ describe('formatShoppingList', () => {
         purchasePrice: 150,
       },
     ]
-    const text = formatShoppingList(items)
-    expect(text).toContain('Сахар: 1 упак. (1000 г) — 100.00 ₽')
-    expect(text).toContain('Мука: 1 упак. (1000 г) — 150.00 ₽')
+    const text = formatShoppingList(items, 'Торт Наполеон')
+    expect(text).toContain('🛒 Список покупок: Торт Наполеон')
+    expect(text).toContain('✅ Сахар: 1 упак. (1000 г) — 100.00 ₽')
+    expect(text).toContain('✅ Мука: 1 упак. (1000 г) — 150.00 ₽')
+    expect(text).toContain('💰 Итого: 250.00 ₽')
   })
 
   it('omits in-stock items from the copied text', () => {
@@ -335,7 +337,7 @@ describe('formatShoppingList', () => {
         purchasePrice: 0,
       },
     ]
-    const text = formatShoppingList(items)
+    const text = formatShoppingList(items, 'Торт')
     expect(text).toBe('')
   })
 })
