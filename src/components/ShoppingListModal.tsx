@@ -19,7 +19,7 @@ export function ShoppingListModal({ result, cakeName, onClose }: ShoppingListMod
   const [copied, setCopied] = useState(false)
 
   const totalCost = useMemo(
-    () => result.toBuy.reduce((sum, item) => sum + item.estimatedCost, 0),
+    () => result.toBuy.reduce((sum, item) => sum + item.purchasePrice, 0),
     [result.toBuy],
   )
 
@@ -70,45 +70,52 @@ export function ShoppingListModal({ result, cakeName, onClose }: ShoppingListMod
     )
   }
 
-  const renderItem = (item: ShoppingListItem, inStockSection = false) => (
+  const renderToBuyItem = (item: ShoppingListItem) => (
     <li
       key={item.ingredientId}
       className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50"
     >
-      {!inStockSection && (
-        <input
-          id={`shop-${item.ingredientId}`}
-          type="checkbox"
-          checked={checked.has(item.ingredientId)}
-          onChange={() => toggleItem(item.ingredientId)}
-          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600"
-          data-testid="shopping-list-checkbox"
-        />
-      )}
+      <input
+        id={`shop-${item.ingredientId}`}
+        type="checkbox"
+        checked={checked.has(item.ingredientId)}
+        onChange={() => toggleItem(item.ingredientId)}
+        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600"
+        data-testid="shopping-list-checkbox"
+      />
       <label
-        htmlFor={!inStockSection ? `shop-${item.ingredientId}` : undefined}
+        htmlFor={`shop-${item.ingredientId}`}
         className="flex flex-1 flex-col sm:flex-row sm:items-center sm:justify-between"
       >
         <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
           {item.name}
         </span>
         <span className="text-sm text-slate-600 dark:text-slate-300">
-          {inStockSection ? (
-            <>
-              нужно {item.required} {unitLabel(item.unit)} · в наличии {item.inStock} {unitLabel(item.unit)}
-            </>
-          ) : (
-            <>
-              {item.toBuy} {unitLabel(item.unit)} · {item.estimatedCost.toFixed(2)} ₽
-              {item.inStock > 0 && (
-                <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
-                  (нужно {item.required}, есть {item.inStock})
-                </span>
-              )}
-            </>
+          {item.packagesToBuy} упак. ({item.purchaseQuantity} {unitLabel(item.unit)}) · {item.purchasePrice.toFixed(2)} ₽
+          {item.inStock > 0 && (
+            <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
+              (нужно {item.required}, есть {item.inStock})
+            </span>
           )}
         </span>
       </label>
+    </li>
+  )
+
+  const renderInStockItem = (item: ShoppingListItem) => (
+    <li
+      key={item.ingredientId}
+      className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+    >
+      <div className="h-4 w-4" />
+      <div className="flex flex-1 flex-col sm:flex-row sm:items-center sm:justify-between">
+        <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+          {item.name}
+        </span>
+        <span className="text-sm text-slate-600 dark:text-slate-300">
+          нужно {item.required} {unitLabel(item.unit)} · в наличии {item.inStock} {unitLabel(item.unit)}
+        </span>
+      </div>
     </li>
   )
 
@@ -130,7 +137,7 @@ export function ShoppingListModal({ result, cakeName, onClose }: ShoppingListMod
             </div>
           ) : (
             <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-              {result.toBuy.map((item) => renderItem(item))}
+              {result.toBuy.map((item) => renderToBuyItem(item))}
             </ul>
           )}
         </div>
@@ -142,7 +149,7 @@ export function ShoppingListModal({ result, cakeName, onClose }: ShoppingListMod
             </h3>
             <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
               <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-                {result.inStock.map((item) => renderItem(item, true))}
+                {result.inStock.map((item) => renderInStockItem(item))}
               </ul>
             </div>
           </div>

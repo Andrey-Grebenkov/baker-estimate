@@ -9,7 +9,9 @@ export interface ShoppingListItem {
   required: number
   inStock: number
   toBuy: number
-  estimatedCost: number
+  packagesToBuy: number
+  purchaseQuantity: number
+  purchasePrice: number
 }
 
 export interface ShoppingListResult {
@@ -20,12 +22,12 @@ export interface ShoppingListResult {
 
 /**
  * Aggregates raw ingredients from the selected recipes (with multipliers),
- * then deducts current warehouse stock and splits the result into
- * a "to buy" list and an "already in stock" list.
+ * deducts current warehouse stock, and calculates how many whole packages
+ * need to be purchased.
  *
  * @param recipeItems — recipes with multipliers (from a cake).
  * @param recipesById — map of base recipes.
- * @param ingredientsById — map of base ingredients (used for price and unit).
+ * @param ingredientsById — map of base ingredients (used for price, unit and package size).
  */
 export function generateShoppingList(
   recipeItems: CakeRecipeItem[],
@@ -56,6 +58,12 @@ export function generateShoppingList(
     const inStock = ingredient.inStock ?? 0
     const roundedRequired = roundToDecimal(required, 1)
     const deficit = Math.max(0, roundToDecimal(roundedRequired - inStock, 1))
+
+    const packageSize = Math.max(1, ingredient.packageQuantity || 1)
+    const packagesToBuy = deficit > 0 ? Math.ceil(deficit / packageSize) : 0
+    const purchaseQuantity = packagesToBuy * packageSize
+    const purchasePrice = roundToCurrency(packagesToBuy * ingredient.pricePerPackage)
+
     return {
       ingredientId: ingredient.id,
       name: ingredient.name,
@@ -63,7 +71,9 @@ export function generateShoppingList(
       required: roundedRequired,
       inStock,
       toBuy: deficit,
-      estimatedCost: roundToCurrency(deficit * ingredient.pricePerBaseUnit),
+      packagesToBuy,
+      purchaseQuantity,
+      purchasePrice,
     }
   })
 
@@ -83,7 +93,7 @@ export function formatShoppingList(items: ShoppingListItem[]): string {
     .filter((item) => item.toBuy > 0)
     .map((item) => {
       const unitLabel = unitLabelFor(item.unit)
-      return `${item.name}: ${item.toBuy} ${unitLabel} — ${item.estimatedCost.toFixed(2)} ₽`
+      return `${item.name}: ${item.packagesToBuy} упак. (${item.purchaseQuantity} ${unitLabel}) — ${item.purchasePrice.toFixed(2)} ₽`
     })
     .join('\n')
 }
