@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
 import { CakePrintView } from './CakePrintView'
 import { generateId } from '../lib/id'
-import type { CakeAdditionalItem, CakeRecipeItem, Ingredient, Overheads, Recipe } from '../domain/types'
+import type { CakeAdditionalItem, CakeInput, CakeRecipeItem, Ingredient, Overheads, Recipe } from '../domain/types'
 import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
 import { formatMoney, roundToCurrency } from '../domain/money'
 import {
@@ -1092,7 +1092,7 @@ export function CakesPage({ state }: { state: AppState }) {
               <CakeCard
                 key={cake.id}
                 cake={cake}
-                recipes={state.recipes}
+                state={state}
                 onEdit={() => startEdit(cake)}
                 onDelete={() => confirmDelete(() => state.deleteCake(cake.id))}
                 onPrint={() => handlePrint(cake.id)}
@@ -1199,14 +1199,51 @@ function CakeCard({
   onEdit,
   onDelete,
   onPrint,
-  recipes,
+  state,
 }: {
   cake: CakeDetails
   onEdit: () => void
   onDelete: () => void
   onPrint: () => void
-  recipes: Recipe[]
+  state: AppState
 }) {
+  const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
+  const [selectedReplacementId, setSelectedReplacementId] = useState('')
+
+  const handleStartReplace = (missingRecipeId: string) => {
+    setEditingRecipeId(missingRecipeId)
+    setSelectedReplacementId(state.recipes[0]?.id ?? '')
+  }
+
+  const handleCancelReplace = () => {
+    setEditingRecipeId(null)
+    setSelectedReplacementId('')
+  }
+
+  const handleSaveReplacement = (missingRecipeId: string) => {
+    if (!selectedReplacementId) return
+
+    const newRecipes = cake.recipes.map((cr) =>
+      cr.recipeId === missingRecipeId
+        ? { recipeId: selectedReplacementId, multiplier: cr.multiplier }
+        : cr,
+    )
+
+    const payload: Omit<CakeInput, 'id' | 'user_id'> = {
+      name: cake.name,
+      recipes: newRecipes,
+      packaging: cake.packaging,
+      decor: cake.decor,
+      overheads: cake.overheads,
+      marginPercent: cake.marginPercent,
+      image_url: cake.image_url,
+    }
+
+    state.updateCake(cake.id, payload)
+    setEditingRecipeId(null)
+    setSelectedReplacementId('')
+  }
+
   return (
     <div
       className="card-inset overflow-hidden print:bg-white"
@@ -1248,6 +1285,59 @@ function CakeCard({
           <p className="text-sm text-slate-500">
             {cake.recipes.length} рецептов | {cake.packaging.length} упак. | {cake.decor.length} декора
           </p>
+          {cake.recipes.map((cr) => {
+            const recipe = state.recipes.find((r) => r.id === cr.recipeId)
+            if (recipe) return null
+
+            if (editingRecipeId === cr.recipeId) {
+              return (
+                <div key={cr.recipeId} className="mt-2 flex flex-wrap items-center gap-2" data-testid="cake-replace-recipe-inline">
+                  <select
+                    value={selectedReplacementId}
+                    onChange={(e) => setSelectedReplacementId(e.target.value)}
+                    className="h-9 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    data-testid="cake-replace-recipe-select"
+                  >
+                    {state.recipes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name} ({r.totalWeight} г, {formatMoney(r.totalCost)} ₽)
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveReplacement(cr.recipeId)}
+                    disabled={!selectedReplacementId || state.isLoading}
+                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                    data-testid="cake-replace-recipe-save"
+                  >
+                    Сохранить
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelReplace}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    data-testid="cake-replace-recipe-cancel"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              )
+            }
+
+            return (
+              <button
+                key={cr.recipeId}
+                type="button"
+                onClick={() => handleStartReplace(cr.recipeId)}
+                disabled={state.isLoading}
+                className="mt-1 block text-left text-sm font-medium text-rose-600 hover:text-rose-700 disabled:text-slate-400"
+                data-testid="cake-missing-recipe-warning"
+              >
+                ⚠ Обнаружен удаленный рецепт (нажмите для замены)
+              </button>
+            )
+          })}
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -1301,7 +1391,7 @@ function CakeCard({
       </div>
 
       <div className="hidden print:block">
-        <CakePrintView cake={cake} recipes={recipes} />
+        <CakePrintView cake={cake} recipes={state.recipes} />
       </div>
       </div>
     </div>
