@@ -219,6 +219,15 @@ export function CakesPage({ state }: { state: AppState }) {
     setRecipes((prev) => prev.filter((r) => r.recipeId !== recipeId))
   }
 
+  const editRecipeInCake = (cr: CakeRecipeItem) => {
+    const recipe = state.recipes.find((r) => r.id === cr.recipeId)
+    const firstAvailable = state.recipes.find((r) => !recipes.some((item) => item.recipeId === r.id))
+    setSelectedRecipeId(recipe?.id ?? firstAvailable?.id ?? '')
+    setSelectedMultiplier(String(cr.multiplier))
+    setRecipes((prev) => prev.filter((r) => r.recipeId !== cr.recipeId))
+    setError(null)
+  }
+
   const addPackaging = () => {
     const trimmedName = packagingName.trim()
     if (trimmedName.length === 0) {
@@ -253,6 +262,14 @@ export function CakesPage({ state }: { state: AppState }) {
     setPackaging((prev) => prev.filter((p) => p.id !== id))
   }
 
+  const editPackaging = (item: CakeAdditionalItem) => {
+    setPackagingName(item.name)
+    setPackagingCost(String(item.cost))
+    setPackagingQuantity(String(item.quantity))
+    setPackaging((prev) => prev.filter((p) => p.id !== item.id))
+    setError(null)
+  }
+
   const addDecor = () => {
     const trimmedName = decorName.trim()
     if (trimmedName.length === 0) {
@@ -285,6 +302,14 @@ export function CakesPage({ state }: { state: AppState }) {
 
   const removeDecor = (id: string) => {
     setDecor((prev) => prev.filter((d) => d.id !== id))
+  }
+
+  const editDecor = (item: CakeAdditionalItem) => {
+    setDecorName(item.name)
+    setDecorCost(String(item.cost))
+    setDecorQuantity(String(item.quantity))
+    setDecor((prev) => prev.filter((d) => d.id !== item.id))
+    setError(null)
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -717,14 +742,24 @@ export function CakesPage({ state }: { state: AppState }) {
                       <span className="text-sm text-rose-700">
                         Удалённый рецепт — {cr.multiplier}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => removeRecipeFromCake(cr.recipeId)}
-                        className="text-sm text-rose-700 hover:text-rose-800"
-                        data-testid="cake-remove-recipe-button"
-                      >
-                        Удалить
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => editRecipeInCake(cr)}
+                          className="text-sm text-indigo-600 hover:text-indigo-700"
+                          data-testid="cake-edit-recipe-button"
+                        >
+                          Изменить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeRecipeFromCake(cr.recipeId)}
+                          className="text-sm text-rose-700 hover:text-rose-800"
+                          data-testid="cake-remove-recipe-button"
+                        >
+                          Удалить
+                        </button>
+                      </div>
                     </li>
                   )
                 }
@@ -738,14 +773,24 @@ export function CakesPage({ state }: { state: AppState }) {
                     <span className="text-sm text-slate-700">
                       {recipe.name} × {cr.multiplier}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => removeRecipeFromCake(cr.recipeId)}
-                      className="text-sm text-rose-600 hover:text-rose-700"
-                      data-testid="cake-remove-recipe-button"
-                    >
-                      Удалить
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => editRecipeInCake(cr)}
+                        className="text-sm text-indigo-600 hover:text-indigo-700"
+                        data-testid="cake-edit-recipe-button"
+                      >
+                        Изменить
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipeFromCake(cr.recipeId)}
+                        className="text-sm text-rose-600 hover:text-rose-700"
+                        data-testid="cake-remove-recipe-button"
+                      >
+                        Удалить
+                      </button>
+                    </div>
                   </li>
                 )
               })}
@@ -843,14 +888,24 @@ export function CakesPage({ state }: { state: AppState }) {
                   <span className="text-sm text-slate-700">
                     {p.name} — {p.quantity} шт. × {p.cost} ₽
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removePackaging(p.id)}
-                    className="text-sm text-rose-600 hover:text-rose-700"
-                    data-testid="cake-remove-packaging-button"
-                  >
-                    Удалить
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => editPackaging(p)}
+                      className="text-sm text-indigo-600 hover:text-indigo-700"
+                      data-testid="cake-edit-packaging-button"
+                    >
+                      Изменить
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removePackaging(p.id)}
+                      className="text-sm text-rose-600 hover:text-rose-700"
+                      data-testid="cake-remove-packaging-button"
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -938,14 +993,24 @@ export function CakesPage({ state }: { state: AppState }) {
                   <span className="text-sm text-slate-700">
                     {d.name} — {d.quantity} шт. × {d.cost} ₽
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeDecor(d.id)}
-                    className="text-sm text-rose-600 hover:text-rose-700"
-                    data-testid="cake-remove-decor-button"
-                  >
-                    Удалить
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => editDecor(d)}
+                      className="text-sm text-indigo-600 hover:text-indigo-700"
+                      data-testid="cake-edit-decor-button"
+                    >
+                      Изменить
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeDecor(d.id)}
+                      className="text-sm text-rose-600 hover:text-rose-700"
+                      data-testid="cake-remove-decor-button"
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -1207,26 +1272,32 @@ function CakeCard({
 }) {
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
   const [selectedReplacementId, setSelectedReplacementId] = useState('')
+  const [replacementMultiplier, setReplacementMultiplier] = useState('')
 
-  const handleStartReplace = (missingRecipeId: string) => {
+  const handleStartReplace = (missingRecipeId: string, oldMultiplier: number) => {
     setEditingRecipeId(missingRecipeId)
     const available = state.recipes.filter(
       (r) => !cake.recipes.some((cr) => cr.recipeId === r.id && cr.recipeId !== missingRecipeId),
     )
     setSelectedReplacementId(available[0]?.id ?? '')
+    setReplacementMultiplier(String(oldMultiplier))
   }
 
   const handleCancelReplace = () => {
     setEditingRecipeId(null)
     setSelectedReplacementId('')
+    setReplacementMultiplier('')
   }
 
   const handleSaveReplacement = (missingRecipeId: string) => {
     if (!selectedReplacementId) return
 
+    const multiplier = Number(replacementMultiplier)
+    if (Number.isNaN(multiplier) || multiplier <= 0) return
+
     const newRecipes = cake.recipes.map((cr) =>
       cr.recipeId === missingRecipeId
-        ? { recipeId: selectedReplacementId, multiplier: cr.multiplier }
+        ? { recipeId: selectedReplacementId, multiplier }
         : cr,
     )
 
@@ -1243,6 +1314,7 @@ function CakeCard({
     state.updateCake(cake.id, payload)
     setEditingRecipeId(null)
     setSelectedReplacementId('')
+    setReplacementMultiplier('')
   }
 
   return (
@@ -1307,10 +1379,21 @@ function CakeCard({
                         </option>
                       ))}
                   </select>
+                  <input
+                    type="number"
+                    min="0"
+                    max={MAX_DEFAULT_PERCENT}
+                    step="0.01"
+                    value={replacementMultiplier}
+                    onChange={(e) => setReplacementMultiplier(normalizeNumberString(e.target.value, MAX_DEFAULT_PERCENT))}
+                    className="h-9 w-28 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    data-testid="cake-replace-recipe-multiplier"
+                  />
+                  <span className="text-sm text-slate-600">коэф.</span>
                   <button
                     type="button"
                     onClick={() => handleSaveReplacement(cr.recipeId)}
-                    disabled={!selectedReplacementId || state.isLoading}
+                    disabled={!selectedReplacementId || Number(replacementMultiplier) <= 0 || state.isLoading}
                     className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     data-testid="cake-replace-recipe-save"
                   >
@@ -1332,7 +1415,7 @@ function CakeCard({
               <button
                 key={cr.recipeId}
                 type="button"
-                onClick={() => handleStartReplace(cr.recipeId)}
+                onClick={() => handleStartReplace(cr.recipeId, cr.multiplier)}
                 disabled={state.isLoading}
                 className="mt-1 block text-left text-sm font-medium text-rose-600 hover:text-rose-700 disabled:text-slate-400"
                 data-testid="cake-missing-recipe-warning"

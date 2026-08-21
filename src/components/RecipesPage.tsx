@@ -79,6 +79,13 @@ export function RecipesPage({ state }: { state: AppState }) {
     })
   }
 
+  const editRecipeIngredient = (ri: RecipeIngredient) => {
+    setSelectedIngredientId(ri.ingredientId)
+    setSelectedQuantity(String(ri.quantityUsed))
+    setRecipeIngredients((prev) => prev.filter((item) => item.ingredientId !== ri.ingredientId))
+    setError(null)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -229,14 +236,24 @@ export function RecipesPage({ state }: { state: AppState }) {
                     <span className="text-sm text-slate-700">
                       {ingredient.name} — {ri.quantityUsed} {unitLabels[ingredient.unit]}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => removeRecipeIngredient(ri.ingredientId)}
-                      className="text-sm text-rose-600 hover:text-rose-700"
-                      data-testid="recipe-remove-ingredient-button"
-                    >
-                      Удалить
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => editRecipeIngredient(ri)}
+                        className="text-sm text-indigo-600 hover:text-indigo-700"
+                        data-testid="recipe-edit-ingredient-button"
+                      >
+                        Изменить
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipeIngredient(ri.ingredientId)}
+                        className="text-sm text-rose-600 hover:text-rose-700"
+                        data-testid="recipe-remove-ingredient-button"
+                      >
+                        Удалить
+                      </button>
+                    </div>
                   </li>
                 )
               })}
@@ -313,26 +330,34 @@ function RecipeCard({
 }) {
   const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null)
   const [selectedReplacementId, setSelectedReplacementId] = useState('')
+  const [replacementQuantity, setReplacementQuantity] = useState('')
 
-  const handleStartReplace = (missingIngredientId: string) => {
+  const selectedReplacement = state.ingredients.find((i) => i.id === selectedReplacementId)
+
+  const handleStartReplace = (missingIngredientId: string, oldQuantity: number) => {
     setEditingIngredientId(missingIngredientId)
     const available = state.ingredients.filter(
       (i) => !recipe.ingredients.some((ri) => ri.ingredientId === i.id && ri.ingredientId !== missingIngredientId),
     )
     setSelectedReplacementId(available[0]?.id ?? '')
+    setReplacementQuantity(String(oldQuantity))
   }
 
   const handleCancelReplace = () => {
     setEditingIngredientId(null)
     setSelectedReplacementId('')
+    setReplacementQuantity('')
   }
 
   const handleSaveReplacement = (missingIngredientId: string) => {
     if (!selectedReplacementId) return
 
+    const quantity = Number(replacementQuantity)
+    if (Number.isNaN(quantity) || quantity <= 0) return
+
     const newIngredients = recipe.ingredients.map((ri) =>
       ri.ingredientId === missingIngredientId
-        ? { ingredientId: selectedReplacementId, quantityUsed: ri.quantityUsed }
+        ? { ingredientId: selectedReplacementId, quantityUsed: quantity }
         : ri,
     )
 
@@ -344,6 +369,7 @@ function RecipeCard({
     state.updateRecipe(recipe.id, payload)
     setEditingIngredientId(null)
     setSelectedReplacementId('')
+    setReplacementQuantity('')
   }
 
   return (
@@ -381,10 +407,23 @@ function RecipeCard({
                               </option>
                             ))}
                         </select>
+                        <input
+                          type="number"
+                          min="0"
+                          max={MAX_DEFAULT_QUANTITY}
+                          step="0.01"
+                          value={replacementQuantity}
+                          onChange={(e) => setReplacementQuantity(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                          className="h-9 w-28 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          data-testid="recipe-replace-ingredient-quantity"
+                        />
+                        <span className="text-sm text-slate-600">
+                          {selectedReplacement ? unitLabels[selectedReplacement.unit] : '—'}
+                        </span>
                         <button
                           type="button"
                           onClick={() => handleSaveReplacement(ri.ingredientId)}
-                          disabled={!selectedReplacementId || state.isLoading}
+                          disabled={!selectedReplacementId || Number(replacementQuantity) <= 0 || state.isLoading}
                           className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                           data-testid="recipe-replace-ingredient-save"
                         >
@@ -407,7 +446,7 @@ function RecipeCard({
                   <li key={ri.ingredientId} className="text-rose-600">
                     <button
                       type="button"
-                      onClick={() => handleStartReplace(ri.ingredientId)}
+                      onClick={() => handleStartReplace(ri.ingredientId, ri.quantityUsed)}
                       disabled={state.isLoading}
                       className="text-left text-sm font-medium text-rose-600 hover:text-rose-700 disabled:text-slate-400"
                       data-testid="recipe-missing-ingredient-warning"
