@@ -25,6 +25,11 @@ function formatDeliveryDate(isoDate: string): string {
   }
 }
 
+function formatKg(weightKg: number): string {
+  const trimmed = Number(weightKg).toString()
+  return `${trimmed} кг`
+}
+
 export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: ClientReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null)
   const [showPhoto, setShowPhoto] = useState(false)
@@ -126,18 +131,18 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
 
         <div
           ref={receiptRef}
-          className="overflow-hidden rounded-2xl bg-white p-8 shadow-lg ring-1 ring-slate-100"
+          className="overflow-hidden rounded-2xl bg-pink-50 p-8 shadow-lg ring-1 ring-pink-100"
           data-testid="client-receipt-node"
         >
           <div className="mb-6 text-center">
-            <p className="mb-1 text-xs font-medium uppercase tracking-widest text-slate-500">
+            <p className="mb-1 text-xs font-medium uppercase tracking-widest text-pink-400">
               Чек на заказ
             </p>
             <h3 className="font-serif text-2xl font-bold text-slate-900">
               {cake?.name ?? 'Заказ'}
             </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Дата доставки: {formatDeliveryDate(order.delivery_date)}
+            <p className="mt-1 text-sm text-slate-700">
+              {formatDeliveryDate(order.delivery_date)}
             </p>
 
             {showPhoto && cake?.image_url && (
@@ -145,7 +150,7 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
                 <img
                 src={cake.image_url}
                 alt={cake.name}
-                className="h-40 w-40 rounded-2xl object-cover shadow-md ring-4 ring-slate-100"
+                className="h-40 w-40 rounded-2xl object-cover shadow-md ring-4 ring-white"
                 crossOrigin="anonymous"
               />
               </div>
@@ -153,44 +158,40 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-4">
-            <div className="rounded-xl bg-slate-50 p-4 text-center">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">Фактический вес</p>
+            <div className="rounded-xl bg-white p-4 text-center shadow-sm">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">Вес</p>
               <p className="text-xl font-semibold text-slate-900">
-                {(order.actual_weight_kg * 1000).toFixed(0)} г
+                {formatKg(order.actual_weight_kg)}
               </p>
-              <p className="text-xs text-slate-400">{order.actual_weight_kg.toFixed(3)} кг</p>
             </div>
-            <div className="rounded-xl bg-indigo-50 p-4 text-center">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-indigo-600">Оплачено</p>
-              <p className="text-xl font-semibold text-indigo-900">
+            <div className="rounded-xl bg-white p-4 text-center shadow-sm">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">Оплачено</p>
+              <p className="text-xl font-semibold text-pink-700">
                 {formatMoney(order.paid_amount)} ₽
               </p>
             </div>
           </div>
 
           {cake && (
-            <div className="rounded-xl bg-slate-50 p-5">
+            <div className="rounded-xl bg-white p-5 shadow-sm">
               <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
                 Состав
               </p>
 
               {recipeItems.length > 0 && (
-                <div className="mb-4">
-                  <p className="mb-2 text-xs font-medium text-slate-400">Рецепты</p>
-                  <ul className="space-y-2">
-                    {recipeItems.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
-                      >
-                        <span>{item.name}</span>
-                        {item.multiplier !== 1 && (
-                          <span className="text-slate-500">× {item.multiplier}</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <ul className="mb-4 space-y-2">
+                  {recipeItems.map((item, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-center justify-between rounded-lg bg-pink-50 px-3 py-2 text-sm text-slate-900"
+                    >
+                      <span>{item.name}</span>
+                      {item.multiplier !== 1 && (
+                        <span className="text-slate-500">× {item.multiplier}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               )}
 
               {packagingItems.length > 0 && (
@@ -200,7 +201,7 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
                     {packagingItems.map((item, idx) => (
                       <li
                         key={idx}
-                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                        className="rounded-lg bg-pink-50 px-3 py-2 text-sm text-slate-900"
                       >
                         {item.name}
                         {item.quantity !== 1 && (
@@ -219,7 +220,7 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
                     {decorItems.map((item, idx) => (
                       <li
                         key={idx}
-                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                        className="rounded-lg bg-pink-50 px-3 py-2 text-sm text-slate-900"
                       >
                         {item.name}
                         {item.quantity !== 1 && (
@@ -234,7 +235,7 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
           )}
 
           {!cake && (
-            <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500">
+            <p className="rounded-xl bg-white p-4 text-center text-sm text-slate-500 shadow-sm">
               Торт, указанный в заказе, был удалён. Состав недоступен.
             </p>
           )}
