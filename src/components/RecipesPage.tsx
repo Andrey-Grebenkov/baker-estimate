@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, RecipeInput, RecipeIngredient, Recipe } from '../domain/types'
 import { MAX_DEFAULT_QUANTITY, normalizeNumberString } from '../lib/numberInput'
+import { pluralizeRu } from '../lib/pluralize'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
 
@@ -12,6 +13,7 @@ const unitLabels: Record<Ingredient['unit'], string> = {
 }
 
 export function RecipesPage({ state }: { state: AppState }) {
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [recipeName, setRecipeName] = useState('')
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([])
@@ -20,6 +22,7 @@ export function RecipesPage({ state }: { state: AppState }) {
   const [error, setError] = useState<string | null>(null)
 
   const resetForm = () => {
+    setIsFormOpen(false)
     setEditingId(null)
     setRecipeName('')
     setRecipeIngredients([])
@@ -28,18 +31,25 @@ export function RecipesPage({ state }: { state: AppState }) {
     setError(null)
   }
 
+  const openForm = () => {
+    setIsFormOpen(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const firstUnusedIngredient = (used: RecipeIngredient[]): string => {
     const usedIds = new Set(used.map((ri) => ri.ingredientId))
     return state.ingredients.find((i) => !usedIds.has(i.id))?.id ?? ''
   }
 
   const startEdit = (recipe: Recipe) => {
+    setIsFormOpen(true)
     setEditingId(recipe.id)
     setRecipeName(recipe.name)
     setRecipeIngredients(recipe.ingredients)
     setSelectedIngredientId(firstUnusedIngredient(recipe.ingredients))
     setSelectedQuantity('')
     setError(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const addIngredientToRecipe = () => {
@@ -100,6 +110,8 @@ export function RecipesPage({ state }: { state: AppState }) {
       return
     }
 
+    const editedId = editingId
+
     if (editingId) {
       state.updateRecipe(editingId, {
         name: trimmedName,
@@ -113,10 +125,31 @@ export function RecipesPage({ state }: { state: AppState }) {
     }
 
     resetForm()
+
+    if (editedId) {
+      setTimeout(() => {
+        document.getElementById(`recipe-${editedId}`)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        })
+      }, 500)
+    }
   }
 
   return (
     <div className="space-y-6" data-testid="recipes-page">
+      {!isFormOpen && (
+        <button
+          type="button"
+          onClick={openForm}
+          className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          data-testid="recipe-open-form-button"
+        >
+          + Создать рецепт
+        </button>
+      )}
+
+      {isFormOpen && (
       <form
         onSubmit={handleSubmit}
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
@@ -276,18 +309,17 @@ export function RecipesPage({ state }: { state: AppState }) {
             {editingId ? 'Сохранить' : 'Создать рецепт'}
           </button>
 
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              data-testid="recipe-cancel-button"
-            >
-              Отмена
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={resetForm}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            data-testid="recipe-cancel-button"
+          >
+            Отмена
+          </button>
         </div>
       </form>
+      )}
 
       <div
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
@@ -374,6 +406,7 @@ function RecipeCard({
 
   return (
     <div
+      id={`recipe-${recipe.id}`}
       className="card-inset p-3"
       data-testid="recipe-row"
       data-recipe-id={recipe.id}
@@ -382,7 +415,7 @@ function RecipeCard({
         <div className="min-w-0 flex-1">
           <p className="font-medium text-slate-800">{recipe.name}</p>
           <p className="text-sm text-slate-500">
-            {recipe.ingredients.length} ингредиентов | вес {recipe.totalWeight} г |{' '}
+            {pluralizeRu(recipe.ingredients.length, ['ингредиент', 'ингредиента', 'ингредиентов'])} | вес {recipe.totalWeight} г |{' '}
             {recipe.totalCost.toFixed(2)} ₽
           </p>
           <ul className="mt-1 text-xs text-slate-500">

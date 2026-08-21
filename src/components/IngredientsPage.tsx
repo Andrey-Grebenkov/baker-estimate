@@ -16,6 +16,7 @@ const units: { value: MeasurementUnit; label: string }[] = [
 ]
 
 export function IngredientsPage({ state }: { state: AppState }) {
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
@@ -25,6 +26,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
   const [error, setError] = useState<string | null>(null)
 
   const resetForm = () => {
+    setIsFormOpen(false)
     setEditingId(null)
     setName('')
     setPrice('')
@@ -34,7 +36,13 @@ export function IngredientsPage({ state }: { state: AppState }) {
     setError(null)
   }
 
+  const openForm = () => {
+    setIsFormOpen(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const startEdit = (ingredient: Ingredient) => {
+    setIsFormOpen(true)
     setEditingId(ingredient.id)
     setName(ingredient.name)
     setPrice(String(ingredient.pricePerPackage))
@@ -42,6 +50,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
     setInStock(ingredient.inStock != null ? String(ingredient.inStock) : '')
     setUnit(ingredient.unit)
     setError(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,6 +80,8 @@ export function IngredientsPage({ state }: { state: AppState }) {
       return
     }
 
+    const editedId = editingId
+
     if (editingId) {
       state.updateIngredient(editingId, {
         name: trimmedName,
@@ -90,10 +101,31 @@ export function IngredientsPage({ state }: { state: AppState }) {
     }
 
     resetForm()
+
+    if (editedId) {
+      setTimeout(() => {
+        document.getElementById(`ingredient-${editedId}`)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        })
+      }, 500)
+    }
   }
 
   return (
     <div className="space-y-6" data-testid="ingredients-page">
+      {!isFormOpen && (
+        <button
+          type="button"
+          onClick={openForm}
+          className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          data-testid="ingredient-open-form-button"
+        >
+          + Добавить продукт
+        </button>
+      )}
+
+      {isFormOpen && (
       <form
         onSubmit={handleSubmit}
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
@@ -212,18 +244,17 @@ export function IngredientsPage({ state }: { state: AppState }) {
             {editingId ? 'Сохранить' : 'Добавить'}
           </button>
 
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              data-testid="ingredient-cancel-button"
-            >
-              Отмена
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={resetForm}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            data-testid="ingredient-cancel-button"
+          >
+            Отмена
+          </button>
         </div>
       </form>
+      )}
 
       <div
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
@@ -239,6 +270,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
           <div className="space-y-3">
             {state.ingredients.map((ingredient) => (
               <div
+                id={`ingredient-${ingredient.id}`}
                 key={ingredient.id}
                 className="card-inset p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                 data-testid="ingredient-row"
