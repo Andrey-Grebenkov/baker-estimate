@@ -1,17 +1,31 @@
 import { useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 import type { CakeDetails } from '../domain/cake'
-import type { Recipe } from '../domain/types'
+import type { Order, Recipe } from '../domain/types'
 import { formatMoney } from '../domain/money'
 
 interface ClientReceiptModalProps {
-  cake: CakeDetails
+  order: Order
+  cake?: CakeDetails
   recipes: Recipe[]
   isOpen: boolean
   onClose: () => void
 }
 
-export function ClientReceiptModal({ cake, recipes, isOpen, onClose }: ClientReceiptModalProps) {
+function formatDeliveryDate(isoDate: string): string {
+  try {
+    const date = new Date(isoDate)
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  } catch {
+    return isoDate
+  }
+}
+
+export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: ClientReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null)
   const [showPhoto, setShowPhoto] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -20,25 +34,18 @@ export function ClientReceiptModal({ cake, recipes, isOpen, onClose }: ClientRec
 
   const recipesById: Record<string, Recipe> = Object.fromEntries(recipes.map((r) => [r.id, r]))
 
-  const recipeItems = cake.recipes
-    .map((cr) => {
-      const recipe = recipesById[cr.recipeId]
-      if (!recipe) return null
-      return { name: recipe.name, multiplier: cr.multiplier }
-    })
-    .filter((item): item is { name: string; multiplier: number } => item !== null)
+  const recipeItems = cake
+    ? cake.recipes
+        .map((cr) => {
+          const recipe = recipesById[cr.recipeId]
+          if (!recipe) return null
+          return { name: recipe.name, multiplier: cr.multiplier }
+        })
+        .filter((item): item is { name: string; multiplier: number } => item !== null)
+    : []
 
-  const packagingItems = cake.packaging.map((p) => ({
-    name: p.name,
-    quantity: p.quantity,
-    total: p.cost * p.quantity,
-  }))
-
-  const decorItems = cake.decor.map((d) => ({
-    name: d.name,
-    quantity: d.quantity,
-    total: d.cost * d.quantity,
-  }))
+  const packagingItems = cake ? cake.packaging : []
+  const decorItems = cake ? cake.decor : []
 
   const handleDownload = async () => {
     if (!receiptRef.current) return
@@ -50,7 +57,7 @@ export function ClientReceiptModal({ cake, recipes, isOpen, onClose }: ClientRec
       })
       const link = document.createElement('a')
       link.href = dataUrl
-      link.download = `chek-${cake.name.toLowerCase().replace(/\s+/g, '-')}.png`
+      link.download = `chek-${(cake?.name ?? 'zakaz').toLowerCase().replace(/\s+/g, '-')}.png`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -124,105 +131,113 @@ export function ClientReceiptModal({ cake, recipes, isOpen, onClose }: ClientRec
         >
           <div className="mb-6 text-center">
             <p className="mb-1 text-xs font-medium uppercase tracking-widest text-slate-500">
-              Смета на торт
+              Чек на заказ
             </p>
-            <h3 className="font-serif text-2xl font-bold text-slate-900">{cake.name}</h3>
+            <h3 className="font-serif text-2xl font-bold text-slate-900">
+              {cake?.name ?? 'Заказ'}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Дата доставки: {formatDeliveryDate(order.delivery_date)}
+            </p>
 
-            {showPhoto && cake.image_url && (
+            {showPhoto && cake?.image_url && (
               <div className="mt-4 flex justify-center">
                 <img
-                  src={cake.image_url}
-                  alt={cake.name}
+                src={cake.image_url}
+                alt={cake.name}
                 className="h-40 w-40 rounded-2xl object-cover shadow-md ring-4 ring-slate-100"
                 crossOrigin="anonymous"
-                />
+              />
               </div>
             )}
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-4">
             <div className="rounded-xl bg-slate-50 p-4 text-center">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">Вес</p>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">Фактический вес</p>
               <p className="text-xl font-semibold text-slate-900">
-                {(cake.weightKg * 1000).toFixed(0)} г
+                {(order.actual_weight_kg * 1000).toFixed(0)} г
               </p>
+              <p className="text-xs text-slate-400">{order.actual_weight_kg.toFixed(3)} кг</p>
             </div>
             <div className="rounded-xl bg-indigo-50 p-4 text-center">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-indigo-600">Цена</p>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-indigo-600">Оплачено</p>
               <p className="text-xl font-semibold text-indigo-900">
-                {formatMoney(cake.recommendedPrice)} ₽
+                {formatMoney(order.paid_amount)} ₽
               </p>
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-5">
-            <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
-              Состав
+          {cake && (
+            <div className="rounded-xl bg-slate-50 p-5">
+              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Состав
+              </p>
+
+              {recipeItems.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-xs font-medium text-slate-400">Рецепты</p>
+                  <ul className="space-y-2">
+                    {recipeItems.map((item, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                      >
+                        <span>{item.name}</span>
+                        {item.multiplier !== 1 && (
+                          <span className="text-slate-500">× {item.multiplier}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {packagingItems.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-xs font-medium text-slate-400">Упаковка</p>
+                  <ul className="space-y-2">
+                    {packagingItems.map((item, idx) => (
+                      <li
+                        key={idx}
+                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                      >
+                        {item.name}
+                        {item.quantity !== 1 && (
+                          <span className="ml-1 text-slate-500">× {item.quantity}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {decorItems.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-medium text-slate-400">Декор</p>
+                  <ul className="space-y-2">
+                    {decorItems.map((item, idx) => (
+                      <li
+                        key={idx}
+                        className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
+                      >
+                        {item.name}
+                        {item.quantity !== 1 && (
+                          <span className="ml-1 text-slate-500">× {item.quantity}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!cake && (
+            <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500">
+              Торт, указанный в заказе, был удалён. Состав недоступен.
             </p>
-
-            {recipeItems.length > 0 && (
-              <div className="mb-4">
-                <p className="mb-2 text-xs font-medium text-slate-400">Рецепты</p>
-                <ul className="space-y-2">
-                  {recipeItems.map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
-                    >
-                      <span>{item.name}</span>
-                      {item.multiplier !== 1 && (
-                        <span className="text-slate-500">× {item.multiplier}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {packagingItems.length > 0 && (
-              <div className="mb-4">
-                <p className="mb-2 text-xs font-medium text-slate-400">Упаковка</p>
-                <ul className="space-y-2">
-                  {packagingItems.map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
-                    >
-                      <span>
-                        {item.name}
-                        {item.quantity !== 1 && (
-                          <span className="ml-1 text-slate-500">× {item.quantity}</span>
-                        )}
-                      </span>
-                      <span className="font-medium text-slate-900">{formatMoney(item.total)} ₽</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {decorItems.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-medium text-slate-400">Декор</p>
-                <ul className="space-y-2">
-                  {decorItems.map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm"
-                    >
-                      <span>
-                        {item.name}
-                        {item.quantity !== 1 && (
-                          <span className="ml-1 text-slate-500">× {item.quantity}</span>
-                        )}
-                      </span>
-                      <span className="font-medium text-slate-900">{formatMoney(item.total)} ₽</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="font-serif text-sm text-slate-500">Спасибо за заказ!</p>

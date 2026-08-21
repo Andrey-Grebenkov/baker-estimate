@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
 import { formatMoney } from '../domain/money'
 import { OrderModal } from './OrderModal'
+import { ClientReceiptModal } from './ClientReceiptModal'
+import type { Order } from '../domain/types'
 
 function formatDate(iso: string): string {
   const date = new Date(iso)
@@ -14,6 +16,11 @@ function formatDate(iso: string): string {
 
 export function OrdersPage({ state }: { state: AppState }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
+
+  const receiptCake = receiptOrder
+    ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
+    : undefined
 
   return (
     <div data-testid="orders-page">
@@ -74,6 +81,12 @@ export function OrdersPage({ state }: { state: AppState }) {
                 >
                   Прибыль
                 </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500"
+                >
+                  Чек
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
@@ -103,6 +116,16 @@ export function OrdersPage({ state }: { state: AppState }) {
                     >
                       {formatMoney(profit)} ₽
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setReceiptOrder(order)}
+                        className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-50"
+                        data-testid="order-receipt-button"
+                      >
+                        Чек
+                      </button>
+                    </td>
                   </tr>
                 )
               })}
@@ -112,6 +135,16 @@ export function OrdersPage({ state }: { state: AppState }) {
       )}
 
       <OrderModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} state={state} />
+
+      {receiptOrder && (
+        <ClientReceiptModal
+          order={receiptOrder}
+          cake={receiptCake}
+          recipes={state.recipes}
+          isOpen={!!receiptOrder}
+          onClose={() => setReceiptOrder(null)}
+        />
+      )}
     </div>
   )
 }
