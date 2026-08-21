@@ -1199,7 +1199,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
       {showShoppingList && (
         <ShoppingListModal
-          items={shoppingListItems}
+          result={shoppingListItems}
           cakeName={cakeName.trim() || 'Новый торт'}
           onClose={() => setShowShoppingList(false)}
         />

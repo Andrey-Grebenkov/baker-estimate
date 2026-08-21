@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { formatShoppingList, type ShoppingListItem } from '../domain/shoppingList'
+import { formatShoppingList, type ShoppingListResult } from '../domain/shoppingList'
+import type { ShoppingListItem } from '../domain/shoppingList'
 
 interface ShoppingListModalProps {
-  items: ShoppingListItem[]
+  result: ShoppingListResult
   cakeName: string
   onClose: () => void
 }
@@ -13,13 +14,13 @@ function unitLabel(unit: string): string {
   return 'шт.'
 }
 
-export function ShoppingListModal({ items, cakeName, onClose }: ShoppingListModalProps) {
+export function ShoppingListModal({ result, cakeName, onClose }: ShoppingListModalProps) {
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
 
   const totalCost = useMemo(
-    () => items.reduce((sum, item) => sum + item.estimatedCost, 0),
-    [items],
+    () => result.toBuy.reduce((sum, item) => sum + item.estimatedCost, 0),
+    [result.toBuy],
   )
 
   const toggleItem = (id: string) => {
@@ -32,7 +33,7 @@ export function ShoppingListModal({ items, cakeName, onClose }: ShoppingListModa
   }
 
   const handleCopy = async () => {
-    const text = formatShoppingList(items)
+    const text = formatShoppingList(result.toBuy)
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)
@@ -42,9 +43,12 @@ export function ShoppingListModal({ items, cakeName, onClose }: ShoppingListModa
     }
   }
 
-  if (items.length === 0) {
+  if (!result.hasIngredients) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+        data-testid="shopping-list-modal-empty"
+      >
         <div className="w-full max-w-lg rounded-xl bg-white p-4 shadow-lg dark:bg-slate-800 sm:p-6">
           <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-white">
             Список покупок
@@ -66,6 +70,48 @@ export function ShoppingListModal({ items, cakeName, onClose }: ShoppingListModa
     )
   }
 
+  const renderItem = (item: ShoppingListItem, inStockSection = false) => (
+    <li
+      key={item.ingredientId}
+      className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+    >
+      {!inStockSection && (
+        <input
+          id={`shop-${item.ingredientId}`}
+          type="checkbox"
+          checked={checked.has(item.ingredientId)}
+          onChange={() => toggleItem(item.ingredientId)}
+          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600"
+          data-testid="shopping-list-checkbox"
+        />
+      )}
+      <label
+        htmlFor={!inStockSection ? `shop-${item.ingredientId}` : undefined}
+        className="flex flex-1 flex-col sm:flex-row sm:items-center sm:justify-between"
+      >
+        <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+          {item.name}
+        </span>
+        <span className="text-sm text-slate-600 dark:text-slate-300">
+          {inStockSection ? (
+            <>
+              нужно {item.required} {unitLabel(item.unit)} · в наличии {item.inStock} {unitLabel(item.unit)}
+            </>
+          ) : (
+            <>
+              {item.toBuy} {unitLabel(item.unit)} · {item.estimatedCost.toFixed(2)} ₽
+              {item.inStock > 0 && (
+                <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
+                  (нужно {item.required}, есть {item.inStock})
+                </span>
+              )}
+            </>
+          )}
+        </span>
+      </label>
+    </li>
+  )
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
@@ -78,39 +124,35 @@ export function ShoppingListModal({ items, cakeName, onClose }: ShoppingListModa
         <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{cakeName}</p>
 
         <div className="max-h-80 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
-          <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-            {items.map((item) => (
-              <li
-                key={item.ingredientId}
-                className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50"
-              >
-                <input
-                  id={`shop-${item.ingredientId}`}
-                  type="checkbox"
-                  checked={checked.has(item.ingredientId)}
-                  onChange={() => toggleItem(item.ingredientId)}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600"
-                  data-testid="shopping-list-checkbox"
-                />
-                <label
-                  htmlFor={`shop-${item.ingredientId}`}
-                  className="flex flex-1 flex-col sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                    {item.name}
-                  </span>
-                  <span className="text-sm text-slate-600 dark:text-slate-300">
-                    {item.totalQuantity} {unitLabel(item.unit)} · {item.estimatedCost.toFixed(2)} ₽
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
+          {result.toBuy.length === 0 ? (
+            <div className="p-4 text-center text-sm text-slate-600 dark:text-slate-300">
+              Все ингредиенты уже есть на складе.
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+              {result.toBuy.map((item) => renderItem(item))}
+            </ul>
+          )}
         </div>
+
+        {result.inStock.length > 0 && (
+          <div className="mt-4">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              В наличии
+            </h3>
+            <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
+              <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+                {result.inStock.map((item) => renderItem(item, true))}
+              </ul>
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 flex items-center justify-between text-sm text-slate-700 dark:text-slate-200">
           <span className="font-semibold">Итого: {totalCost.toFixed(2)} ₽</span>
-          <span>Отмечено: {checked.size} из {items.length}</span>
+          <span>
+            Отмечено: {checked.size} из {result.toBuy.length}
+          </span>
         </div>
 
         <div className="mt-6 flex flex-wrap justify-end gap-3">

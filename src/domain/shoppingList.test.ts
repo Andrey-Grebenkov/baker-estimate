@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildIngredient } from './ingredient'
 import { buildRecipe } from './recipe'
-import { generateShoppingList, formatShoppingList } from './shoppingList'
+import { generateShoppingList, formatShoppingList, type ShoppingListItem } from './shoppingList'
 
 function makeIngredient(
   id: string,
@@ -49,7 +49,7 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar, [flour.id]: flour },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [
         { recipeId: recipe1.id, multiplier: 1 },
         { recipeId: recipe2.id, multiplier: 1 },
@@ -58,12 +58,13 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar, [flour.id]: flour },
     )
 
-    expect(items).toHaveLength(2)
-    const sugarItem = items.find((i) => i.ingredientId === sugar.id)
-    expect(sugarItem?.totalQuantity).toBe(150)
+    expect(result.hasIngredients).toBe(true)
+    expect(result.toBuy).toHaveLength(2)
+    const sugarItem = result.toBuy.find((i) => i.ingredientId === sugar.id)
+    expect(sugarItem?.toBuy).toBe(150)
     expect(sugarItem?.estimatedCost).toBe(15)
-    const flourItem = items.find((i) => i.ingredientId === flour.id)
-    expect(flourItem?.totalQuantity).toBe(20)
+    const flourItem = result.toBuy.find((i) => i.ingredientId === flour.id)
+    expect(flourItem?.toBuy).toBe(20)
     expect(flourItem?.estimatedCost).toBe(3)
   })
 
@@ -79,14 +80,14 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [{ recipeId: recipe.id, multiplier: 2.5 }],
       { [recipe.id]: recipe },
       { [sugar.id]: sugar },
     )
 
-    expect(items[0].totalQuantity).toBe(250)
-    expect(items[0].estimatedCost).toBe(50)
+    expect(result.toBuy[0].toBuy).toBe(250)
+    expect(result.toBuy[0].estimatedCost).toBe(50)
   })
 
   it('skips recipes with missing references', () => {
@@ -101,13 +102,15 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [{ recipeId: 'missing', multiplier: 1 }],
       { [recipe.id]: recipe },
       { [sugar.id]: sugar },
     )
 
-    expect(items).toHaveLength(0)
+    expect(result.hasIngredients).toBe(false)
+    expect(result.toBuy).toHaveLength(0)
+    expect(result.inStock).toHaveLength(0)
   })
 
   it('sorts items alphabetically', () => {
@@ -127,17 +130,17 @@ describe('generateShoppingList', () => {
       { [ingA.id]: ingA, [ingB.id]: ingB },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [{ recipeId: recipe.id, multiplier: 1 }],
       { [recipe.id]: recipe },
       { [ingA.id]: ingA, [ingB.id]: ingB },
     )
 
-    expect(items[0].name).toBe('Абрикос')
-    expect(items[1].name).toBe('Банан')
+    expect(result.toBuy[0].name).toBe('Абрикос')
+    expect(result.toBuy[1].name).toBe('Банан')
   })
 
-  it('omits ingredient when stock fully covers required amount', () => {
+  it('moves fully covered ingredients to the in-stock section', () => {
     const sugar = makeIngredient('ing-1', 'Сахар', 100, 1000, 200)
     const recipe = buildRecipe(
       {
@@ -149,13 +152,17 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [{ recipeId: recipe.id, multiplier: 1 }],
       { [recipe.id]: recipe },
       { [sugar.id]: sugar },
     )
 
-    expect(items).toHaveLength(0)
+    expect(result.toBuy).toHaveLength(0)
+    expect(result.inStock).toHaveLength(1)
+    expect(result.inStock[0].ingredientId).toBe(sugar.id)
+    expect(result.inStock[0].required).toBe(150)
+    expect(result.inStock[0].inStock).toBe(200)
   })
 
   it('adds only deficit when stock partially covers the need', () => {
@@ -170,15 +177,18 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [{ recipeId: recipe.id, multiplier: 1 }],
       { [recipe.id]: recipe },
       { [sugar.id]: sugar },
     )
 
-    expect(items).toHaveLength(1)
-    expect(items[0].totalQuantity).toBe(100)
-    expect(items[0].estimatedCost).toBe(10)
+    expect(result.toBuy).toHaveLength(1)
+    expect(result.inStock).toHaveLength(0)
+    expect(result.toBuy[0].toBuy).toBe(100)
+    expect(result.toBuy[0].required).toBe(150)
+    expect(result.toBuy[0].inStock).toBe(50)
+    expect(result.toBuy[0].estimatedCost).toBe(10)
   })
 
   it('treats undefined stock as zero and lists the full required quantity', () => {
@@ -193,14 +203,14 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [{ recipeId: recipe.id, multiplier: 1 }],
       { [recipe.id]: recipe },
       { [sugar.id]: sugar },
     )
 
-    expect(items[0].totalQuantity).toBe(80)
-    expect(items[0].estimatedCost).toBe(8)
+    expect(result.toBuy[0].toBuy).toBe(80)
+    expect(result.toBuy[0].estimatedCost).toBe(8)
   })
 
   it('deducts stock across multiple recipes for the same ingredient', () => {
@@ -226,7 +236,7 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar },
     )
 
-    const items = generateShoppingList(
+    const result = generateShoppingList(
       [
         { recipeId: recipe1.id, multiplier: 1 },
         { recipeId: recipe2.id, multiplier: 1 },
@@ -235,19 +245,52 @@ describe('generateShoppingList', () => {
       { [sugar.id]: sugar },
     )
 
-    expect(items).toHaveLength(1)
-    expect(items[0].totalQuantity).toBe(70)
-    expect(items[0].estimatedCost).toBe(7)
+    expect(result.toBuy).toHaveLength(1)
+    expect(result.toBuy[0].toBuy).toBe(70)
+    expect(result.toBuy[0].estimatedCost).toBe(7)
   })
 })
 
 describe('formatShoppingList', () => {
   it('formats shopping list as plain text', () => {
-    const text = formatShoppingList([
-      { ingredientId: '1', name: 'Сахар', totalQuantity: 150, unit: 'g', estimatedCost: 15 },
-      { ingredientId: '2', name: 'Мука', totalQuantity: 200, unit: 'g', estimatedCost: 30 },
-    ])
+    const items: ShoppingListItem[] = [
+      {
+        ingredientId: '1',
+        name: 'Сахар',
+        unit: 'g',
+        required: 150,
+        inStock: 0,
+        toBuy: 150,
+        estimatedCost: 15,
+      },
+      {
+        ingredientId: '2',
+        name: 'Мука',
+        unit: 'g',
+        required: 200,
+        inStock: 0,
+        toBuy: 200,
+        estimatedCost: 30,
+      },
+    ]
+    const text = formatShoppingList(items)
     expect(text).toContain('Сахар: 150 г — 15.00 ₽')
     expect(text).toContain('Мука: 200 г — 30.00 ₽')
+  })
+
+  it('omits in-stock items from the copied text', () => {
+    const items: ShoppingListItem[] = [
+      {
+        ingredientId: '1',
+        name: 'Сахар',
+        unit: 'g',
+        required: 150,
+        inStock: 200,
+        toBuy: 0,
+        estimatedCost: 0,
+      },
+    ]
+    const text = formatShoppingList(items)
+    expect(text).toBe('')
   })
 })
