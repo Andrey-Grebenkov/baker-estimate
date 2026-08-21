@@ -21,6 +21,7 @@ import {
   type PanShape,
 } from '../domain/recipeScaling'
 import { generateShoppingList } from '../domain/shoppingList'
+import { pluralizeRu } from '../lib/pluralize'
 import { ShoppingListModal } from './ShoppingListModal'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
@@ -1356,7 +1357,9 @@ function CakeCard({
         <div>
           <p className="font-medium text-slate-800">{cake.name}</p>
           <p className="text-sm text-slate-500">
-            {cake.recipes.length} рецептов | {cake.packaging.length} упак. | {cake.decor.length} декора
+            {pluralizeRu(cake.recipes.length, ['рецепт', 'рецепта', 'рецептов'])} |{' '}
+            {pluralizeRu(cake.packaging.length, ['упаковка', 'упаковки', 'упаковок'])} |{' '}
+            {pluralizeRu(cake.decor.length, ['декор', 'декора', 'декоров'])}
           </p>
           {cake.recipes.map((cr) => {
             const recipe = state.recipes.find((r) => r.id === cr.recipeId)
@@ -1467,7 +1470,7 @@ function CakeCard({
         <Metric label="За 1 кг (себест.)" value={`${formatMoney(cake.costPerKg)} ₽/кг`} />
         <Metric label="За 1 кг (продажа)" value={`${formatMoney(cake.recommendedPricePerKg)} ₽/кг`} />
         <Metric
-          label="Состав"
+          label="Структура затрат"
           value={`ингр. ${formatMoney(cake.totalIngredientsCost)} ₽ + упак. ${formatMoney(
             cake.totalPackagingCost,
           )} ₽ + декор ${formatMoney(cake.totalDecorCost)} ₽ + труд ${formatMoney(

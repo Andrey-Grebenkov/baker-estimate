@@ -12,6 +12,8 @@ import type {
 } from '../domain/types'
 import { supabase } from '../lib/supabase'
 import * as db from '../lib/db'
+import { buildIngredient } from '../domain/ingredient'
+import { buildRecipe } from '../domain/recipe'
 
 export interface AppState {
   ingredients: Ingredient[]
@@ -125,25 +127,120 @@ export function useAppState(user: User | null): AppState {
     async (id, input) => {
       try {
         if (!userId) throw new Error('Пользователь не авторизован')
+        setIsLoading(true)
         await db.updateIngredient(id, input, userId)
+
+        const updatedIngredient = buildIngredient({ ...input, id, user_id: userId })
+        const updatedIngredientsById: Record<string, Ingredient> = {
+          ...Object.fromEntries(ingredients.map((i) => [i.id, i])),
+          [id]: updatedIngredient,
+        }
+
+        const affectedRecipeIds = new Set<string>()
+        const updatedRecipesById: Record<string, Recipe> = {
+          ...Object.fromEntries(recipes.map((r) => [r.id, r])),
+        }
+
+        const recipesToUpdate = recipes.filter((r) =>
+          r.ingredients.some((ri) => ri.ingredientId === id),
+        )
+
+        for (const recipe of recipesToUpdate) {
+          await db.updateRecipe(
+            recipe.id,
+            { name: recipe.name, ingredients: recipe.ingredients },
+            userId,
+            updatedIngredientsById,
+          )
+          const recomputed = buildRecipe(recipe, updatedIngredientsById)
+          updatedRecipesById[recipe.id] = recomputed
+          affectedRecipeIds.add(recipe.id)
+        }
+
+        const cakesToUpdate = cakes.filter((c) =>
+          c.recipes.some((cr) => affectedRecipeIds.has(cr.recipeId)),
+        )
+
+        for (const cake of cakesToUpdate) {
+          const payload: Omit<CakeInput, 'id' | 'user_id'> = {
+            name: cake.name,
+            recipes: cake.recipes,
+            packaging: cake.packaging,
+            decor: cake.decor,
+            overheads: cake.overheads,
+            marginPercent: cake.marginPercent,
+            image_url: cake.image_url,
+          }
+          await db.updateCake(cake.id, payload, userId, updatedRecipesById)
+        }
+
         await loadAll()
       } catch (err) {
         handleError(err)
+      } finally {
+        setIsLoading(false)
       }
     },
-    [loadAll, handleError, userId],
+    [ingredients, recipes, cakes, loadAll, handleError, userId],
   )
 
   const deleteIngredient = useCallback(
     async (id) => {
       try {
+        if (!userId) throw new Error('Пользователь не авторизован')
+        setIsLoading(true)
         await db.deleteIngredient(id)
+
+        const updatedIngredientsById: Record<string, Ingredient> = Object.fromEntries(
+          ingredients.filter((i) => i.id !== id).map((i) => [i.id, i]),
+        )
+
+        const affectedRecipeIds = new Set<string>()
+        const updatedRecipesById: Record<string, Recipe> = {
+          ...Object.fromEntries(recipes.map((r) => [r.id, r])),
+        }
+
+        const recipesToUpdate = recipes.filter((r) =>
+          r.ingredients.some((ri) => ri.ingredientId === id),
+        )
+
+        for (const recipe of recipesToUpdate) {
+          await db.updateRecipe(
+            recipe.id,
+            { name: recipe.name, ingredients: recipe.ingredients },
+            userId,
+            updatedIngredientsById,
+          )
+          const recomputed = buildRecipe(recipe, updatedIngredientsById)
+          updatedRecipesById[recipe.id] = recomputed
+          affectedRecipeIds.add(recipe.id)
+        }
+
+        const cakesToUpdate = cakes.filter((c) =>
+          c.recipes.some((cr) => affectedRecipeIds.has(cr.recipeId)),
+        )
+
+        for (const cake of cakesToUpdate) {
+          const payload: Omit<CakeInput, 'id' | 'user_id'> = {
+            name: cake.name,
+            recipes: cake.recipes,
+            packaging: cake.packaging,
+            decor: cake.decor,
+            overheads: cake.overheads,
+            marginPercent: cake.marginPercent,
+            image_url: cake.image_url,
+          }
+          await db.updateCake(cake.id, payload, userId, updatedRecipesById)
+        }
+
         await loadAll()
       } catch (err) {
         handleError(err)
+      } finally {
+        setIsLoading(false)
       }
     },
-    [loadAll, handleError],
+    [userId, ingredients, recipes, cakes, loadAll, handleError],
   )
 
   const addRecipe = useCallback(
@@ -164,26 +261,75 @@ export function useAppState(user: User | null): AppState {
     async (id, input) => {
       try {
         if (!userId) throw new Error('Пользователь не авторизован')
+        setIsLoading(true)
         const ingredientsById = Object.fromEntries(ingredients.map((i) => [i.id, i]))
         await db.updateRecipe(id, input, userId, ingredientsById)
+
+        const updatedRecipe = buildRecipe({ ...input, id, user_id: userId }, ingredientsById)
+        const updatedRecipesById: Record<string, Recipe> = {
+          ...Object.fromEntries(recipes.map((r) => [r.id, r])),
+          [id]: updatedRecipe,
+        }
+
+        const cakesToUpdate = cakes.filter((c) => c.recipes.some((cr) => cr.recipeId === id))
+
+        for (const cake of cakesToUpdate) {
+          const payload: Omit<CakeInput, 'id' | 'user_id'> = {
+            name: cake.name,
+            recipes: cake.recipes,
+            packaging: cake.packaging,
+            decor: cake.decor,
+            overheads: cake.overheads,
+            marginPercent: cake.marginPercent,
+            image_url: cake.image_url,
+          }
+          await db.updateCake(cake.id, payload, userId, updatedRecipesById)
+        }
+
         await loadAll()
       } catch (err) {
         handleError(err)
+      } finally {
+        setIsLoading(false)
       }
     },
-    [ingredients, loadAll, handleError, userId],
+    [ingredients, recipes, cakes, loadAll, handleError, userId],
   )
 
   const deleteRecipe = useCallback(
     async (id) => {
       try {
+        if (!userId) throw new Error('Пользователь не авторизован')
+        setIsLoading(true)
         await db.deleteRecipe(id)
+
+        const updatedRecipesById: Record<string, Recipe> = Object.fromEntries(
+          recipes.filter((r) => r.id !== id).map((r) => [r.id, r]),
+        )
+
+        const cakesToUpdate = cakes.filter((c) => c.recipes.some((cr) => cr.recipeId === id))
+
+        for (const cake of cakesToUpdate) {
+          const payload: Omit<CakeInput, 'id' | 'user_id'> = {
+            name: cake.name,
+            recipes: cake.recipes,
+            packaging: cake.packaging,
+            decor: cake.decor,
+            overheads: cake.overheads,
+            marginPercent: cake.marginPercent,
+            image_url: cake.image_url,
+          }
+          await db.updateCake(cake.id, payload, userId, updatedRecipesById)
+        }
+
         await loadAll()
       } catch (err) {
         handleError(err)
+      } finally {
+        setIsLoading(false)
       }
     },
-    [loadAll, handleError],
+    [userId, recipes, cakes, loadAll, handleError],
   )
 
   const addCake = useCallback(
