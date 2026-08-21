@@ -52,9 +52,9 @@ export interface AppState {
 async function uploadCakeImage(file: File): Promise<string> {
   const extension = file.name.split('.').pop() || 'png'
   const path = `cakes/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`
-  const { error } = await supabase.storage.from('cakes').upload(path, file)
+  const { error } = await supabase.storage.from('cake-images').upload(path, file)
   if (error) throw new Error(error.message)
-  const { data } = supabase.storage.from('cakes').getPublicUrl(path)
+  const { data } = supabase.storage.from('cake-images').getPublicUrl(path)
   return data.publicUrl
 }
 
