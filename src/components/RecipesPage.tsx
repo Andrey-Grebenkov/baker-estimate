@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { AppState } from '../hooks/useAppState'
-import type { Ingredient, RecipeIngredient, Recipe } from '../domain/types'
+import type { Ingredient, RecipeInput, RecipeIngredient, Recipe } from '../domain/types'
 import { MAX_DEFAULT_QUANTITY, normalizeNumberString } from '../lib/numberInput'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
@@ -271,61 +271,163 @@ export function RecipesPage({ state }: { state: AppState }) {
         ) : (
           <div className="space-y-3">
             {state.recipes.map((recipe) => (
-              <div
+              <RecipeCard
                 key={recipe.id}
-                className="card-inset p-3"
-                data-testid="recipe-row"
-                data-recipe-id={recipe.id}
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-slate-800">{recipe.name}</p>
-                    <p className="text-sm text-slate-500">
-                      {recipe.ingredients.length} ингредиентов | вес {recipe.totalWeight} г |{' '}
-                      {recipe.totalCost.toFixed(2)} ₽
-                    </p>
-                    <ul className="mt-1 text-xs text-slate-500">
-                      {recipe.ingredients.map((ri) => {
-                        const ingredient = state.ingredients.find((i) => i.id === ri.ingredientId)
-                        if (!ingredient) {
-                          return (
-                            <li key={ri.ingredientId} className="text-rose-600">
-                              Удалённый продукт — {ri.quantityUsed} (ед. изм. неизвестна)
-                            </li>
-                          )
-                        }
-                        return (
-                          <li key={ri.ingredientId}>
-                            {ingredient.name} — {ri.quantityUsed} {unitLabels[ingredient.unit]}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(recipe)}
-                      className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-50"
-                      data-testid="recipe-edit-button"
-                    >
-                      Изменить
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => confirmDelete(() => state.deleteRecipe(recipe.id))}
-                      className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-rose-600 ring-1 ring-inset ring-rose-200 hover:bg-rose-50"
-                      data-testid="recipe-delete-button"
-                    >
-                      Удалить
-                    </button>
-                  </div>
-                </div>
-              </div>
+                recipe={recipe}
+                state={state}
+                onEdit={() => startEdit(recipe)}
+                onDelete={() => confirmDelete(() => state.deleteRecipe(recipe.id))}
+              />
             ))}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function RecipeCard({
+  recipe,
+  state,
+  onEdit,
+  onDelete,
+}: {
+  recipe: Recipe
+  state: AppState
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null)
+  const [selectedReplacementId, setSelectedReplacementId] = useState('')
+
+  const handleStartReplace = (missingIngredientId: string) => {
+    setEditingIngredientId(missingIngredientId)
+    setSelectedReplacementId(state.ingredients[0]?.id ?? '')
+  }
+
+  const handleCancelReplace = () => {
+    setEditingIngredientId(null)
+    setSelectedReplacementId('')
+  }
+
+  const handleSaveReplacement = (missingIngredientId: string) => {
+    if (!selectedReplacementId) return
+
+    const newIngredients = recipe.ingredients.map((ri) =>
+      ri.ingredientId === missingIngredientId
+        ? { ingredientId: selectedReplacementId, quantityUsed: ri.quantityUsed }
+        : ri,
+    )
+
+    const payload: Omit<RecipeInput, 'id' | 'user_id'> = {
+      name: recipe.name,
+      ingredients: newIngredients,
+    }
+
+    state.updateRecipe(recipe.id, payload)
+    setEditingIngredientId(null)
+    setSelectedReplacementId('')
+  }
+
+  return (
+    <div
+      className="card-inset p-3"
+      data-testid="recipe-row"
+      data-recipe-id={recipe.id}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-slate-800">{recipe.name}</p>
+          <p className="text-sm text-slate-500">
+            {recipe.ingredients.length} ингредиентов | вес {recipe.totalWeight} г |{' '}
+            {recipe.totalCost.toFixed(2)} ₽
+          </p>
+          <ul className="mt-1 text-xs text-slate-500">
+            {recipe.ingredients.map((ri) => {
+              const ingredient = state.ingredients.find((i) => i.id === ri.ingredientId)
+              if (!ingredient) {
+                if (editingIngredientId === ri.ingredientId) {
+                  return (
+                    <li key={ri.ingredientId} className="text-rose-600" data-testid="recipe-replace-ingredient-inline">
+                      <div className="mt-2 flex flex-wrap items-center gap-2" data-testid="recipe-replace-ingredient-inline">
+                        <select
+                          value={selectedReplacementId}
+                          onChange={(e) => setSelectedReplacementId(e.target.value)}
+                          className="h-9 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          data-testid="recipe-replace-ingredient-select"
+                        >
+                          {state.ingredients.map((i) => (
+                            <option key={i.id} value={i.id}>
+                              {i.name} ({unitLabels[i.unit]})
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveReplacement(ri.ingredientId)}
+                          disabled={!selectedReplacementId || state.isLoading}
+                          className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          data-testid="recipe-replace-ingredient-save"
+                        >
+                          Сохранить
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelReplace}
+                          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                          data-testid="recipe-replace-ingredient-cancel"
+                        >
+                          Отмена
+                        </button>
+                      </div>
+                    </li>
+                  )
+                }
+
+                return (
+                  <li key={ri.ingredientId} className="text-rose-600">
+                    <button
+                      type="button"
+                      onClick={() => handleStartReplace(ri.ingredientId)}
+                      disabled={state.isLoading}
+                      className="text-left text-sm font-medium text-rose-600 hover:text-rose-700 disabled:text-slate-400"
+                      data-testid="recipe-missing-ingredient-warning"
+                    >
+                      ⚠ Обнаружен удаленный продукт (нажмите для замены)
+                    </button>
+                    <span className="ml-1 text-xs text-rose-500">
+                      — {ri.quantityUsed} (ед. изм. неизвестна)
+                    </span>
+                  </li>
+                )
+              }
+              return (
+                <li key={ri.ingredientId}>
+                  {ingredient.name} — {ri.quantityUsed} {unitLabels[ingredient.unit]}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-50"
+            data-testid="recipe-edit-button"
+          >
+            Изменить
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-rose-600 ring-1 ring-inset ring-rose-200 hover:bg-rose-50"
+            data-testid="recipe-delete-button"
+          >
+            Удалить
+          </button>
+        </div>
       </div>
     </div>
   )
