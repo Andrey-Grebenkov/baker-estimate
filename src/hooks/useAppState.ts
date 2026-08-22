@@ -10,6 +10,7 @@ import type {
   Recipe,
   RecipeInput,
 } from '../domain/types'
+import { isSuppressedAuthError } from '../lib/authErrors'
 import { supabase } from '../lib/supabase'
 import * as db from '../lib/db'
 import { buildIngredient } from '../domain/ingredient'
@@ -70,7 +71,9 @@ export function useAppState(user: User | null): AppState {
   const clearError = useCallback(() => setError(null), [])
 
   const handleError = useCallback((err: unknown) => {
-    setError(err instanceof Error ? err.message : 'Произошла ошибка')
+    const message = err instanceof Error ? err.message : 'Произошла ошибка'
+    if (isSuppressedAuthError(err instanceof Error ? { message } : message)) return
+    setError(message)
   }, [])
 
   const loadAll = useCallback(async () => {

@@ -3,8 +3,14 @@ interface AuthErrorLike {
   code?: string
 }
 
+export function isSuppressedAuthError(error: AuthErrorLike | string | null | undefined): boolean {
+  if (!error) return false
+  const message = typeof error === 'string' ? error : error.message
+  return message.toLowerCase().includes('jwt issued at future')
+}
+
 export function mapAuthError(error: AuthErrorLike | string | null | undefined): string | null {
-  if (!error) return null
+  if (!error || isSuppressedAuthError(error)) return null
 
   const message = typeof error === 'string' ? error : error.message
   const code = typeof error === 'string' ? undefined : error.code
