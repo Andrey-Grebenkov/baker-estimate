@@ -5,7 +5,9 @@ import { formatMoney } from '../domain/money'
 import { OrderModal } from './OrderModal'
 import { ClientReceiptModal } from './ClientReceiptModal'
 import { OrderCalendarView } from './OrderCalendarView'
-import type { Order, OrderStatus } from '../domain/types'
+import { OrderStatusDropdown } from './OrderStatusDropdown'
+import { CompleteOrderModal } from './CompleteOrderModal'
+import type { Order, OrderInput, OrderStatus } from '../domain/types'
 
 function formatDate(iso: string): string {
   const date = new Date(iso)
@@ -16,10 +18,20 @@ function formatDate(iso: string): string {
   })
 }
 
-const statusStyles: Record<OrderStatus, string> = {
-  'Новый': 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600',
-  'В работе': 'bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:ring-blue-700',
-  'Выдан': 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:ring-emerald-700',
+function toOrderInput(order: Order, overrides: Partial<OrderInput> = {}): OrderInput {
+  return {
+    cake_id: order.cake_id,
+    client_name: order.client_name,
+    client_phone: order.client_phone,
+    status: order.status,
+    delivery_date: order.delivery_date,
+    actual_weight_kg: order.actual_weight_kg,
+    actual_cost: order.actual_cost,
+    paid_amount: order.paid_amount,
+    advance_payment: order.advance_payment,
+    completion_comment: order.completion_comment,
+    ...overrides,
+  }
 }
 
 type ViewMode = 'list' | 'calendar'
@@ -29,6 +41,7 @@ export function OrdersPage({ state }: { state: AppState }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
+  const [completingOrder, setCompletingOrder] = useState<Order | null>(null)
 
   const receiptCake = receiptOrder
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
@@ -51,6 +64,21 @@ export function OrdersPage({ state }: { state: AppState }) {
 
   const openReceipt = (order: Order) => {
     setReceiptOrder(order)
+  }
+
+  const closeComplete = () => {
+    setCompletingOrder(null)
+  }
+
+  const handleStatusSelect = (order: Order, status: OrderStatus) => {
+    if (status === order.status) return
+
+    if (status === 'Выдан') {
+      setCompletingOrder(order)
+      return
+    }
+
+    state.updateOrder(order.id, toOrderInput(order, { status }))
   }
 
   return (
@@ -164,11 +192,11 @@ export function OrdersPage({ state }: { state: AppState }) {
                 return (
                   <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
                     <td className="whitespace-nowrap px-4 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${statusStyles[order.status]}`}
-                      >
-                        {order.status}
-                      </span>
+                      <OrderStatusDropdown
+                        order={order}
+                        onSelect={(status) => handleStatusSelect(order, status)}
+                        disabled={state.isLoading}
+                      />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
@@ -251,6 +279,15 @@ export function OrdersPage({ state }: { state: AppState }) {
           recipes={state.recipes}
           isOpen={!!receiptOrder}
           onClose={() => setReceiptOrder(null)}
+        />
+      )}
+
+      {completingOrder && (
+        <CompleteOrderModal
+          order={completingOrder}
+          state={state}
+          isOpen={!!completingOrder}
+          onClose={closeComplete}
         />
       )}
     </div>

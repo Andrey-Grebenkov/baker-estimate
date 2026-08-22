@@ -130,6 +130,7 @@ export interface Order {
   actual_cost: number // Реальная себестоимость
   paid_amount: number // Итоговая сумма к оплате
   advance_payment: number // Предоплата / аванс
+  completion_comment?: string // Причина переплаты (доставка, чаевые и т.п.)
   created_at?: string
 }
 

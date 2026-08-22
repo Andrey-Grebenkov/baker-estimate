@@ -231,6 +231,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   actual_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
   paid_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
   advance_payment NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  completion_comment TEXT,
 
   created_at TIMESTAMPTZ DEFAULT now()
 );

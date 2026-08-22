@@ -46,6 +46,7 @@ interface DbOrder {
   actual_cost: number
   paid_amount: number
   advance_payment: number
+  completion_comment: string | null
   created_at: string
 }
 
@@ -111,6 +112,7 @@ function mapOrder(row: DbOrder): Order {
     actual_cost: toNumber(row.actual_cost),
     paid_amount: toNumber(row.paid_amount),
     advance_payment: toNumber(row.advance_payment),
+    completion_comment: row.completion_comment ?? undefined,
     created_at: row.created_at,
   }
 }
@@ -346,12 +348,13 @@ export async function addOrder(input: OrderInput, userId: string): Promise<void>
     actual_cost: input.actual_cost,
     paid_amount: input.paid_amount,
     advance_payment: input.advance_payment,
+    completion_comment: input.completion_comment ?? null,
   })
   if (error) throw new Error(error.message)
 }
 
 export async function updateOrder(id: string, input: OrderInput, userId: string): Promise<void> {
-  const { error } = await supabase.from('orders').update({
+  const payload: Record<string, unknown> = {
     user_id: userId,
     cake_id: input.cake_id ?? null,
     client_name: input.client_name,
@@ -362,7 +365,11 @@ export async function updateOrder(id: string, input: OrderInput, userId: string)
     actual_cost: input.actual_cost,
     paid_amount: input.paid_amount,
     advance_payment: input.advance_payment,
-  }).eq('id', id)
+  }
+  if (input.completion_comment !== undefined) {
+    payload.completion_comment = input.completion_comment || null
+  }
+  const { error } = await supabase.from('orders').update(payload).eq('id', id)
   if (error) throw new Error(error.message)
 }
 

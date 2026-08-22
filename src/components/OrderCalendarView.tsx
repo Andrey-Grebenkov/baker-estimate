@@ -15,7 +15,8 @@ import { ru } from 'date-fns/locale/ru'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatMoney } from '../domain/money'
 import type { CakeDetails } from '../domain/cake'
-import type { Order, OrderStatus } from '../domain/types'
+import type { Order } from '../domain/types'
+import { dotColor, statusStyles } from '../lib/orderStatus'
 
 interface OrderCalendarViewProps {
   orders: Order[]
@@ -25,18 +26,6 @@ interface OrderCalendarViewProps {
 }
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-
-const statusStyles: Record<OrderStatus, string> = {
-  'Новый': 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600',
-  'В работе': 'bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:ring-blue-700',
-  'Выдан': 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:ring-emerald-700',
-}
-
-const dotColor: Record<OrderStatus, string> = {
-  'Новый': 'bg-slate-400',
-  'В работе': 'bg-blue-500',
-  'Выдан': 'bg-emerald-500',
-}
 
 function orderDate(order: Order): Date {
   return new Date(order.delivery_date)
