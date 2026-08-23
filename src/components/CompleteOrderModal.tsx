@@ -38,6 +38,7 @@ export function CompleteOrderModal({ order, state, isOpen, onClose }: CompleteOr
 
   const isOverpaid = finalPaymentNum > remaining
   const isUnderpaid = finalPaymentNum < remaining
+  const hasPaymentDifference = isOverpaid || isUnderpaid
 
   if (!isOpen) return null
 
@@ -50,14 +51,9 @@ export function CompleteOrderModal({ order, state, isOpen, onClose }: CompleteOr
       return
     }
 
-    if (isUnderpaid) {
-      setError('Сумма доплаты не может быть меньше остатка')
-      return
-    }
-
     const totalReceived = roundToCurrency(order.advance_payment + finalPaymentNum)
-    const newPaidAmount = isOverpaid ? totalReceived : order.paid_amount
-    const newComment = isOverpaid ? comment.trim() || undefined : undefined
+    const newPaidAmount = totalReceived
+    const newComment = hasPaymentDifference ? comment.trim() || undefined : undefined
 
     const input: OrderInput = {
       cake_id: order.cake_id,
@@ -141,13 +137,15 @@ export function CompleteOrderModal({ order, state, isOpen, onClose }: CompleteOr
             />
           </div>
 
-          {isOverpaid && (
+          {hasPaymentDifference && (
             <div className="space-y-1">
               <label
                 htmlFor="complete-order-comment"
                 className="text-sm font-medium text-slate-600 dark:text-slate-300"
               >
-                Комментарий к переплате (например, доставка, чаевые)
+                {isOverpaid
+                  ? 'Комментарий к переплате (например, доставка, чаевые)'
+                  : 'Комментарий к скидке/недоплате (например, компенсация)'}
               </label>
               <textarea
                 id="complete-order-comment"
@@ -155,7 +153,7 @@ export function CompleteOrderModal({ order, state, isOpen, onClose }: CompleteOr
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="Укажите причину переплаты"
+                placeholder="Укажите причину"
                 data-testid="complete-order-comment-input"
               />
             </div>
