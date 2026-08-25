@@ -170,6 +170,7 @@ export function OrderCalendarView({ orders, cakes, onEdit, onReceipt }: OrderCal
             <ul className="divide-y divide-slate-200 dark:divide-slate-700">
               {dayOrders.map((order) => {
                 const remaining = Math.max(0, order.paid_amount - order.advance_payment)
+                const isCompleted = order.status === 'Выдан'
                 return (
                   <li key={order.id} className="py-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -190,7 +191,12 @@ export function OrderCalendarView({ orders, cakes, onEdit, onReceipt }: OrderCal
                         </p>
                         <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                           Сумма: {formatMoney(order.paid_amount)} ₽ · Аванс:{' '}
-                          {formatMoney(order.advance_payment)} ₽ · Остаток: {formatMoney(remaining)} ₽
+                          {formatMoney(order.advance_payment)} ₽ ·{' '}
+                          {isCompleted ? (
+                            <span className="font-medium text-emerald-500">Оплачено</span>
+                          ) : (
+                            `Остаток: ${formatMoney(remaining)} ₽`
+                          )}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

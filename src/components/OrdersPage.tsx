@@ -189,6 +189,7 @@ export function OrdersPage({ state }: { state: AppState }) {
             <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
               {state.orders.map((order) => {
                 const remaining = Math.max(0, order.paid_amount - order.advance_payment)
+                const isCompleted = order.status === 'Выдан'
                 return (
                   <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
                     <td className="whitespace-nowrap px-4 py-3">
@@ -222,10 +223,14 @@ export function OrdersPage({ state }: { state: AppState }) {
                     </td>
                     <td
                       className={`whitespace-nowrap px-4 py-3 text-sm font-medium ${
-                        remaining > 0 ? 'text-amber-600' : 'text-emerald-600'
+                        isCompleted
+                          ? 'text-emerald-500'
+                          : remaining > 0
+                            ? 'text-amber-600'
+                            : 'text-emerald-600'
                       }`}
                     >
-                      {formatMoney(remaining)} ₽
+                      {isCompleted ? 'Оплачено' : `${formatMoney(remaining)} ₽`}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
