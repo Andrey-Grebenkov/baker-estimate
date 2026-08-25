@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Calendar, List, MessageSquare } from 'lucide-react'
 import type { AppState } from '../hooks/useAppState'
 import { formatMoney } from '../domain/money'
@@ -44,6 +44,16 @@ export function OrdersPage({ state }: { state: AppState }) {
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
   const [completingOrder, setCompletingOrder] = useState<Order | null>(null)
   const [commentOrder, setCommentOrder] = useState<Order | null>(null)
+
+  const sortedOrders = useMemo(
+    () =>
+      [...state.orders].sort((a, b) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0
+        return bTime - aTime
+      }),
+    [state.orders],
+  )
 
   const receiptCake = receiptOrder
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
@@ -133,7 +143,7 @@ export function OrdersPage({ state }: { state: AppState }) {
         </div>
       </div>
 
-      {state.orders.length === 0 ? (
+      {sortedOrders.length === 0 ? (
         <p className="text-sm text-slate-500" data-testid="orders-empty-state">
           Пока нет заказов. Нажмите «Отметить продажу», чтобы создать первую запись.
         </p>
@@ -193,7 +203,7 @@ export function OrdersPage({ state }: { state: AppState }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
-              {state.orders.map((order) => {
+              {sortedOrders.map((order) => {
                 const remaining = Math.max(0, order.paid_amount - order.advance_payment)
                 const isCompleted = order.status === 'Выдан'
                 return (
@@ -275,7 +285,7 @@ export function OrdersPage({ state }: { state: AppState }) {
         </div>
       ) : (
         <OrderCalendarView
-          orders={state.orders}
+          orders={sortedOrders}
           cakes={state.cakes}
           onEdit={(order) => {
             setEditingOrder(order)

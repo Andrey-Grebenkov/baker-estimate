@@ -401,12 +401,23 @@ export function useAppState(user: User | null): AppState {
       try {
         if (!userId) throw new Error('Пользователь не авторизован')
         await db.updateOrder(id, input, userId)
-        await loadAll()
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.id === id
+              ? {
+                  ...input,
+                  id,
+                  user_id: order.user_id,
+                  created_at: order.created_at,
+                }
+              : order,
+          ),
+        )
       } catch (err) {
         handleError(err)
       }
     },
-    [loadAll, handleError, userId],
+    [handleError, userId],
   )
 
   const deleteOrder = useCallback(
