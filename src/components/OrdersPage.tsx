@@ -5,6 +5,7 @@ import { formatMoney } from '../domain/money'
 import { OrderModal } from './OrderModal'
 import { ClientReceiptModal } from './ClientReceiptModal'
 import { OrderCalendarView } from './OrderCalendarView'
+import { EditCommentModal } from './EditCommentModal'
 import { OrderStatusDropdown } from './OrderStatusDropdown'
 import { CompleteOrderModal } from './CompleteOrderModal'
 import type { Order, OrderInput, OrderStatus } from '../domain/types'
@@ -42,6 +43,7 @@ export function OrdersPage({ state }: { state: AppState }) {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
   const [completingOrder, setCompletingOrder] = useState<Order | null>(null)
+  const [commentOrder, setCommentOrder] = useState<Order | null>(null)
 
   const receiptCake = receiptOrder
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
@@ -68,6 +70,10 @@ export function OrdersPage({ state }: { state: AppState }) {
 
   const closeComplete = () => {
     setCompletingOrder(null)
+  }
+
+  const closeComment = () => {
+    setCommentOrder(null)
   }
 
   const handleStatusSelect = (order: Order, status: OrderStatus) => {
@@ -219,9 +225,11 @@ export function OrdersPage({ state }: { state: AppState }) {
                       <div className="flex items-center gap-1.5">
                         {formatMoney(order.paid_amount)} ₽
                         {order.completion_comment && (
-                          <span title={order.completion_comment} className="inline-flex">
-                            <MessageSquare className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-help" />
-                          </span>
+                          <MessageSquare
+                            onClick={() => setCommentOrder(order)}
+                            className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                            data-testid="order-comment-icon"
+                          />
                         )}
                       </div>
                     </td>
@@ -300,6 +308,15 @@ export function OrdersPage({ state }: { state: AppState }) {
           state={state}
           isOpen={!!completingOrder}
           onClose={closeComplete}
+        />
+      )}
+
+      {commentOrder && (
+        <EditCommentModal
+          isOpen={!!commentOrder}
+          onClose={closeComment}
+          order={commentOrder}
+          state={state}
         />
       )}
     </div>
