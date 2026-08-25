@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, List } from 'lucide-react'
+import { Calendar, List, MessageSquare } from 'lucide-react'
 import type { AppState } from '../hooks/useAppState'
 import { formatMoney } from '../domain/money'
 import { OrderModal } from './OrderModal'
@@ -216,7 +216,14 @@ export function OrdersPage({ state }: { state: AppState }) {
                       {order.actual_weight_kg.toFixed(3)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                      {formatMoney(order.paid_amount)} ₽
+                      <div className="flex items-center gap-1.5">
+                        {formatMoney(order.paid_amount)} ₽
+                        {order.completion_comment && (
+                          <span title={order.completion_comment} className="inline-flex">
+                            <MessageSquare className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-help" />
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                       {formatMoney(order.advance_payment)} ₽

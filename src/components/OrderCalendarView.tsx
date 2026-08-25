@@ -12,7 +12,7 @@ import {
   subMonths,
 } from 'date-fns'
 import { ru } from 'date-fns/locale/ru'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import { formatMoney } from '../domain/money'
 import type { CakeDetails } from '../domain/cake'
 import type { Order } from '../domain/types'
@@ -190,7 +190,16 @@ export function OrderCalendarView({ orders, cakes, onEdit, onReceipt }: OrderCal
                           {formatDay(order.delivery_date)}
                         </p>
                         <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                          Сумма: {formatMoney(order.paid_amount)} ₽ · Аванс:{' '}
+                          Сумма:{' '}
+                          <span className="inline-flex items-center gap-1.5">
+                            {formatMoney(order.paid_amount)} ₽
+                            {order.completion_comment && (
+                              <span title={order.completion_comment} className="inline-flex">
+                                <MessageSquare className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-help" />
+                              </span>
+                            )}
+                          </span>
+                          {' · Аванс: '}
                           {formatMoney(order.advance_payment)} ₽ ·{' '}
                           {isCompleted ? (
                             <span className="font-medium text-emerald-500">Оплачено</span>
