@@ -185,7 +185,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 space-y-4 overflow-y-auto overflow-x-hidden pr-1">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label
                 htmlFor="order-client"
@@ -290,7 +290,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
                 type="date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="h-10 min-h-0 w-full min-w-0 max-w-full rounded-lg border border-slate-300 px-3 py-2 leading-tight text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                className="h-10 min-h-0 w-full min-w-0 max-w-full overflow-hidden text-ellipsis rounded-lg border border-slate-300 px-3 py-2 leading-tight text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                 data-testid="order-date-input"
               />
             </div>
