@@ -163,8 +163,8 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       data-testid="order-modal"
     >
-      <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
-        <div className="mb-4 flex items-start justify-between">
+      <div className="flex w-full max-w-2xl max-h-[90dvh] flex-col overflow-hidden rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+        <div className="flex-shrink-0 mb-4 flex items-start justify-between">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {isEditing ? 'Редактировать заказ' : 'Отметить продажу'}
           </h2>
@@ -179,8 +179,9 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+            <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label
                 htmlFor="order-client"
@@ -274,7 +275,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
                 type="date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                className="h-10 min-h-0 w-full rounded-lg border border-slate-300 px-3 py-2 leading-tight text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                 data-testid="order-date-input"
               />
             </div>
@@ -410,8 +411,9 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
               {error}
             </p>
           )}
+          </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-shrink-0 justify-end gap-3 border-t border-slate-200 pt-4 pb-2 dark:border-slate-700/50">
             <button
               type="button"
               onClick={onClose}
