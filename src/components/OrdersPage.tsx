@@ -14,8 +14,8 @@ import type { Order, OrderInput, OrderStatus } from '../domain/types'
 function formatDate(iso: string): string {
   const date = new Date(iso)
   return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
   })
 }
@@ -160,55 +160,55 @@ export function OrdersPage({ state }: { state: AppState }) {
               <tr>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Статус
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Клиент
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Дата доставки
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Вес, кг
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Сумма
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Аванс
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Остаток
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="w-1 px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Заметка
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="w-1 px-2 py-2 text-right text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Действия
                 </th>
@@ -220,14 +220,14 @@ export function OrdersPage({ state }: { state: AppState }) {
                 const isCompleted = order.status === 'Выдан'
                 return (
                   <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="whitespace-nowrap px-2 py-2">
                       <OrderStatusDropdown
                         order={order}
                         onSelect={(status) => handleStatusSelect(order, status)}
                         disabled={state.isLoading}
                       />
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="whitespace-nowrap px-2 py-2">
                       <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
                         {order.client_name}
                       </div>
@@ -237,13 +237,13 @@ export function OrdersPage({ state }: { state: AppState }) {
                         </div>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
                       {formatDate(order.delivery_date)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
                       {order.actual_weight_kg != null ? order.actual_weight_kg.toFixed(3) : '—'}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
                       <div className="flex items-center gap-1.5">
                         {formatMoney(order.paid_amount)} ₽
                         {order.completion_comment && (
@@ -255,11 +255,11 @@ export function OrdersPage({ state }: { state: AppState }) {
                         )}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
                       {formatMoney(order.advance_payment)} ₽
                     </td>
                     <td
-                      className={`whitespace-nowrap px-4 py-3 text-sm font-medium ${
+                      className={`whitespace-nowrap px-2 py-2 text-sm font-medium ${
                         isCompleted
                           ? 'text-emerald-500'
                           : remaining > 0
@@ -269,7 +269,7 @@ export function OrdersPage({ state }: { state: AppState }) {
                     >
                       {isCompleted ? 'Оплачено' : `${formatMoney(remaining)} ₽`}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-center">
+                    <td className="w-1 whitespace-nowrap px-2 py-2 text-center">
                       {order.internal_comment?.trim() && (
                         <FileText
                           onClick={() => setInternalCommentOrder(order)}
@@ -278,7 +278,7 @@ export function OrdersPage({ state }: { state: AppState }) {
                         />
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <td className="w-1 whitespace-nowrap px-2 py-2 text-right">
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
