@@ -38,6 +38,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
   const [paidAmount, setPaidAmount] = useState('')
   const [advancePayment, setAdvancePayment] = useState('')
   const [internalComment, setInternalComment] = useState('')
+  const [unit, setUnit] = useState<Order['unit']>('кг')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -53,6 +54,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
         setPaidAmount(String(orderToEdit.paid_amount))
         setAdvancePayment(String(orderToEdit.advance_payment))
         setInternalComment(orderToEdit.internal_comment ?? '')
+        setUnit(orderToEdit.unit ?? 'кг')
       } else {
         setCakeId('')
         setClientName('')
@@ -63,6 +65,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
         setPaidAmount('')
         setAdvancePayment('')
         setInternalComment('')
+        setUnit('кг')
       }
       setError(null)
       setSubmitting(false)
@@ -141,6 +144,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
       paid_amount: paidAmountNum,
       advance_payment: advancePaymentNum,
       internal_comment: internalComment.trim(),
+      unit,
     }
 
     setSubmitting(true)
@@ -246,20 +250,31 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
                 htmlFor="order-weight"
                 className="text-sm font-medium text-slate-600 dark:text-slate-300"
               >
-                Фактический вес, кг
+                Вес / Кол-во
               </label>
-              <input
-                id="order-weight"
-                type="number"
-                min="0"
-                max={MAX_DEFAULT_QUANTITY}
-                step="0.01"
-                value={actualWeight}
-                onChange={(e) => setActualWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="0"
-                data-testid="order-weight-input"
-              />
+              <div className="flex gap-2">
+                <input
+                  id="order-weight"
+                  type="number"
+                  min="0"
+                  max={MAX_DEFAULT_QUANTITY}
+                  step="0.01"
+                  value={actualWeight}
+                  onChange={(e) => setActualWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                  className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                  placeholder="0"
+                  data-testid="order-weight-input"
+                />
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value as Order['unit'])}
+                  className="h-10 w-20 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                  data-testid="order-unit-select"
+                >
+                  <option value="кг">кг</option>
+                  <option value="шт">шт</option>
+                </select>
+              </div>
             </div>
 
             <div className="min-w-0 max-w-full space-y-1">

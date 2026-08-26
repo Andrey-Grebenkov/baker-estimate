@@ -126,7 +126,8 @@ export interface Order {
   client_phone?: string
   status: OrderStatus
   delivery_date: string // ISO-строка даты/времени
-  actual_weight_kg?: number // Фактический вес в кг
+  actual_weight_kg?: number // Фактический вес / количество
+  unit?: 'кг' | 'шт' // Единица измерения
   actual_cost: number // Реальная себестоимость
   paid_amount: number // Итоговая сумма к оплате
   advance_payment: number // Предоплата / аванс

@@ -25,10 +25,10 @@ function formatDeliveryDate(isoDate: string): string {
   }
 }
 
-function formatKg(weightKg: number | undefined): string {
+function formatKg(weightKg: number | undefined, unit = 'кг'): string {
   if (weightKg == null) return '—'
   const trimmed = Number(weightKg).toString()
-  return `${trimmed} кг`
+  return `${trimmed} ${unit}`
 }
 
 const receiptTheme = {
@@ -190,7 +190,7 @@ export function ClientReceiptModal({ order, cake, recipes, isOpen, onClose }: Cl
                 Вес
               </p>
               <p className="text-xl font-semibold" style={{ color: receiptTheme.text }}>
-                {formatKg(order.actual_weight_kg)}
+                {formatKg(order.actual_weight_kg, order.unit ?? 'кг')}
               </p>
             </div>
             <div
