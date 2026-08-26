@@ -6,5 +6,5 @@ export function roundToCurrency(value: number): number {
 }
 
 export function formatMoney(value: number): string {
-  return roundToCurrency(value).toFixed(2)
+  return String(parseFloat(roundToCurrency(value).toFixed(2)))
 }
