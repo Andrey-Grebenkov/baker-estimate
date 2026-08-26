@@ -25,7 +25,8 @@ function formatDeliveryDate(isoDate: string): string {
   }
 }
 
-function formatKg(weightKg: number): string {
+function formatKg(weightKg: number | undefined): string {
+  if (weightKg == null) return '—'
   const trimmed = Number(weightKg).toString()
   return `${trimmed} кг`
 }

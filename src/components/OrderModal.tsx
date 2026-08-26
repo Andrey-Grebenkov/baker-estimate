@@ -44,11 +44,11 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
     if (isOpen) {
       if (orderToEdit) {
         setCakeId(orderToEdit.cake_id ?? '')
-        setClientName(orderToEdit.client_name)
+        setClientName(orderToEdit.client_name ?? '')
         setClientPhone(orderToEdit.client_phone ?? '')
         setStatus(orderToEdit.status)
         setDeliveryDate(formatDateForInput(orderToEdit.delivery_date))
-        setActualWeight(String(orderToEdit.actual_weight_kg))
+        setActualWeight(orderToEdit.actual_weight_kg != null ? String(orderToEdit.actual_weight_kg) : '')
         setPaidAmount(String(orderToEdit.paid_amount))
         setAdvancePayment(String(orderToEdit.advance_payment))
       } else {
@@ -108,18 +108,6 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
     e.preventDefault()
     setError(null)
 
-    if (!selectedCake) {
-      setError('Выберите торт')
-      return
-    }
-    if (clientName.trim().length === 0) {
-      setError('Введите имя клиента')
-      return
-    }
-    if (actualWeightNum <= 0) {
-      setError('Укажите фактический вес больше 0')
-      return
-    }
     if (paidAmountNum < 0) {
       setError('Сумма оплаты не может быть отрицательной')
       return
@@ -137,13 +125,15 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
       return
     }
 
+    const actualWeightValue = actualWeight.trim() === '' ? undefined : Number(actualWeight.trim())
+
     const input = {
-      cake_id: selectedCake.id,
-      client_name: clientName.trim(),
+      cake_id: selectedCake?.id,
+      client_name: clientName.trim() || undefined,
       client_phone: clientPhone.trim() || undefined,
       status,
       delivery_date: new Date(deliveryDate).toISOString(),
-      actual_weight_kg: actualWeightNum,
+      actual_weight_kg: actualWeightValue,
       actual_cost: actualCost,
       paid_amount: paidAmountNum,
       advance_payment: advancePaymentNum,
@@ -189,35 +179,10 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label
-                htmlFor="order-cake"
-                className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300"
-              >
-                Торт
-                <RequiredMark />
-              </label>
-              <select
-                id="order-cake"
-                value={cakeId}
-                onChange={(e) => setCakeId(e.target.value)}
-                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                data-testid="order-cake-select"
-              >
-                <option value="">Выберите торт</option>
-                {state.cakes.map((cake) => (
-                  <option key={cake.id} value={cake.id}>
-                    {cake.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label
                 htmlFor="order-client"
-                className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300"
               >
                 Имя клиента
-                <RequiredMark />
               </label>
               <input
                 id="order-client"
@@ -250,24 +215,46 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
 
             <div className="space-y-1">
               <label
-                htmlFor="order-status"
+                htmlFor="order-cake"
                 className="text-sm font-medium text-slate-600 dark:text-slate-300"
               >
-                Статус
+                Торт
               </label>
               <select
-                id="order-status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as OrderStatus)}
+                id="order-cake"
+                value={cakeId}
+                onChange={(e) => setCakeId(e.target.value)}
                 className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                data-testid="order-status-select"
+                data-testid="order-cake-select"
               >
-                {ORDER_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
+                <option value="">Выберите торт</option>
+                {state.cakes.map((cake) => (
+                  <option key={cake.id} value={cake.id}>
+                    {cake.name}
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="order-weight"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300"
+              >
+                Фактический вес, кг
+              </label>
+              <input
+                id="order-weight"
+                type="number"
+                min="0"
+                max={MAX_DEFAULT_QUANTITY}
+                step="0.01"
+                value={actualWeight}
+                onChange={(e) => setActualWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                placeholder="0"
+                data-testid="order-weight-input"
+              />
             </div>
 
             <div className="space-y-1">
@@ -290,24 +277,24 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
 
             <div className="space-y-1">
               <label
-                htmlFor="order-weight"
-                className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300"
+                htmlFor="order-status"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300"
               >
-                Фактический вес, кг
-                <RequiredMark />
+                Статус
               </label>
-              <input
-                id="order-weight"
-                type="number"
-                min="0"
-                max={MAX_DEFAULT_QUANTITY}
-                step="0.01"
-                value={actualWeight}
-                onChange={(e) => setActualWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                placeholder="0"
-                data-testid="order-weight-input"
-              />
+              <select
+                id="order-status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as OrderStatus)}
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                data-testid="order-status-select"
+              >
+                {ORDER_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1">

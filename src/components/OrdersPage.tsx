@@ -229,7 +229,7 @@ export function OrdersPage({ state }: { state: AppState }) {
                       {formatDate(order.delivery_date)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                      {order.actual_weight_kg.toFixed(3)}
+                      {order.actual_weight_kg != null ? order.actual_weight_kg.toFixed(3) : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                       <div className="flex items-center gap-1.5">

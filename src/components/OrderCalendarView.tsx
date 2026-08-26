@@ -186,7 +186,8 @@ export function OrderCalendarView({ orders, cakes, onEdit, onReceipt }: OrderCal
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {orderCakeName(order, cakes)} · {order.actual_weight_kg.toFixed(3)} кг ·{' '}
+                          {orderCakeName(order, cakes)} ·{' '}
+                          {order.actual_weight_kg != null ? `${order.actual_weight_kg.toFixed(3)} кг` : '—'} ·{' '}
                           {formatDay(order.delivery_date)}
                         </p>
                         <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">

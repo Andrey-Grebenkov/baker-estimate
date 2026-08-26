@@ -223,11 +223,11 @@ CREATE TABLE IF NOT EXISTS public.orders (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   cake_id UUID REFERENCES public.cakes(id) ON DELETE SET NULL,
 
-  client_name TEXT NOT NULL,
+  client_name TEXT,
   client_phone TEXT,
   status TEXT NOT NULL DEFAULT 'Новый',
   delivery_date TIMESTAMPTZ NOT NULL,
-  actual_weight_kg NUMERIC(12, 3) NOT NULL DEFAULT 0,
+  actual_weight_kg NUMERIC(12, 3),
   actual_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
   paid_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
   advance_payment NUMERIC(12, 2) NOT NULL DEFAULT 0,
