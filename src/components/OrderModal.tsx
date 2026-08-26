@@ -277,7 +277,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
               </div>
             </div>
 
-            <div className="min-w-0 max-w-full space-y-1">
+            <div className="w-full min-w-0 max-w-full space-y-1">
               <label
                 htmlFor="order-date"
                 className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300"
