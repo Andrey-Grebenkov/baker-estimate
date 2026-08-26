@@ -160,7 +160,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex max-w-[100vw] items-center justify-center overflow-x-hidden bg-black/50 p-4"
       data-testid="order-modal"
     >
       <div className="flex w-full max-w-2xl max-h-[90dvh] flex-col overflow-hidden rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
@@ -180,8 +180,8 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex-1 space-y-4 overflow-y-auto overflow-x-hidden pr-1">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label
                 htmlFor="order-client"
@@ -262,7 +262,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="min-w-0 max-w-full space-y-1">
               <label
                 htmlFor="order-date"
                 className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300"
@@ -275,7 +275,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
                 type="date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="h-10 min-h-0 w-full rounded-lg border border-slate-300 px-3 py-2 leading-tight text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                className="h-10 min-h-0 w-full min-w-0 max-w-full rounded-lg border border-slate-300 px-3 py-2 leading-tight text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                 data-testid="order-date-input"
               />
             </div>
