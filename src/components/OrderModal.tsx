@@ -37,6 +37,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
   const [actualWeight, setActualWeight] = useState('')
   const [paidAmount, setPaidAmount] = useState('')
   const [advancePayment, setAdvancePayment] = useState('')
+  const [internalComment, setInternalComment] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -51,6 +52,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
         setActualWeight(orderToEdit.actual_weight_kg != null ? String(orderToEdit.actual_weight_kg) : '')
         setPaidAmount(String(orderToEdit.paid_amount))
         setAdvancePayment(String(orderToEdit.advance_payment))
+        setInternalComment(orderToEdit.internal_comment ?? '')
       } else {
         setCakeId('')
         setClientName('')
@@ -60,6 +62,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
         setActualWeight('')
         setPaidAmount('')
         setAdvancePayment('')
+        setInternalComment('')
       }
       setError(null)
       setSubmitting(false)
@@ -137,6 +140,7 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
       actual_cost: actualCost,
       paid_amount: paidAmountNum,
       advance_payment: advancePaymentNum,
+      internal_comment: internalComment.trim(),
     }
 
     setSubmitting(true)
@@ -337,6 +341,24 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                 placeholder="0"
                 data-testid="order-advance-input"
+              />
+            </div>
+
+            <div className="col-span-1 space-y-1 sm:col-span-2">
+              <label
+                htmlFor="order-internal-comment"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300"
+              >
+                Внутренняя заметка
+              </label>
+              <textarea
+                id="order-internal-comment"
+                rows={3}
+                value={internalComment}
+                onChange={(e) => setInternalComment(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                placeholder="Внутренние примечания по заказу (не видны клиенту)"
+                data-testid="order-internal-comment-input"
               />
             </div>
           </div>

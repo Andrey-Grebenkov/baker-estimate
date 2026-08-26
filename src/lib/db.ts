@@ -47,6 +47,7 @@ interface DbOrder {
   paid_amount: number
   advance_payment: number
   completion_comment: string | null
+  internal_comment: string | null
   created_at: string
 }
 
@@ -113,6 +114,7 @@ function mapOrder(row: DbOrder): Order {
     paid_amount: toNumber(row.paid_amount),
     advance_payment: toNumber(row.advance_payment),
     completion_comment: row.completion_comment ?? undefined,
+    internal_comment: row.internal_comment ?? undefined,
     created_at: row.created_at,
   }
 }
@@ -349,6 +351,7 @@ export async function addOrder(input: OrderInput, userId: string): Promise<void>
     paid_amount: input.paid_amount,
     advance_payment: input.advance_payment,
     completion_comment: input.completion_comment ?? null,
+    internal_comment: input.internal_comment?.trim() || null,
   })
   if (error) throw new Error(error.message)
 }
@@ -368,6 +371,9 @@ export async function updateOrder(id: string, input: OrderInput, userId: string)
   }
   if (input.completion_comment !== undefined) {
     payload.completion_comment = input.completion_comment || null
+  }
+  if (input.internal_comment !== undefined) {
+    payload.internal_comment = input.internal_comment?.trim() || null
   }
   const { error } = await supabase.from('orders').update(payload).eq('id', id)
   if (error) throw new Error(error.message)

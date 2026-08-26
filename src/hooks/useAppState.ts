@@ -405,6 +405,7 @@ export function useAppState(user: User | null): AppState {
           prev.map((order) =>
             order.id === id
               ? {
+                  ...order,
                   ...input,
                   id,
                   user_id: order.user_id,

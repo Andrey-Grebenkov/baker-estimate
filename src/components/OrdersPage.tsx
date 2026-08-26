@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Calendar, List, MessageSquare } from 'lucide-react'
+import { Calendar, FileText, List, MessageSquare } from 'lucide-react'
 import type { AppState } from '../hooks/useAppState'
 import { formatMoney } from '../domain/money'
 import { OrderModal } from './OrderModal'
 import { ClientReceiptModal } from './ClientReceiptModal'
 import { OrderCalendarView } from './OrderCalendarView'
 import { EditCommentModal } from './EditCommentModal'
+import { ViewInternalCommentModal } from './ViewInternalCommentModal'
 import { OrderStatusDropdown } from './OrderStatusDropdown'
 import { CompleteOrderModal } from './CompleteOrderModal'
 import type { Order, OrderInput, OrderStatus } from '../domain/types'
@@ -44,6 +45,7 @@ export function OrdersPage({ state }: { state: AppState }) {
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
   const [completingOrder, setCompletingOrder] = useState<Order | null>(null)
   const [commentOrder, setCommentOrder] = useState<Order | null>(null)
+  const [internalCommentOrder, setInternalCommentOrder] = useState<Order | null>(null)
 
   const sortedOrders = useMemo(
     () =>
@@ -84,6 +86,10 @@ export function OrdersPage({ state }: { state: AppState }) {
 
   const closeComment = () => {
     setCommentOrder(null)
+  }
+
+  const closeInternalComment = () => {
+    setInternalCommentOrder(null)
   }
 
   const handleStatusSelect = (order: Order, status: OrderStatus) => {
@@ -196,6 +202,12 @@ export function OrdersPage({ state }: { state: AppState }) {
                 </th>
                 <th
                   scope="col"
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
+                  Заметка
+                </th>
+                <th
+                  scope="col"
                   className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Действия
@@ -256,6 +268,15 @@ export function OrdersPage({ state }: { state: AppState }) {
                       }`}
                     >
                       {isCompleted ? 'Оплачено' : `${formatMoney(remaining)} ₽`}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-center">
+                      {order.internal_comment?.trim() && (
+                        <FileText
+                          onClick={() => setInternalCommentOrder(order)}
+                          className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                          data-testid="order-internal-comment-icon"
+                        />
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
@@ -327,6 +348,14 @@ export function OrdersPage({ state }: { state: AppState }) {
           onClose={closeComment}
           order={commentOrder}
           state={state}
+        />
+      )}
+
+      {internalCommentOrder && (
+        <ViewInternalCommentModal
+          isOpen={!!internalCommentOrder}
+          onClose={closeInternalComment}
+          order={internalCommentOrder}
         />
       )}
     </div>

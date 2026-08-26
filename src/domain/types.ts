@@ -131,6 +131,7 @@ export interface Order {
   paid_amount: number // Итоговая сумма к оплате
   advance_payment: number // Предоплата / аванс
   completion_comment?: string // Причина переплаты (доставка, чаевые и т.п.)
+  internal_comment?: string // Внутренняя заметка по заказу
   created_at?: string
 }
 
