@@ -171,51 +171,53 @@ export function RecipesPage({ state }: { state: AppState }) {
           {editingId ? 'Редактировать рецепт' : 'Создать рецепт'}
         </h2>
 
-        <div className="mb-4">
-          <label htmlFor="recipe-name" className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600">
-            Название рецепта
-            <RequiredMark />
-          </label>
-          <input
-            id="recipe-name"
-            type="text"
-            value={recipeName}
-            onChange={(e) => setRecipeName(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="Например, Бисквит ванильный"
-            data-testid="recipe-name-input"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="recipe-yield-amount"
-            className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600"
-          >
-            Выход рецепта
-          </label>
-          <div className="flex gap-2">
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-[2fr_1fr]">
+          <div>
+            <label htmlFor="recipe-name" className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600">
+              Название рецепта
+              <RequiredMark />
+            </label>
             <input
-              id="recipe-yield-amount"
-              type="number"
-              min="0"
-              step="0.01"
-              max={MAX_DEFAULT_QUANTITY}
-              value={yieldAmount}
-              onChange={(e) => setYieldAmount(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
-              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="1"
-              data-testid="recipe-yield-amount-input"
+              id="recipe-name"
+              type="text"
+              value={recipeName}
+              onChange={(e) => setRecipeName(e.target.value)}
+              className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              placeholder="Например, Бисквит ванильный"
+              data-testid="recipe-name-input"
             />
-            <select
-              value={yieldUnit}
-              onChange={(e) => setYieldUnit(e.target.value as Recipe['yield_unit'])}
-              className="h-10 w-20 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              data-testid="recipe-yield-unit-select"
+          </div>
+
+          <div>
+            <label
+              htmlFor="recipe-yield-amount"
+              className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600"
             >
-              <option value="кг">кг</option>
-              <option value="шт">шт</option>
-            </select>
+              Выход рецепта
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="recipe-yield-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                max={MAX_DEFAULT_QUANTITY}
+                value={yieldAmount}
+                onChange={(e) => setYieldAmount(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="1"
+                data-testid="recipe-yield-amount-input"
+              />
+              <select
+                value={yieldUnit}
+                onChange={(e) => setYieldUnit(e.target.value as Recipe['yield_unit'])}
+                className="h-10 w-20 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                data-testid="recipe-yield-unit-select"
+              >
+                <option value="кг">кг</option>
+                <option value="шт">шт</option>
+              </select>
+            </div>
           </div>
         </div>
 
