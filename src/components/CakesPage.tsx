@@ -32,7 +32,7 @@ export function CakesPage({ state }: { state: AppState }) {
   const [cakeName, setCakeName] = useState('')
   const [recipes, setRecipes] = useState<CakeRecipeItem[]>([])
   const [selectedRecipeId, setSelectedRecipeId] = useState('')
-  const [selectedMultiplier, setSelectedMultiplier] = useState('1')
+  const [selectedDesiredAmount, setSelectedDesiredAmount] = useState('1')
 
   const [showScaling, setShowScaling] = useState(false)
   const [sourceShape, setSourceShape] = useState<PanShape>('round')
@@ -87,7 +87,7 @@ export function CakesPage({ state }: { state: AppState }) {
     setCakeName('')
     setRecipes([])
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
-    setSelectedMultiplier('1')
+    setSelectedDesiredAmount('1')
     setShowScaling(false)
     setSourceShape('round')
     setSourceDiameter('16')
@@ -128,7 +128,7 @@ export function CakesPage({ state }: { state: AppState }) {
     setCakeName(cake.name)
     setRecipes(cake.recipes)
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
-    setSelectedMultiplier('1')
+    setSelectedDesiredAmount('1')
     setPackaging([...cake.packaging])
     setPackagingName('')
     setPackagingCost('')
@@ -160,9 +160,10 @@ export function CakesPage({ state }: { state: AppState }) {
       return
     }
 
-    const multiplier = Number(selectedMultiplier)
-    if (Number.isNaN(multiplier) || multiplier <= 0) {
-      setError('Коэффициент должен быть положительным числом')
+    const selectedRecipe = state.recipes.find((r) => r.id === selectedRecipeId)
+    const desiredAmount = Number(selectedDesiredAmount)
+    if (Number.isNaN(desiredAmount) || desiredAmount <= 0) {
+      setError('Вес / количество должен быть положительным числом')
       return
     }
 
@@ -171,8 +172,11 @@ export function CakesPage({ state }: { state: AppState }) {
       return
     }
 
+    const yieldAmount = selectedRecipe?.yield_amount ?? 1
+    const multiplier = desiredAmount / yieldAmount
+
     setRecipes((prev) => [...prev, { recipeId: selectedRecipeId, multiplier }])
-    setSelectedMultiplier('1')
+    setSelectedDesiredAmount(String(yieldAmount))
     setError(null)
   }
 
@@ -208,7 +212,7 @@ export function CakesPage({ state }: { state: AppState }) {
     const newMultiplier = roundToDecimal(scalingCoefficient, 4)
 
     if (Number.isNaN(newMultiplier) || newMultiplier <= 0) {
-      setError('Коэффициент должен быть положительным числом')
+      setError('Вес / количество должен быть положительным числом')
       return
     }
 
@@ -221,7 +225,9 @@ export function CakesPage({ state }: { state: AppState }) {
       }
       return [...prev, { recipeId: selectedRecipeId, multiplier: newMultiplier }]
     })
-    setSelectedMultiplier(String(newMultiplier))
+    const selectedRecipe = state.recipes.find((r) => r.id === selectedRecipeId)
+    const newDesiredAmount = roundToDecimal(newMultiplier * (selectedRecipe?.yield_amount ?? 1), 4)
+    setSelectedDesiredAmount(String(newDesiredAmount))
     setError(null)
   }
 
@@ -233,7 +239,8 @@ export function CakesPage({ state }: { state: AppState }) {
     const recipe = state.recipes.find((r) => r.id === cr.recipeId)
     const firstAvailable = state.recipes.find((r) => !recipes.some((item) => item.recipeId === r.id))
     setSelectedRecipeId(recipe?.id ?? firstAvailable?.id ?? '')
-    setSelectedMultiplier(String(cr.multiplier))
+    const desiredAmount = roundToDecimal(cr.multiplier * (recipe?.yield_amount ?? 1), 4)
+    setSelectedDesiredAmount(String(desiredAmount))
     setRecipes((prev) => prev.filter((r) => r.recipeId !== cr.recipeId))
     setError(null)
   }
@@ -389,6 +396,7 @@ export function CakesPage({ state }: { state: AppState }) {
     () => generateShoppingList(recipes, recipesById, ingredientsById),
     [recipes, recipesById, ingredientsById],
   )
+  const selectedRecipe = state.recipes.find((r) => r.id === selectedRecipeId)
 
   const handlePrint = (cakeId: string) => {
     const cake = state.cakes.find((c) => c.id === cakeId)
@@ -582,7 +590,12 @@ export function CakesPage({ state }: { state: AppState }) {
               <select
                 id="cake-recipe-select"
                 value={selectedRecipeId}
-                onChange={(e) => setSelectedRecipeId(e.target.value)}
+                onChange={(e) => {
+                  const recipeId = e.target.value
+                  setSelectedRecipeId(recipeId)
+                  const recipe = state.recipes.find((r) => r.id === recipeId)
+                  setSelectedDesiredAmount(String(recipe?.yield_amount ?? 1))
+                }}
                 className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 data-testid="cake-recipe-select"
               >
@@ -596,22 +609,31 @@ export function CakesPage({ state }: { state: AppState }) {
             </div>
 
             <div className="space-y-1">
-              <label htmlFor="cake-recipe-multiplier" className="inline-flex items-center gap-1 text-sm text-slate-600">
-                Коэффициент
+              <label htmlFor="cake-recipe-desired" className="inline-flex items-center gap-1 text-sm text-slate-600">
+                Нужный вес / кол-во
                 <RequiredMark />
               </label>
-              <input
-                id="cake-recipe-multiplier"
-                type="number"
-                min="0"
-                max={MAX_DEFAULT_PERCENT}
-                step="0.01"
-                value={selectedMultiplier}
-                onChange={(e) => setSelectedMultiplier(normalizeNumberString(e.target.value, MAX_DEFAULT_PERCENT))}
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                placeholder="1"
-                data-testid="cake-recipe-multiplier-input"
-              />
+              <div className="flex gap-2">
+                <input
+                  id="cake-recipe-desired"
+                  type="number"
+                  min="0"
+                  max={MAX_DEFAULT_QUANTITY}
+                  step="0.01"
+                  value={selectedDesiredAmount}
+                  onChange={(e) => setSelectedDesiredAmount(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                  disabled={!selectedRecipe}
+                  className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500"
+                  placeholder="1"
+                  data-testid="cake-recipe-desired-input"
+                />
+                <span
+                  className="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-slate-50 px-2 text-sm font-medium text-slate-600"
+                  data-testid="cake-recipe-desired-unit"
+                >
+                  {selectedRecipe?.yield_unit ?? 'кг'}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-end">
