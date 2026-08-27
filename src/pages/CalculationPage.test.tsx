@@ -147,6 +147,34 @@ describe('CalculationPage', () => {
     })
   })
 
+  it('blocks typing more than three digits after the decimal point', async () => {
+    render(<CalculationPage state={createMockState()} />)
+    fireEvent.change(screen.getByTestId('calc-cake-select'), {
+      target: { value: 'cake-1' },
+    })
+
+    const targetInput = screen.getByTestId('calc-target-weight-input') as HTMLInputElement
+    fireEvent.change(targetInput, { target: { value: '1.234' } })
+    await waitFor(() => {
+      expect(targetInput.value).toBe('1.234')
+    })
+
+    fireEvent.change(targetInput, { target: { value: '1.2345' } })
+    await waitFor(() => {
+      expect(targetInput.value).toBe('1.234')
+    })
+
+    fireEvent.change(targetInput, { target: { value: '12.345' } })
+    await waitFor(() => {
+      expect(targetInput.value).toBe('12.345')
+    })
+
+    fireEvent.change(targetInput, { target: { value: '12.3456' } })
+    await waitFor(() => {
+      expect(targetInput.value).toBe('12.345')
+    })
+  })
+
   it('applies pan scaling and updates the target weight and coefficient', async () => {
     render(<CalculationPage state={createMockState()} />)
     fireEvent.change(screen.getByTestId('calc-cake-select'), {

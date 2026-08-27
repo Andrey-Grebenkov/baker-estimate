@@ -179,7 +179,12 @@ export function CalculationPage({ state }: { state: AppState }) {
                     max={MAX_DEFAULT_QUANTITY}
                     step="0.01"
                     value={targetWeight}
-                    onChange={(e) => setTargetWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                    onChange={(e) => {
+                      const normalized = normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY)
+                      if (/^\d*\.?\d{0,3}$/.test(normalized)) {
+                        setTargetWeight(normalized)
+                      }
+                    }}
                     className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     placeholder="1"
                     data-testid="calc-target-weight-input"
