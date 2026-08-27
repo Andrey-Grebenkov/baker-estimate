@@ -43,6 +43,10 @@ export interface Recipe {
   name: string
   ingredients: RecipeIngredient[]
 
+  // Базовый выход рецепта (фаза 1 замены коэффициента)
+  yield_amount?: number
+  yield_unit?: 'кг' | 'шт'
+
   // Рассчитываемые поля:
   totalWeight: number // Сумма quantityUsed всех ингредиентов (если в 'g' или 'ml')
   totalCost: number // Сумма (quantityUsed * pricePerBaseUnit)

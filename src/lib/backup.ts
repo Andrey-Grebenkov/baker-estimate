@@ -176,6 +176,8 @@ function toDbRecipe(recipe: Recipe, userId: string) {
     user_id: userId,
     name: recipe.name,
     ingredients: recipe.ingredients,
+    yield_amount: recipe.yield_amount ?? 1,
+    yield_unit: recipe.yield_unit ?? 'кг',
     total_weight: recipe.totalWeight,
     total_cost: recipe.totalCost,
   }
@@ -239,6 +241,8 @@ function buildDomainRecipes(
         user_id: userId,
         name: r.name,
         ingredients: r.ingredients,
+        yield_amount: r.yield_amount,
+        yield_unit: r.yield_unit,
       },
       ingredientsById,
     ),

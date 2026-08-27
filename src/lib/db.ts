@@ -30,6 +30,8 @@ interface DbRecipe {
   user_id: string
   name: string
   ingredients: Recipe['ingredients']
+  yield_amount: number | null
+  yield_unit: string | null
   total_weight: number
   total_cost: number
 }
@@ -96,6 +98,8 @@ function mapRecipe(row: DbRecipe): Recipe {
     user_id: row.user_id,
     name: row.name,
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
+    yield_amount: row.yield_amount == null ? undefined : toNumber(row.yield_amount),
+    yield_unit: (row.yield_unit as Recipe['yield_unit']) ?? undefined,
     totalWeight: toNumber(row.total_weight),
     totalCost: toNumber(row.total_cost),
   }
@@ -227,6 +231,8 @@ export async function addRecipe(
     user_id: userId,
     name: recipe.name,
     ingredients: recipe.ingredients,
+    yield_amount: recipe.yield_amount ?? 1,
+    yield_unit: recipe.yield_unit ?? 'кг',
     total_weight: recipe.totalWeight,
     total_cost: recipe.totalCost,
   })
@@ -244,13 +250,20 @@ export async function updateRecipe(
     { ...input, id, user_id: userId, ingredients: validIngredients },
     ingredientsById,
   )
-  const { error } = await supabase.from('recipes').update({
+  const payload: Record<string, unknown> = {
     name: recipe.name,
     user_id: userId,
     ingredients: recipe.ingredients,
     total_weight: recipe.totalWeight,
     total_cost: recipe.totalCost,
-  }).eq('id', id)
+  }
+  if (recipe.yield_amount !== undefined) {
+    payload.yield_amount = recipe.yield_amount
+  }
+  if (recipe.yield_unit !== undefined) {
+    payload.yield_unit = recipe.yield_unit
+  }
+  const { error } = await supabase.from('recipes').update(payload).eq('id', id)
   if (error) throw new Error(error.message)
 }
 

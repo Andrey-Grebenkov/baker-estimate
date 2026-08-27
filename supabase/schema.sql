@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS public.recipes (
   name TEXT NOT NULL,
   ingredients JSONB NOT NULL DEFAULT '[]'::jsonb,
 
+  yield_amount NUMERIC(12, 3) NOT NULL DEFAULT 1,
+  yield_unit TEXT NOT NULL DEFAULT 'кг' CHECK (yield_unit IN ('кг', 'шт')),
+
   total_weight NUMERIC(12, 3) NOT NULL DEFAULT 0,
   total_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
 

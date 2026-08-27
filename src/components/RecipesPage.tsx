@@ -16,6 +16,8 @@ export function RecipesPage({ state }: { state: AppState }) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [recipeName, setRecipeName] = useState('')
+  const [yieldAmount, setYieldAmount] = useState('1')
+  const [yieldUnit, setYieldUnit] = useState<Recipe['yield_unit']>('кг')
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([])
   const [selectedIngredientId, setSelectedIngredientId] = useState('')
   const [selectedQuantity, setSelectedQuantity] = useState('')
@@ -25,6 +27,8 @@ export function RecipesPage({ state }: { state: AppState }) {
     setIsFormOpen(false)
     setEditingId(null)
     setRecipeName('')
+    setYieldAmount('1')
+    setYieldUnit('кг')
     setRecipeIngredients([])
     setSelectedIngredientId(state.ingredients[0]?.id ?? '')
     setSelectedQuantity('')
@@ -45,6 +49,8 @@ export function RecipesPage({ state }: { state: AppState }) {
     setIsFormOpen(true)
     setEditingId(recipe.id)
     setRecipeName(recipe.name)
+    setYieldAmount(recipe.yield_amount != null ? String(recipe.yield_amount) : '1')
+    setYieldUnit(recipe.yield_unit ?? 'кг')
     setRecipeIngredients(recipe.ingredients)
     setSelectedIngredientId(firstUnusedIngredient(recipe.ingredients))
     setSelectedQuantity('')
@@ -112,15 +118,21 @@ export function RecipesPage({ state }: { state: AppState }) {
 
     const editedId = editingId
 
+    const parsedYieldAmount = Number(yieldAmount) > 0 ? Number(yieldAmount) : 1
+
     if (editingId) {
       state.updateRecipe(editingId, {
         name: trimmedName,
         ingredients: recipeIngredients,
+        yield_amount: parsedYieldAmount,
+        yield_unit: yieldUnit,
       })
     } else {
       state.addRecipe({
         name: trimmedName,
         ingredients: recipeIngredients,
+        yield_amount: parsedYieldAmount,
+        yield_unit: yieldUnit,
       })
     }
 
@@ -173,6 +185,38 @@ export function RecipesPage({ state }: { state: AppState }) {
             placeholder="Например, Бисквит ванильный"
             data-testid="recipe-name-input"
           />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="recipe-yield-amount"
+            className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600"
+          >
+            Выход рецепта
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="recipe-yield-amount"
+              type="number"
+              min="0"
+              step="0.01"
+              max={MAX_DEFAULT_QUANTITY}
+              value={yieldAmount}
+              onChange={(e) => setYieldAmount(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              placeholder="1"
+              data-testid="recipe-yield-amount-input"
+            />
+            <select
+              value={yieldUnit}
+              onChange={(e) => setYieldUnit(e.target.value as Recipe['yield_unit'])}
+              className="h-10 w-20 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              data-testid="recipe-yield-unit-select"
+            >
+              <option value="кг">кг</option>
+              <option value="шт">шт</option>
+            </select>
+          </div>
         </div>
 
         <div className="mb-4 card-inset p-4">
@@ -396,6 +440,8 @@ function RecipeCard({
     const payload: Omit<RecipeInput, 'id' | 'user_id'> = {
       name: recipe.name,
       ingredients: newIngredients,
+      yield_amount: recipe.yield_amount,
+      yield_unit: recipe.yield_unit,
     }
 
     state.updateRecipe(recipe.id, payload)
