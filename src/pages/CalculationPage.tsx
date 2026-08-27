@@ -27,6 +27,11 @@ function unitDisplay(quantity: number, unit: MeasurementUnit): string {
   return `${rounded} ${unitLabelFor(unit)}`
 }
 
+function formatScaleCoefficient(value: number): string {
+  if (!Number.isFinite(value)) return '—'
+  return String(Number(value.toFixed(3)))
+}
+
 export function CalculationPage({ state }: { state: AppState }) {
   const [selectedCakeId, setSelectedCakeId] = useState('')
   const [targetWeight, setTargetWeight] = useState('')
@@ -185,11 +190,11 @@ export function CalculationPage({ state }: { state: AppState }) {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-slate-700/50">
-                <p className="text-xs text-slate-500 dark:text-slate-400">Коэффициент масштаба</p>
-                <p className="font-medium text-slate-800 dark:text-slate-200" data-testid="calc-multiplier-value">
-                  {multiplier.toFixed(4)}
-                </p>
+              <div className="flex h-10 items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 dark:bg-slate-700/50">
+                <span className="text-xs text-slate-500 dark:text-slate-400">Коэффициент масштаба</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200" data-testid="calc-multiplier-value">
+                  {formatScaleCoefficient(multiplier)}
+                </span>
               </div>
             </div>
 

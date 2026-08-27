@@ -105,5 +105,5 @@ export function formatShoppingList(items: ShoppingListItem[], cakeName?: string)
 export function unitLabelFor(unit: MeasurementUnit): string {
   if (unit === 'g') return 'г'
   if (unit === 'ml') return 'мл'
-  return 'шт.'
+  return 'шт'
 }
