@@ -153,7 +153,11 @@ export function buildCake(
   const totalDecorCost = calculateAdditionalItemsCost(input.decor)
   const totalOverheadsCost = calculateOverheadsCost(input.overheads)
   const totalWeightGrams = calculateCakeRecipesWeight(input.recipes, recipesById)
-  const weightKg = gramsToKilograms(totalWeightGrams)
+  const calculatedWeightKg = gramsToKilograms(totalWeightGrams)
+  const weightKg =
+    input.base_yield_weight != null && input.base_yield_weight > 0
+      ? input.base_yield_weight
+      : calculatedWeightKg
   const finalCostPrice = calculateFinalCostPrice(
     totalIngredientsCost,
     totalPackagingCost,

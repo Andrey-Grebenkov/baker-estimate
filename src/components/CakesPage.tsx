@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
 import { CakePrintView } from './CakePrintView'
 import { generateId } from '../lib/id'
-import type { CakeAdditionalItem, CakeInput, CakeRecipeItem, Ingredient, Overheads, Recipe } from '../domain/types'
+import type { Cake, CakeAdditionalItem, CakeInput, CakeRecipeItem, Ingredient, Overheads, Recipe } from '../domain/types'
 import { calculateFinalCostPrice, type CakeDetails } from '../domain/cake'
 import { formatMoney, roundToCurrency } from '../domain/money'
 import {
@@ -26,13 +26,28 @@ import { ShoppingListModal } from './ShoppingListModal'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
 
+function recalculateRecipeMultipliers(
+  items: CakeRecipeItem[],
+  baseYieldWeight: number,
+  recipesById: Record<string, Recipe>,
+): CakeRecipeItem[] {
+  const totalYield = items.reduce((sum, item) => {
+    const recipe = recipesById[item.recipeId]
+    return sum + (recipe?.yield_amount ?? 1)
+  }, 0)
+  const scale = totalYield > 0 ? baseYieldWeight / totalYield : 1
+  return items.map((item) => ({ ...item, multiplier: scale }))
+}
+
 export function CakesPage({ state }: { state: AppState }) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [cakeName, setCakeName] = useState('')
   const [recipes, setRecipes] = useState<CakeRecipeItem[]>([])
   const [selectedRecipeId, setSelectedRecipeId] = useState('')
-  const [selectedDesiredAmount, setSelectedDesiredAmount] = useState('1')
+
+  const [baseYieldWeight, setBaseYieldWeight] = useState('1')
+  const [baseYieldUnit, setBaseYieldUnit] = useState<Cake['base_yield_unit']>('кг')
 
   const [showScaling, setShowScaling] = useState(false)
   const [sourceShape, setSourceShape] = useState<PanShape>('round')
@@ -87,7 +102,8 @@ export function CakesPage({ state }: { state: AppState }) {
     setCakeName('')
     setRecipes([])
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
-    setSelectedDesiredAmount('1')
+    setBaseYieldWeight('1')
+    setBaseYieldUnit('кг')
     setShowScaling(false)
     setSourceShape('round')
     setSourceDiameter('16')
@@ -128,7 +144,8 @@ export function CakesPage({ state }: { state: AppState }) {
     setCakeName(cake.name)
     setRecipes(cake.recipes)
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
-    setSelectedDesiredAmount('1')
+    setBaseYieldWeight(cake.base_yield_weight != null ? String(cake.base_yield_weight) : '1')
+    setBaseYieldUnit(cake.base_yield_unit ?? 'кг')
     setPackaging([...cake.packaging])
     setPackagingName('')
     setPackagingCost('')
@@ -160,23 +177,18 @@ export function CakesPage({ state }: { state: AppState }) {
       return
     }
 
-    const selectedRecipe = state.recipes.find((r) => r.id === selectedRecipeId)
-    const desiredAmount = Number(selectedDesiredAmount)
-    if (Number.isNaN(desiredAmount) || desiredAmount <= 0) {
-      setError('Вес / количество должен быть положительным числом')
-      return
-    }
-
     if (recipes.some((r) => r.recipeId === selectedRecipeId)) {
       setError('Этот рецепт уже добавлен. Удалите старый или выберите другой.')
       return
     }
 
-    const yieldAmount = selectedRecipe?.yield_amount ?? 1
-    const multiplier = desiredAmount / yieldAmount
-
-    setRecipes((prev) => [...prev, { recipeId: selectedRecipeId, multiplier }])
-    setSelectedDesiredAmount(String(yieldAmount))
+    setRecipes((prev) =>
+      recalculateRecipeMultipliers(
+        [...prev, { recipeId: selectedRecipeId, multiplier: 1 }],
+        Number(baseYieldWeight) || 1,
+        recipesById,
+      ),
+    )
     setError(null)
   }
 
@@ -195,11 +207,7 @@ export function CakesPage({ state }: { state: AppState }) {
   const scalingCoefficient =
     sourcePan && targetPan ? roundToDecimal(calculateScalingCoefficient(sourcePan, targetPan), 4) : 0
 
-  const applyRecipeScaling = () => {
-    if (!selectedRecipeId) {
-      setError('Выберите рецепт')
-      return
-    }
+  const applyCakeScaling = () => {
     if (!sourcePan || !targetPan) {
       setError('Введите положительные размеры обеих форм')
       return
@@ -209,40 +217,29 @@ export function CakesPage({ state }: { state: AppState }) {
       return
     }
 
-    const newMultiplier = roundToDecimal(scalingCoefficient, 4)
+    const currentBase = Number(baseYieldWeight) || 1
+    const newBase = roundToDecimal(currentBase * scalingCoefficient, 4)
 
-    if (Number.isNaN(newMultiplier) || newMultiplier <= 0) {
-      setError('Вес / количество должен быть положительным числом')
+    if (Number.isNaN(newBase) || newBase <= 0) {
+      setError('Базовый выход должен быть положительным числом')
       return
     }
 
-    setRecipes((prev) => {
-      const exists = prev.some((r) => r.recipeId === selectedRecipeId)
-      if (exists) {
-        return prev.map((r) =>
-          r.recipeId === selectedRecipeId ? { ...r, multiplier: newMultiplier } : r,
-        )
-      }
-      return [...prev, { recipeId: selectedRecipeId, multiplier: newMultiplier }]
-    })
-    const selectedRecipe = state.recipes.find((r) => r.id === selectedRecipeId)
-    const newDesiredAmount = roundToDecimal(newMultiplier * (selectedRecipe?.yield_amount ?? 1), 4)
-    setSelectedDesiredAmount(String(newDesiredAmount))
+    setBaseYieldWeight(String(newBase))
+    setRecipes((prev) =>
+      recalculateRecipeMultipliers(prev, newBase, recipesById),
+    )
     setError(null)
   }
 
   const removeRecipeFromCake = (recipeId: string) => {
-    setRecipes((prev) => prev.filter((r) => r.recipeId !== recipeId))
-  }
-
-  const editRecipeInCake = (cr: CakeRecipeItem) => {
-    const recipe = state.recipes.find((r) => r.id === cr.recipeId)
-    const firstAvailable = state.recipes.find((r) => !recipes.some((item) => item.recipeId === r.id))
-    setSelectedRecipeId(recipe?.id ?? firstAvailable?.id ?? '')
-    const desiredAmount = roundToDecimal(cr.multiplier * (recipe?.yield_amount ?? 1), 4)
-    setSelectedDesiredAmount(String(desiredAmount))
-    setRecipes((prev) => prev.filter((r) => r.recipeId !== cr.recipeId))
-    setError(null)
+    setRecipes((prev) =>
+      recalculateRecipeMultipliers(
+        prev.filter((r) => r.recipeId !== recipeId),
+        Number(baseYieldWeight) || 1,
+        recipesById,
+      ),
+    )
   }
 
   const addPackaging = () => {
@@ -367,6 +364,7 @@ export function CakesPage({ state }: { state: AppState }) {
 
     const recipesById = Object.fromEntries(state.recipes.map((r) => [r.id, r])) as Record<string, Recipe>
     const id = editingId ?? generateId()
+    const baseYield = Number(baseYieldWeight) || 1
 
     try {
       return {
@@ -376,8 +374,19 @@ export function CakesPage({ state }: { state: AppState }) {
         packaging,
         decor,
         overheads,
+        base_yield_weight: baseYield,
+        base_yield_unit: baseYieldUnit,
         marginPercent: margin,
-        ...calculateDerivedCake(recipes, packaging, decor, overheads, margin, recipesById),
+        ...calculateDerivedCake(
+          recipes,
+          packaging,
+          decor,
+          overheads,
+          margin,
+          recipesById,
+          baseYield,
+          baseYieldUnit,
+        ),
       }
     } catch {
       return null
@@ -388,6 +397,12 @@ export function CakesPage({ state }: { state: AppState }) {
     () => Object.fromEntries(state.recipes.map((r) => [r.id, r])) as Record<string, Recipe>,
     [state.recipes],
   )
+
+  useEffect(() => {
+    const base = Number(baseYieldWeight) || 1
+    setRecipes((prev) => recalculateRecipeMultipliers(prev, base, recipesById))
+  }, [baseYieldWeight, baseYieldUnit, recipesById])
+
   const ingredientsById = useMemo(
     () => Object.fromEntries(state.ingredients.map((i) => [i.id, i])) as Record<string, Ingredient>,
     [state.ingredients],
@@ -396,7 +411,6 @@ export function CakesPage({ state }: { state: AppState }) {
     () => generateShoppingList(recipes, recipesById, ingredientsById),
     [recipes, recipesById, ingredientsById],
   )
-  const selectedRecipe = state.recipes.find((r) => r.id === selectedRecipeId)
 
   const handlePrint = (cakeId: string) => {
     const cake = state.cakes.find((c) => c.id === cakeId)
@@ -435,12 +449,14 @@ export function CakesPage({ state }: { state: AppState }) {
       return
     }
 
-    const payload = {
+    const payload: Omit<CakeInput, 'id' | 'user_id'> = {
       name: trimmedName,
       recipes,
       packaging,
       decor,
       overheads,
+      base_yield_weight: Number(baseYieldWeight) || 1,
+      base_yield_unit: baseYieldUnit,
       marginPercent: margin,
       image_url: imageUrl ?? undefined,
     }
@@ -581,8 +597,8 @@ export function CakesPage({ state }: { state: AppState }) {
         <div className="mb-4 card-inset p-4">
           <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Полуфабрикаты</h3>
 
-          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1 lg:col-span-2">
+          <div className="grid items-end gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
               <label htmlFor="cake-recipe-select" className="inline-flex items-center gap-1 text-sm text-slate-600">
                 Рецепт
                 <RequiredMark />
@@ -590,12 +606,7 @@ export function CakesPage({ state }: { state: AppState }) {
               <select
                 id="cake-recipe-select"
                 value={selectedRecipeId}
-                onChange={(e) => {
-                  const recipeId = e.target.value
-                  setSelectedRecipeId(recipeId)
-                  const recipe = state.recipes.find((r) => r.id === recipeId)
-                  setSelectedDesiredAmount(String(recipe?.yield_amount ?? 1))
-                }}
+                onChange={(e) => setSelectedRecipeId(e.target.value)}
                 className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 data-testid="cake-recipe-select"
               >
@@ -608,34 +619,6 @@ export function CakesPage({ state }: { state: AppState }) {
               </select>
             </div>
 
-            <div className="space-y-1">
-              <label htmlFor="cake-recipe-desired" className="inline-flex items-center gap-1 text-sm text-slate-600">
-                Нужный вес / кол-во
-                <RequiredMark />
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="cake-recipe-desired"
-                  type="number"
-                  min="0"
-                  max={MAX_DEFAULT_QUANTITY}
-                  step="0.01"
-                  value={selectedDesiredAmount}
-                  onChange={(e) => setSelectedDesiredAmount(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
-                  disabled={!selectedRecipe}
-                  className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500"
-                  placeholder="1"
-                  data-testid="cake-recipe-desired-input"
-                />
-                <span
-                  className="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-slate-50 px-2 text-sm font-medium text-slate-600"
-                  data-testid="cake-recipe-desired-unit"
-                >
-                  {selectedRecipe?.yield_unit ?? 'кг'}
-                </span>
-              </div>
-            </div>
-
             <div className="flex items-end">
               <button
                 type="button"
@@ -645,6 +628,103 @@ export function CakesPage({ state }: { state: AppState }) {
               >
                 Добавить
               </button>
+            </div>
+          </div>
+
+
+          {recipes.length > 0 && (
+            <ul className="mt-4 space-y-2" data-testid="cake-recipe-list">
+              {recipes.map((cr) => {
+                const recipe = state.recipes.find((r) => r.id === cr.recipeId)
+                if (!recipe) {
+                  return (
+                    <li
+                      key={cr.recipeId}
+                      className="flex items-center justify-between rounded-md bg-rose-50 p-2 ring-1 ring-rose-200"
+                      data-testid="cake-recipe-row"
+                    >
+                      <span className="text-sm text-rose-700">Удалённый рецепт</span>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipeFromCake(cr.recipeId)}
+                        className="text-sm text-rose-700 hover:text-rose-800"
+                        data-testid="cake-remove-recipe-button"
+                      >
+                        Удалить
+                      </button>
+                    </li>
+                  )
+                }
+
+                return (
+                  <li
+                    key={cr.recipeId}
+                    className="flex items-center justify-between rounded-md bg-white p-2 ring-1 ring-slate-200"
+                    data-testid="cake-recipe-row"
+                  >
+                    <span className="text-sm text-slate-700">{recipe.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRecipeFromCake(cr.recipeId)}
+                      className="text-sm text-rose-600 hover:text-rose-700"
+                      data-testid="cake-remove-recipe-button"
+                    >
+                      Удалить
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setShowShoppingList(true)}
+            className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            data-testid="cake-shopping-list-button"
+          >
+            Сформировать список покупок
+          </button>
+        </div>
+
+        <div className="mb-4 card-inset p-4" data-testid="cake-base-yield-section">
+          <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Базовый выход торта</h3>
+
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-1">
+              <label htmlFor="cake-base-yield-weight" className="inline-flex items-center gap-1 text-sm text-slate-600">
+                Вес / кол-во
+                <RequiredMark />
+              </label>
+              <input
+                id="cake-base-yield-weight"
+                type="number"
+                min="0"
+                max={MAX_DEFAULT_QUANTITY}
+                step="0.01"
+                value={baseYieldWeight}
+                onChange={(e) => setBaseYieldWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="1"
+                data-testid="cake-base-yield-weight-input"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="cake-base-yield-unit" className="inline-flex items-center gap-1 text-sm text-slate-600">
+                Единица
+                <RequiredMark />
+              </label>
+              <select
+                id="cake-base-yield-unit"
+                value={baseYieldUnit}
+                onChange={(e) => setBaseYieldUnit(e.target.value as Cake['base_yield_unit'])}
+                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                data-testid="cake-base-yield-unit-select"
+              >
+                <option value="кг">кг</option>
+                <option value="шт">шт</option>
+              </select>
             </div>
           </div>
 
@@ -771,7 +851,7 @@ export function CakesPage({ state }: { state: AppState }) {
                   </span>
                   <button
                     type="button"
-                    onClick={applyRecipeScaling}
+                    onClick={applyCakeScaling}
                     disabled={!sourcePan || !targetPan}
                     className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     data-testid="cake-apply-scaling-button"
@@ -782,84 +862,6 @@ export function CakesPage({ state }: { state: AppState }) {
               </div>
             )}
           </div>
-
-          {recipes.length > 0 && (
-            <ul className="mt-4 space-y-2" data-testid="cake-recipe-list">
-              {recipes.map((cr) => {
-                const recipe = state.recipes.find((r) => r.id === cr.recipeId)
-                if (!recipe) {
-                  return (
-                    <li
-                      key={cr.recipeId}
-                      className="flex items-center justify-between rounded-md bg-rose-50 p-2 ring-1 ring-rose-200"
-                      data-testid="cake-recipe-row"
-                    >
-                      <span className="text-sm text-rose-700">
-                        Удалённый рецепт — {cr.multiplier}
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => editRecipeInCake(cr)}
-                          className="text-sm text-indigo-600 hover:text-indigo-700"
-                          data-testid="cake-edit-recipe-button"
-                        >
-                          Изменить
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeRecipeFromCake(cr.recipeId)}
-                          className="text-sm text-rose-700 hover:text-rose-800"
-                          data-testid="cake-remove-recipe-button"
-                        >
-                          Удалить
-                        </button>
-                      </div>
-                    </li>
-                  )
-                }
-
-                return (
-                  <li
-                    key={cr.recipeId}
-                    className="flex items-center justify-between rounded-md bg-white p-2 ring-1 ring-slate-200"
-                    data-testid="cake-recipe-row"
-                  >
-                    <span className="text-sm text-slate-700">
-                      {recipe.name} × {cr.multiplier}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => editRecipeInCake(cr)}
-                        className="text-sm text-indigo-600 hover:text-indigo-700"
-                        data-testid="cake-edit-recipe-button"
-                      >
-                        Изменить
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeRecipeFromCake(cr.recipeId)}
-                        className="text-sm text-rose-600 hover:text-rose-700"
-                        data-testid="cake-remove-recipe-button"
-                      >
-                        Удалить
-                      </button>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setShowShoppingList(true)}
-            className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
-            data-testid="cake-shopping-list-button"
-          >
-            Сформировать список покупок
-          </button>
         </div>
 
         <div className="mb-4 card-inset p-4">
@@ -1237,18 +1239,20 @@ function calculateDerivedCake(
   overheads: Overheads,
   marginPercent: number,
   recipesById: Record<string, Recipe>,
-): Omit<CakeDetails, 'id' | 'name' | 'recipes' | 'packaging' | 'decor' | 'overheads' | 'marginPercent'> {
+  baseYieldWeight: number,
+  baseYieldUnit: Cake['base_yield_unit'],
+): Omit<
+  CakeDetails,
+  'id' | 'name' | 'recipes' | 'packaging' | 'decor' | 'overheads' | 'marginPercent'
+> {
   let totalIngredientsCost = 0
-  let totalWeightGrams = 0
 
   for (const item of recipes) {
     const recipe = recipesById[item.recipeId]
     if (!recipe) {
-      // Пропускаем рецепты, которые были удалены из базы.
       continue
     }
     totalIngredientsCost += roundToCurrency(recipe.totalCost * item.multiplier)
-    totalWeightGrams += recipe.totalWeight * item.multiplier
   }
 
   totalIngredientsCost = roundToCurrency(totalIngredientsCost)
@@ -1264,7 +1268,6 @@ function calculateDerivedCake(
     overheads.workHours * overheads.hourlyRate + overheads.fixedCosts,
   )
 
-  const weightKg = totalWeightGrams / 1000
   const finalCostPrice = calculateFinalCostPrice(
     totalIngredientsCost,
     totalPackagingCost,
@@ -1272,8 +1275,11 @@ function calculateDerivedCake(
     totalOverheadsCost,
   )
   const recommendedPrice = roundToCurrency(finalCostPrice * (1 + marginPercent / 100))
+  const weightKg = baseYieldWeight
 
   return {
+    base_yield_weight: baseYieldWeight,
+    base_yield_unit: baseYieldUnit,
     totalIngredientsCost,
     totalPackagingCost,
     totalDecorCost,
@@ -1286,8 +1292,17 @@ function calculateDerivedCake(
   }
 }
 
+function formatCakeWeight(weight: number, unit: 'кг' | 'шт'): string {
+  const trimmed = Number(weight.toFixed(3))
+  if (unit === 'шт') return `${trimmed} шт`
+  return `${(weight * 1000).toFixed(0)} г / ${trimmed} кг`
+}
+
 function CakePreview({ cake }: { cake: CakeDetails | null }) {
   if (!cake) return null
+
+  const unit = cake.base_yield_unit ?? 'кг'
+  const perUnitLabel = unit === 'шт' ? 'За 1 шт' : 'За 1 кг'
 
   return (
     <div
@@ -1297,15 +1312,18 @@ function CakePreview({ cake }: { cake: CakeDetails | null }) {
       <h3 className="mb-3 text-lg font-semibold text-slate-800">Предварительный расчёт</h3>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Вес" value={`${(cake.weightKg * 1000).toFixed(0)} г / ${cake.weightKg.toFixed(3)} кг`} />
+        <Metric
+          label="Вес"
+          value={formatCakeWeight(cake.base_yield_weight ?? cake.weightKg, unit)}
+        />
         <Metric label="Себестоимость" value={`${formatMoney(cake.finalCostPrice)} ₽`} />
         <Metric label="Цена продажи" value={`${formatMoney(cake.recommendedPrice)} ₽`} />
         <Metric label="Наценка" value={`${cake.marginPercent}%`} />
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Metric label="За 1 кг (себест.)" value={`${formatMoney(cake.costPerKg)} ₽/кг`} />
-        <Metric label="За 1 кг (продажа)" value={`${formatMoney(cake.recommendedPricePerKg)} ₽/кг`} />
+        <Metric label={`${perUnitLabel} (себест.)`} value={`${formatMoney(cake.costPerKg)} ₽/${unit}`} />
+        <Metric label={`${perUnitLabel} (продажа)`} value={`${formatMoney(cake.recommendedPricePerKg)} ₽/${unit}`} />
       </div>
     </div>
   )
@@ -1326,41 +1344,38 @@ function CakeCard({
 }) {
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
   const [selectedReplacementId, setSelectedReplacementId] = useState('')
-  const [replacementMultiplier, setReplacementMultiplier] = useState('')
 
-  const handleStartReplace = (missingRecipeId: string, oldMultiplier: number) => {
+  const handleStartReplace = (missingRecipeId: string) => {
     setEditingRecipeId(missingRecipeId)
     const available = state.recipes.filter(
       (r) => !cake.recipes.some((cr) => cr.recipeId === r.id && cr.recipeId !== missingRecipeId),
     )
     setSelectedReplacementId(available[0]?.id ?? '')
-    setReplacementMultiplier(String(oldMultiplier))
   }
 
   const handleCancelReplace = () => {
     setEditingRecipeId(null)
     setSelectedReplacementId('')
-    setReplacementMultiplier('')
   }
 
   const handleSaveReplacement = (missingRecipeId: string) => {
     if (!selectedReplacementId) return
 
-    const multiplier = Number(replacementMultiplier)
-    if (Number.isNaN(multiplier) || multiplier <= 0) return
-
+    const recipesById = Object.fromEntries(state.recipes.map((r) => [r.id, r])) as Record<string, Recipe>
     const newRecipes = cake.recipes.map((cr) =>
-      cr.recipeId === missingRecipeId
-        ? { recipeId: selectedReplacementId, multiplier }
-        : cr,
+      cr.recipeId === missingRecipeId ? { recipeId: selectedReplacementId, multiplier: 1 } : cr,
     )
+    const baseYield = cake.base_yield_weight ?? cake.weightKg
+    const scaledRecipes = recalculateRecipeMultipliers(newRecipes, baseYield, recipesById)
 
     const payload: Omit<CakeInput, 'id' | 'user_id'> = {
       name: cake.name,
-      recipes: newRecipes,
+      recipes: scaledRecipes,
       packaging: cake.packaging,
       decor: cake.decor,
       overheads: cake.overheads,
+      base_yield_weight: cake.base_yield_weight,
+      base_yield_unit: cake.base_yield_unit,
       marginPercent: cake.marginPercent,
       image_url: cake.image_url,
     }
@@ -1368,7 +1383,6 @@ function CakeCard({
     state.updateCake(cake.id, payload)
     setEditingRecipeId(null)
     setSelectedReplacementId('')
-    setReplacementMultiplier('')
   }
 
   return (
@@ -1415,21 +1429,10 @@ function CakeCard({
                         </option>
                       ))}
                   </select>
-                  <input
-                    type="number"
-                    min="0"
-                    max={MAX_DEFAULT_PERCENT}
-                    step="0.01"
-                    value={replacementMultiplier}
-                    onChange={(e) => setReplacementMultiplier(normalizeNumberString(e.target.value, MAX_DEFAULT_PERCENT))}
-                    className="h-9 w-28 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    data-testid="cake-replace-recipe-multiplier"
-                  />
-                  <span className="text-sm text-slate-600">коэф.</span>
                   <button
                     type="button"
                     onClick={() => handleSaveReplacement(cr.recipeId)}
-                    disabled={!selectedReplacementId || Number(replacementMultiplier) <= 0 || state.isLoading}
+                    disabled={!selectedReplacementId || state.isLoading}
                     className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     data-testid="cake-replace-recipe-save"
                   >
@@ -1451,7 +1454,7 @@ function CakeCard({
               <button
                 key={cr.recipeId}
                 type="button"
-                onClick={() => handleStartReplace(cr.recipeId, cr.multiplier)}
+                onClick={() => handleStartReplace(cr.recipeId)}
                 disabled={state.isLoading}
                 className="mt-1 block text-left text-sm font-medium text-rose-600 hover:text-rose-700 disabled:text-slate-400"
                 data-testid="cake-missing-recipe-warning"
@@ -1493,15 +1496,24 @@ function CakeCard({
         className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 print:hidden"
         data-testid="cake-result-card"
       >
-        <Metric label="Вес" value={`${(cake.weightKg * 1000).toFixed(0)} г / ${cake.weightKg.toFixed(3)} кг`} />
+        <Metric
+          label="Вес"
+          value={formatCakeWeight(cake.base_yield_weight ?? cake.weightKg, cake.base_yield_unit ?? 'кг')}
+        />
         <Metric label="Себестоимость" value={`${formatMoney(cake.finalCostPrice)} ₽`} />
         <Metric label="Цена продажи" value={`${formatMoney(cake.recommendedPrice)} ₽`} />
         <Metric label="Наценка" value={`${cake.marginPercent}%`} />
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
-        <Metric label="За 1 кг (себест.)" value={`${formatMoney(cake.costPerKg)} ₽/кг`} />
-        <Metric label="За 1 кг (продажа)" value={`${formatMoney(cake.recommendedPricePerKg)} ₽/кг`} />
+        <Metric
+          label={cake.base_yield_unit === 'шт' ? 'За 1 шт (себест.)' : 'За 1 кг (себест.)'}
+          value={`${formatMoney(cake.costPerKg)} ₽/${cake.base_yield_unit ?? 'кг'}`}
+        />
+        <Metric
+          label={cake.base_yield_unit === 'шт' ? 'За 1 шт (продажа)' : 'За 1 кг (продажа)'}
+          value={`${formatMoney(cake.recommendedPricePerKg)} ₽/${cake.base_yield_unit ?? 'кг'}`}
+        />
         <Metric
           label="Структура затрат"
           value={`ингр. ${formatMoney(cake.totalIngredientsCost)} ₽ + упак. ${formatMoney(

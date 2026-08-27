@@ -90,6 +90,10 @@ export interface Cake {
   decor: CakeAdditionalItem[]
   overheads: Overheads
 
+  // Базовый выход торта (фаза упрощения сборки)
+  base_yield_weight?: number
+  base_yield_unit?: 'кг' | 'шт'
+
   marginPercent: number // Желаемая наценка в процентах (например, 30%)
 
   // Итоговые расчетные поля:

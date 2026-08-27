@@ -61,6 +61,9 @@ CREATE TABLE IF NOT EXISTS public.cakes (
 
   margin_percent NUMERIC(5, 2) NOT NULL DEFAULT 0,
 
+  base_yield_weight NUMERIC(12, 3) NOT NULL DEFAULT 1,
+  base_yield_unit TEXT NOT NULL DEFAULT 'кг' CHECK (base_yield_unit IN ('кг', 'шт')),
+
   -- Рассчитываемые поля
   total_ingredients_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
   total_packaging_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,

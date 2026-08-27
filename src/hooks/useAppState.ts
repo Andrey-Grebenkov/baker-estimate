@@ -171,6 +171,8 @@ export function useAppState(user: User | null): AppState {
             packaging: cake.packaging,
             decor: cake.decor,
             overheads: cake.overheads,
+            base_yield_weight: cake.base_yield_weight,
+            base_yield_unit: cake.base_yield_unit,
             marginPercent: cake.marginPercent,
             image_url: cake.image_url,
           }
@@ -230,6 +232,8 @@ export function useAppState(user: User | null): AppState {
             packaging: cake.packaging,
             decor: cake.decor,
             overheads: cake.overheads,
+            base_yield_weight: cake.base_yield_weight,
+            base_yield_unit: cake.base_yield_unit,
             marginPercent: cake.marginPercent,
             image_url: cake.image_url,
           }
@@ -283,6 +287,8 @@ export function useAppState(user: User | null): AppState {
             packaging: cake.packaging,
             decor: cake.decor,
             overheads: cake.overheads,
+            base_yield_weight: cake.base_yield_weight,
+            base_yield_unit: cake.base_yield_unit,
             marginPercent: cake.marginPercent,
             image_url: cake.image_url,
           }
@@ -319,6 +325,8 @@ export function useAppState(user: User | null): AppState {
             packaging: cake.packaging,
             decor: cake.decor,
             overheads: cake.overheads,
+            base_yield_weight: cake.base_yield_weight,
+            base_yield_unit: cake.base_yield_unit,
             marginPercent: cake.marginPercent,
             image_url: cake.image_url,
           }

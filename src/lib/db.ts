@@ -2,8 +2,10 @@ import { supabase } from './supabase'
 import { buildIngredient } from '../domain/ingredient'
 import { buildRecipe } from '../domain/recipe'
 import { buildCake, type CakeDetails } from '../domain/cake'
+import { roundToCurrency } from '../domain/money'
 import { generateId } from './id'
 import type {
+  Cake,
   CakeInput,
   Ingredient,
   MeasurementUnit,
@@ -63,6 +65,8 @@ interface DbCake {
   decor: { id: string; name: string; cost: number; quantity: number }[]
   overheads: Overheads
   margin_percent: number
+  base_yield_weight: number | null
+  base_yield_unit: string | null
   total_ingredients_cost: number
   total_packaging_cost: number
   total_decor_cost: number
@@ -126,6 +130,14 @@ function mapOrder(row: DbOrder): Order {
 }
 
 function mapCake(row: DbCake): CakeDetails {
+  const baseYieldWeight =
+    row.base_yield_weight == null ? 0 : toNumber(row.base_yield_weight)
+  const baseUnit = (row.base_yield_unit as Cake['base_yield_unit']) ?? 'кг'
+  const finalCostPrice = toNumber(row.final_cost_price)
+  const recommendedPrice = toNumber(row.recommended_price)
+  const weightKg =
+    baseYieldWeight > 0 ? baseYieldWeight : toNumber(row.weight_kg)
+
   return {
     id: row.id,
     user_id: row.user_id,
@@ -137,16 +149,19 @@ function mapCake(row: DbCake): CakeDetails {
       typeof row.overheads === 'object' && row.overheads !== null
         ? (row.overheads as Overheads)
         : { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
+    base_yield_weight: baseYieldWeight > 0 ? baseYieldWeight : undefined,
+    base_yield_unit: baseUnit,
     marginPercent: toNumber(row.margin_percent),
     totalIngredientsCost: toNumber(row.total_ingredients_cost),
     totalPackagingCost: toNumber(row.total_packaging_cost),
     totalDecorCost: toNumber(row.total_decor_cost),
     totalOverheadsCost: toNumber(row.total_overheads_cost),
-    finalCostPrice: toNumber(row.final_cost_price),
-    recommendedPrice: toNumber(row.recommended_price),
-    weightKg: toNumber(row.weight_kg),
-    costPerKg: toNumber(row.cost_per_kg),
-    recommendedPricePerKg: toNumber(row.recommended_price_per_kg),
+    finalCostPrice,
+    recommendedPrice,
+    weightKg,
+    costPerKg: weightKg > 0 ? roundToCurrency(finalCostPrice / weightKg) : 0,
+    recommendedPricePerKg:
+      weightKg > 0 ? roundToCurrency(recommendedPrice / weightKg) : 0,
     image_url: row.image_url ?? undefined,
   }
 }
@@ -297,6 +312,8 @@ export async function addCake(
     decor: cake.decor,
     overheads: cake.overheads,
     margin_percent: cake.marginPercent,
+    base_yield_weight: cake.base_yield_weight ?? cake.weightKg,
+    base_yield_unit: cake.base_yield_unit ?? 'кг',
     total_ingredients_cost: cake.totalIngredientsCost,
     total_packaging_cost: cake.totalPackagingCost,
     total_decor_cost: cake.totalDecorCost,
@@ -327,6 +344,8 @@ export async function updateCake(
     decor: cake.decor,
     overheads: cake.overheads,
     margin_percent: cake.marginPercent,
+    base_yield_weight: cake.base_yield_weight ?? cake.weightKg,
+    base_yield_unit: cake.base_yield_unit ?? 'кг',
     total_ingredients_cost: cake.totalIngredientsCost,
     total_packaging_cost: cake.totalPackagingCost,
     total_decor_cost: cake.totalDecorCost,
