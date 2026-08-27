@@ -102,7 +102,7 @@ export function formatShoppingList(items: ShoppingListItem[], cakeName?: string)
   return [header, '', ...lines, '', `💰 Итого: ${total.toFixed(2)} ₽`].join('\n')
 }
 
-function unitLabelFor(unit: MeasurementUnit): string {
+export function unitLabelFor(unit: MeasurementUnit): string {
   if (unit === 'g') return 'г'
   if (unit === 'ml') return 'мл'
   return 'шт.'
