@@ -7,6 +7,7 @@ import { generateId } from './id'
 import type {
   Cake,
   CakeInput,
+  CakeRecipeItem,
   Ingredient,
   MeasurementUnit,
   Order,
@@ -142,7 +143,9 @@ function mapCake(row: DbCake): CakeDetails {
     id: row.id,
     user_id: row.user_id,
     name: row.name,
-    recipes: Array.isArray(row.recipes) ? row.recipes : [],
+    recipes: (Array.isArray(row.recipes) ? row.recipes : [])
+      .filter((cr) => typeof cr === 'object' && cr !== null)
+      .map((cr) => ({ ...(cr as CakeRecipeItem), multiplier: 1 })),
     packaging: Array.isArray(row.packaging) ? row.packaging : [],
     decor: Array.isArray(row.decor) ? row.decor : [],
     overheads:
@@ -298,7 +301,9 @@ export async function addCake(
   userId: string,
   recipesById: Record<string, Recipe>,
 ): Promise<void> {
-  const validRecipes = input.recipes.filter((cr) => recipesById[cr.recipeId])
+  const validRecipes = input.recipes
+    .filter((cr) => recipesById[cr.recipeId])
+    .map((cr) => ({ ...cr, multiplier: 1 }))
   const cake = buildCake(
     { ...input, id: generateId(), user_id: userId, recipes: validRecipes },
     recipesById,
@@ -334,7 +339,9 @@ export async function updateCake(
   userId: string,
   recipesById: Record<string, Recipe>,
 ): Promise<void> {
-  const validRecipes = input.recipes.filter((cr) => recipesById[cr.recipeId])
+  const validRecipes = input.recipes
+    .filter((cr) => recipesById[cr.recipeId])
+    .map((cr) => ({ ...cr, multiplier: 1 }))
   const cake = buildCake({ ...input, id, user_id: userId, recipes: validRecipes }, recipesById)
   const { error } = await supabase.from('cakes').update({
     name: cake.name,

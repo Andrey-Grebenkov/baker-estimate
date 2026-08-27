@@ -270,7 +270,7 @@ function buildDomainCakes(
         id: c.id,
         user_id: userId,
         name: c.name,
-        recipes: c.recipes,
+        recipes: c.recipes.map((cr) => ({ ...cr, multiplier: 1 })),
         packaging: c.packaging,
         decor: c.decor,
         overheads: c.overheads,

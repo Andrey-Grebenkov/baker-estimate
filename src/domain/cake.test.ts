@@ -197,6 +197,27 @@ describe('buildCake', () => {
     expect(cake.costPerKg).toBe(120)
   })
 
+  it('does not auto-scale recipe multipliers by base_yield_weight', () => {
+    const cake = buildCake(
+      {
+        id: 'cake-base-yield',
+        name: 'Торт с базовым выходом',
+        recipes: [{ recipeId: 'biscuit-1', multiplier: 1 }],
+        packaging: [],
+        decor: [],
+        overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
+        marginPercent: 0,
+        base_yield_weight: 1.2,
+        base_yield_unit: 'кг',
+      },
+      recipesById,
+    )
+
+    expect(cake.recipes[0].multiplier).toBe(1)
+    expect(cake.totalIngredientsCost).toBe(biscuit.totalCost)
+    expect(cake.weightKg).toBe(1.2)
+  })
+
   it('handles fractional recipe multipliers', () => {
     const cake = buildCake(
       {

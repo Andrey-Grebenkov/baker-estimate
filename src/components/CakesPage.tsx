@@ -20,19 +20,6 @@ import { ShoppingListModal } from './ShoppingListModal'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
 
-function recalculateRecipeMultipliers(
-  items: CakeRecipeItem[],
-  baseYieldWeight: number,
-  recipesById: Record<string, Recipe>,
-): CakeRecipeItem[] {
-  const totalYield = items.reduce((sum, item) => {
-    const recipe = recipesById[item.recipeId]
-    return sum + (recipe?.yield_amount ?? 1)
-  }, 0)
-  const scale = totalYield > 0 ? baseYieldWeight / totalYield : 1
-  return items.map((item) => ({ ...item, multiplier: scale }))
-}
-
 export function CakesPage({ state }: { state: AppState }) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -117,7 +104,7 @@ export function CakesPage({ state }: { state: AppState }) {
     setIsFormOpen(true)
     setEditingId(cake.id)
     setCakeName(cake.name)
-    setRecipes(cake.recipes)
+    setRecipes(cake.recipes.map((cr) => ({ ...cr, multiplier: 1 })))
     setSelectedRecipeId(state.recipes[0]?.id ?? '')
     setBaseYieldWeight(cake.base_yield_weight != null ? String(cake.base_yield_weight) : '1')
     setBaseYieldUnit(cake.base_yield_unit ?? 'кг')
@@ -157,24 +144,12 @@ export function CakesPage({ state }: { state: AppState }) {
       return
     }
 
-    setRecipes((prev) =>
-      recalculateRecipeMultipliers(
-        [...prev, { recipeId: selectedRecipeId, multiplier: 1 }],
-        Number(baseYieldWeight) || 1,
-        recipesById,
-      ),
-    )
+    setRecipes((prev) => [...prev, { recipeId: selectedRecipeId, multiplier: 1 }])
     setError(null)
   }
 
   const removeRecipeFromCake = (recipeId: string) => {
-    setRecipes((prev) =>
-      recalculateRecipeMultipliers(
-        prev.filter((r) => r.recipeId !== recipeId),
-        Number(baseYieldWeight) || 1,
-        recipesById,
-      ),
-    )
+    setRecipes((prev) => prev.filter((r) => r.recipeId !== recipeId))
   }
 
   const addPackaging = () => {
@@ -332,11 +307,6 @@ export function CakesPage({ state }: { state: AppState }) {
     () => Object.fromEntries(state.recipes.map((r) => [r.id, r])) as Record<string, Recipe>,
     [state.recipes],
   )
-
-  useEffect(() => {
-    const base = Number(baseYieldWeight) || 1
-    setRecipes((prev) => recalculateRecipeMultipliers(prev, base, recipesById))
-  }, [baseYieldWeight, baseYieldUnit, recipesById])
 
   const ingredientsById = useMemo(
     () => Object.fromEntries(state.ingredients.map((i) => [i.id, i])) as Record<string, Ingredient>,
@@ -1161,16 +1131,13 @@ function CakeCard({
   const handleSaveReplacement = (missingRecipeId: string) => {
     if (!selectedReplacementId) return
 
-    const recipesById = Object.fromEntries(state.recipes.map((r) => [r.id, r])) as Record<string, Recipe>
     const newRecipes = cake.recipes.map((cr) =>
-      cr.recipeId === missingRecipeId ? { recipeId: selectedReplacementId, multiplier: 1 } : cr,
+      cr.recipeId === missingRecipeId ? { recipeId: selectedReplacementId, multiplier: 1 } : { ...cr, multiplier: 1 },
     )
-    const baseYield = cake.base_yield_weight ?? cake.weightKg
-    const scaledRecipes = recalculateRecipeMultipliers(newRecipes, baseYield, recipesById)
 
     const payload: Omit<CakeInput, 'id' | 'user_id'> = {
       name: cake.name,
-      recipes: scaledRecipes,
+      recipes: newRecipes,
       packaging: cake.packaging,
       decor: cake.decor,
       overheads: cake.overheads,

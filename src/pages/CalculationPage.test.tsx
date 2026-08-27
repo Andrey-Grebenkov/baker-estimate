@@ -25,6 +25,15 @@ function createMockState(): AppState {
     unit: 'pcs',
   })
 
+  const milk = buildIngredient({
+    id: 'ing-3',
+    user_id: 'u-1',
+    name: 'Молоко',
+    pricePerPackage: 120,
+    packageQuantity: 500,
+    unit: 'ml',
+  })
+
   const biscuit = buildRecipe(
     {
       id: 'rec-1',
@@ -48,6 +57,16 @@ function createMockState(): AppState {
     { [flour.id]: flour, [eggs.id]: eggs },
   )
 
+  const milkRecipe = buildRecipe(
+    {
+      id: 'rec-3',
+      user_id: 'u-1',
+      name: 'Молочная пропитка',
+      ingredients: [{ ingredientId: milk.id, quantityUsed: 100 }],
+    },
+    { [milk.id]: milk },
+  )
+
   const cake = buildCake(
     {
       id: 'cake-1',
@@ -67,10 +86,26 @@ function createMockState(): AppState {
     { [biscuit.id]: biscuit, [cream.id]: cream },
   )
 
+  const milkCake = buildCake(
+    {
+      id: 'cake-2',
+      user_id: 'u-1',
+      name: 'Молочный торт',
+      recipes: [{ recipeId: milkRecipe.id, multiplier: 1 }],
+      packaging: [],
+      decor: [],
+      overheads: { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
+      base_yield_weight: 1.2,
+      base_yield_unit: 'кг',
+      marginPercent: 0,
+    },
+    { [milkRecipe.id]: milkRecipe },
+  )
+
   return {
-    ingredients: [flour, eggs],
-    recipes: [biscuit, cream],
-    cakes: [cake],
+    ingredients: [flour, eggs, milk],
+    recipes: [biscuit, cream, milkRecipe],
+    cakes: [cake, milkCake],
     orders: [],
     isLoading: false,
     initialized: true,
@@ -173,6 +208,23 @@ describe('CalculationPage', () => {
     await waitFor(() => {
       expect(targetInput.value).toBe('12.345')
     })
+  })
+
+  it('shows original recipe quantities when target equals base yield', async () => {
+    render(<CalculationPage state={createMockState()} />)
+    fireEvent.change(screen.getByTestId('calc-cake-select'), {
+      target: { value: 'cake-2' },
+    })
+
+    const targetInput = screen.getByTestId('calc-target-weight-input') as HTMLInputElement
+    await waitFor(() => {
+      expect(targetInput.value).toBe('1.2')
+      expect(screen.getByTestId('calc-multiplier-value').textContent).toBe('1')
+    })
+
+    const rows = screen.getAllByTestId('calc-ingredient-row')
+    const milkRow = rows.find((r) => r.textContent?.includes('Молоко'))
+    expect(milkRow?.textContent).toContain('100 мл')
   })
 
   it('applies pan scaling and updates the target weight and coefficient', async () => {
