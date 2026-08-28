@@ -124,7 +124,7 @@ export type CakeInput = Omit<
 /**
  * TASK: УЧЕТ ПРОДАЖ / ЗАКАЗОВ
  */
-export type OrderStatus = 'Новый' | 'В работе' | 'Выдан'
+export type OrderStatus = 'Новый' | 'В работе' | 'Выдан' | 'Отменен'
 
 export interface Order {
   id: string

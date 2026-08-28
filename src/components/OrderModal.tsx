@@ -5,7 +5,7 @@ import type { Order, OrderStatus } from '../domain/types'
 import { MAX_DEFAULT_PRICE, MAX_DEFAULT_QUANTITY, normalizeNumberString } from '../lib/numberInput'
 import { RequiredMark } from './RequiredMark'
 
-const ORDER_STATUSES: OrderStatus[] = ['Новый', 'В работе', 'Выдан']
+const ORDER_STATUSES: OrderStatus[] = ['Новый', 'В работе', 'Выдан', 'Отменен']
 
 interface OrderModalProps {
   isOpen: boolean

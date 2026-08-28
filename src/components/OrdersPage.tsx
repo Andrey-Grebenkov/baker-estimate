@@ -81,12 +81,12 @@ export function OrdersPage({ state }: { state: AppState }) {
   )
 
   const totalCost = useMemo(
-    () => filteredOrders.reduce((sum, order) => sum + (order.total_cost ?? 0), 0),
+    () => filteredOrders.reduce((sum, order) => (order.status === 'Отменен' ? sum : sum + (order.total_cost ?? 0)), 0),
     [filteredOrders],
   )
 
   const expectedRevenue = useMemo(
-    () => filteredOrders.reduce((sum, order) => (order.status !== 'Выдан' ? sum + order.paid_amount : sum), 0),
+    () => filteredOrders.reduce((sum, order) => (order.status !== 'Выдан' && order.status !== 'Отменен' ? sum + order.paid_amount : sum), 0),
     [filteredOrders],
   )
 
@@ -321,8 +321,14 @@ export function OrdersPage({ state }: { state: AppState }) {
               {filteredOrders.map((order) => {
                 const remaining = Math.max(0, order.paid_amount - order.advance_payment)
                 const isCompleted = order.status === 'Выдан'
+                const isCanceled = order.status === 'Отменен'
                 return (
-                  <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
+                  <tr
+                    key={order.id}
+                    data-testid="order-row"
+                    data-order-id={order.id}
+                    className={isCanceled ? 'opacity-50 grayscale' : undefined}
+                  >
                     <td className="whitespace-nowrap px-2 py-2">
                       <OrderStatusDropdown
                         order={order}

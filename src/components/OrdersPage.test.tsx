@@ -122,6 +122,44 @@ describe('OrdersPage', () => {
     })
   })
 
+  it('excludes canceled orders from revenue, cost, and expected metrics', async () => {
+    const orders: Order[] = [
+      {
+        ...baseOrder(),
+        id: 'o-1',
+        status: 'Выдан',
+        paid_amount: 1000,
+        total_cost: 600,
+      },
+      {
+        ...baseOrder(),
+        id: 'o-2',
+        status: 'В работе',
+        paid_amount: 500,
+        total_cost: 300,
+      },
+      {
+        ...baseOrder(),
+        id: 'o-3',
+        status: 'Отменен',
+        paid_amount: 250,
+        total_cost: 150,
+      },
+    ]
+
+    render(<OrdersPage state={createMockState(orders)} />)
+
+    const periodSelect = screen.getByTestId('orders-period-select') as HTMLSelectElement
+    fireEvent.change(periodSelect, { target: { value: 'all' } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('orders-revenue').textContent).toContain('1 000')
+      expect(screen.getByTestId('orders-expected').textContent).toContain('500')
+      // Profit = revenue - (costs of active orders) = 1000 - (600 + 300) = 100
+      expect(screen.getByTestId('orders-profit').textContent).toContain('100')
+    })
+  })
+
   it('shows zero metrics when there are no orders', () => {
     render(<OrdersPage state={createMockState([])} />)
     expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
