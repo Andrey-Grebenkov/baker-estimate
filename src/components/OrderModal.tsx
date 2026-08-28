@@ -182,10 +182,10 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex max-w-[100vw] items-center justify-center overflow-x-hidden bg-black/50 p-4"
+      className="fixed inset-0 z-[999] flex items-center justify-center overflow-x-hidden bg-black/50"
       data-testid="order-modal"
     >
-      <div className="flex w-full max-w-2xl max-h-[90dvh] flex-col overflow-hidden rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+      <div className="m-4 flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700 sm:max-w-lg md:max-w-2xl">
         <div className="flex-shrink-0 mb-4 flex items-start justify-between">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {isEditing ? 'Редактировать заказ' : 'Отметить продажу'}
