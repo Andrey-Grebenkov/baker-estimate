@@ -30,6 +30,7 @@ function toOrderInput(order: Order, overrides: Partial<OrderInput> = {}): OrderI
     delivery_date: order.delivery_date,
     actual_weight_kg: order.actual_weight_kg,
     actual_cost: order.actual_cost,
+    total_cost: order.total_cost,
     paid_amount: order.paid_amount,
     advance_payment: order.advance_payment,
     completion_comment: order.completion_comment,
@@ -78,6 +79,13 @@ export function OrdersPage({ state }: { state: AppState }) {
     () => filteredOrders.reduce((sum, order) => sum + order.paid_amount, 0),
     [filteredOrders],
   )
+
+  const totalCost = useMemo(
+    () => filteredOrders.reduce((sum, order) => sum + (order.total_cost ?? 0), 0),
+    [filteredOrders],
+  )
+
+  const profit = useMemo(() => revenue - totalCost, [revenue, totalCost])
 
   const receiptCake = receiptOrder
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
@@ -169,6 +177,19 @@ export function OrdersPage({ state }: { state: AppState }) {
               data-testid="orders-revenue"
             >
               Выручка: {formatPeriodRevenue(revenue)} ₽
+            </span>
+
+            <span
+              className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${
+                profit > 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : profit < 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-slate-800 dark:text-slate-200'
+              }`}
+              data-testid="orders-profit"
+            >
+              Прибыль: {formatPeriodRevenue(profit)} ₽
             </span>
           </div>
         </div>

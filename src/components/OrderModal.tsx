@@ -39,6 +39,8 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
   const [advancePayment, setAdvancePayment] = useState('')
   const [internalComment, setInternalComment] = useState('')
   const [unit, setUnit] = useState<Order['unit']>('кг')
+  const [totalCost, setTotalCost] = useState(0)
+  const [costInputsChanged, setCostInputsChanged] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -55,6 +57,8 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
         setAdvancePayment(String(orderToEdit.advance_payment))
         setInternalComment(orderToEdit.internal_comment ?? '')
         setUnit(orderToEdit.unit ?? 'кг')
+        setTotalCost(orderToEdit.total_cost ?? 0)
+        setCostInputsChanged(false)
       } else {
         setCakeId('')
         setClientName('')
@@ -66,6 +70,8 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
         setAdvancePayment('')
         setInternalComment('')
         setUnit('кг')
+        setTotalCost(0)
+        setCostInputsChanged(false)
       }
       setError(null)
       setSubmitting(false)
@@ -104,9 +110,20 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
   )
 
   const netProfit = useMemo(
-    () => roundToCurrency(paidAmountNum - actualCost),
-    [paidAmountNum, actualCost],
+    () => roundToCurrency(paidAmountNum - totalCost),
+    [paidAmountNum, totalCost],
   )
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (isEditing && !costInputsChanged) return
+
+    const newTotalCost =
+      !selectedCake || actualWeightNum <= 0 || selectedCake.weightKg <= 0
+        ? 0
+        : roundToCurrency((actualWeightNum / selectedCake.weightKg) * selectedCake.finalCostPrice)
+    setTotalCost(newTotalCost)
+  }, [isOpen, isEditing, costInputsChanged, selectedCake, actualWeightNum])
 
   if (!isOpen) return null
 
@@ -140,7 +157,8 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
       status,
       delivery_date: new Date(deliveryDate).toISOString(),
       actual_weight_kg: actualWeightValue,
-      actual_cost: actualCost,
+      actual_cost: totalCost,
+      total_cost: totalCost,
       paid_amount: paidAmountNum,
       advance_payment: advancePaymentNum,
       internal_comment: internalComment.trim(),
@@ -232,7 +250,10 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
               <select
                 id="order-cake"
                 value={cakeId}
-                onChange={(e) => setCakeId(e.target.value)}
+                onChange={(e) => {
+                  setCakeId(e.target.value)
+                  setCostInputsChanged(true)
+                }}
                 className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                 data-testid="order-cake-select"
               >
@@ -260,7 +281,10 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
                   max={MAX_DEFAULT_QUANTITY}
                   step="0.01"
                   value={actualWeight}
-                  onChange={(e) => setActualWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))}
+                  onChange={(e) => {
+                    setActualWeight(normalizeNumberString(e.target.value, MAX_DEFAULT_QUANTITY))
+                    setCostInputsChanged(true)
+                  }}
                   className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                   placeholder="0"
                   data-testid="order-weight-input"

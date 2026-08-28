@@ -18,9 +18,11 @@ function toOrderInput(order: Order, comment: string): OrderInput {
     delivery_date: order.delivery_date,
     actual_weight_kg: order.actual_weight_kg,
     actual_cost: order.actual_cost,
+    total_cost: order.total_cost,
     paid_amount: order.paid_amount,
     advance_payment: order.advance_payment,
     completion_comment: comment,
+    unit: order.unit,
   }
 }
 

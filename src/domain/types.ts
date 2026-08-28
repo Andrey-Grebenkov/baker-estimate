@@ -137,6 +137,7 @@ export interface Order {
   actual_weight_kg?: number // Фактический вес / количество
   unit?: 'кг' | 'шт' // Единица измерения
   actual_cost: number // Реальная себестоимость
+  total_cost: number // Снимок себестоимости на момент создания заказа
   paid_amount: number // Итоговая сумма к оплате
   advance_payment: number // Предоплата / аванс
   completion_comment?: string // Причина переплаты (доставка, чаевые и т.п.)

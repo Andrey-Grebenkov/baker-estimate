@@ -49,6 +49,7 @@ interface DbOrder {
   delivery_date: string
   actual_weight_kg: number | null
   actual_cost: number
+  total_cost: number
   paid_amount: number
   advance_payment: number
   completion_comment: string | null
@@ -121,6 +122,7 @@ function mapOrder(row: DbOrder): Order {
     delivery_date: row.delivery_date,
     actual_weight_kg: row.actual_weight_kg == null ? undefined : toNumber(row.actual_weight_kg),
     actual_cost: toNumber(row.actual_cost),
+    total_cost: toNumber(row.total_cost),
     paid_amount: toNumber(row.paid_amount),
     advance_payment: toNumber(row.advance_payment),
     completion_comment: row.completion_comment ?? undefined,
@@ -389,6 +391,7 @@ export async function addOrder(input: OrderInput, userId: string): Promise<void>
     delivery_date: input.delivery_date,
     actual_weight_kg: input.actual_weight_kg ?? null,
     actual_cost: input.actual_cost,
+    total_cost: input.total_cost,
     paid_amount: input.paid_amount,
     advance_payment: input.advance_payment,
     completion_comment: input.completion_comment ?? null,
@@ -408,6 +411,7 @@ export async function updateOrder(id: string, input: OrderInput, userId: string)
     delivery_date: input.delivery_date,
     actual_weight_kg: input.actual_weight_kg ?? null,
     actual_cost: input.actual_cost,
+    total_cost: input.total_cost,
     paid_amount: input.paid_amount,
     advance_payment: input.advance_payment,
   }

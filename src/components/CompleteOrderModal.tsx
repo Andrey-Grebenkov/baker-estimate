@@ -63,8 +63,10 @@ export function CompleteOrderModal({ order, state, isOpen, onClose }: CompleteOr
       delivery_date: order.delivery_date,
       actual_weight_kg: order.actual_weight_kg,
       actual_cost: order.actual_cost,
+      total_cost: order.total_cost,
       paid_amount: newPaidAmount,
       advance_payment: order.advance_payment,
+      unit: order.unit,
       completion_comment: newComment,
     }
 

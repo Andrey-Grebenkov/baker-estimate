@@ -235,6 +235,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   delivery_date TIMESTAMPTZ NOT NULL,
   actual_weight_kg NUMERIC(12, 3),
   actual_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  total_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
   paid_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
   advance_payment NUMERIC(12, 2) NOT NULL DEFAULT 0,
   completion_comment TEXT,
