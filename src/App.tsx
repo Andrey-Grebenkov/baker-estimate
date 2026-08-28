@@ -74,7 +74,7 @@ function App() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-row items-center gap-3">
             {state.isLoading && (
               <span className="text-sm text-slate-500" data-testid="data-loading-indicator">
                 Сохранение…

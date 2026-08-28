@@ -7,7 +7,15 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
   return (
     <button
       type="button"
-      onClick={onToggle}
+      onPointerDown={(e) => {
+        e.preventDefault()
+        onToggle()
+      }}
+      onClick={(e) => {
+        if (e.detail === 0) {
+          onToggle()
+        }
+      }}
       className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-slate-300 dark:hover:bg-slate-700"
       aria-label={theme === 'dark' ? 'Включить светлую тему' : 'Включить темную тему'}
       data-testid="theme-toggle"
