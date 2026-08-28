@@ -98,8 +98,8 @@ describe('buildCake', () => {
     expect(cake.finalCostPrice).toBe(2061.5)
     expect(cake.recommendedPrice).toBe(2679.95)
     expect(cake.weightKg).toBe(0.825)
-    expect(cake.costPerKg).toBe(2498.79)
-    expect(cake.recommendedPricePerKg).toBe(3248.42)
+    expect(cake.costPerKg).toBe(2220)
+    expect(cake.recommendedPricePerKg).toBe(2886)
   })
 
   it('handles cake without packaging and decor', () => {

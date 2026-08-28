@@ -1015,6 +1015,9 @@ function calculateDerivedCake(
   const recommendedPrice = roundToCurrency(finalCostPrice * (1 + marginPercent / 100))
   const weightKg = baseYieldWeight
 
+  const baseCostPrice = roundToCurrency(totalIngredientsCost + totalOverheadsCost)
+  const baseRecommendedPrice = roundToCurrency(baseCostPrice * (1 + marginPercent / 100))
+
   return {
     base_yield_weight: baseYieldWeight,
     base_yield_unit: baseYieldUnit,
@@ -1025,8 +1028,8 @@ function calculateDerivedCake(
     finalCostPrice,
     recommendedPrice,
     weightKg,
-    costPerKg: weightKg > 0 ? roundToCurrency(finalCostPrice / weightKg) : 0,
-    recommendedPricePerKg: weightKg > 0 ? roundToCurrency(recommendedPrice / weightKg) : 0,
+    costPerKg: weightKg > 0 ? roundToCurrency(baseCostPrice / weightKg) : 0,
+    recommendedPricePerKg: weightKg > 0 ? roundToCurrency(baseRecommendedPrice / weightKg) : 0,
   }
 }
 
@@ -1039,7 +1042,6 @@ function CakePreview({ cake }: { cake: CakeDetails | null }) {
   if (!cake) return null
 
   const unit = cake.base_yield_unit ?? 'кг'
-  const perUnitLabel = unit === 'шт' ? 'За 1 шт' : 'За 1 кг'
 
   return (
     <div
@@ -1059,8 +1061,14 @@ function CakePreview({ cake }: { cake: CakeDetails | null }) {
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Metric label={`${perUnitLabel} (себест.)`} value={`${formatMoney(cake.costPerKg)} ₽/${unit}`} />
-        <Metric label={`${perUnitLabel} (продажа)`} value={`${formatMoney(cake.recommendedPricePerKg)} ₽/${unit}`} />
+        <Metric
+          label={unit === 'шт' ? 'За 1 шт (без упак/декора, себест.)' : 'За 1 кг (без упак/декора, себест.)'}
+          value={`${formatMoney(cake.costPerKg)} ₽/${unit}`}
+        />
+        <Metric
+          label={unit === 'шт' ? 'За 1 шт (без упак/декора, продажа)' : 'За 1 кг (без упак/декора, продажа)'}
+          value={`${formatMoney(cake.recommendedPricePerKg)} ₽/${unit}`}
+        />
       </div>
     </div>
   )
@@ -1231,11 +1239,19 @@ function CakeCard({
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
         <Metric
-          label={cake.base_yield_unit === 'шт' ? 'За 1 шт (себест.)' : 'За 1 кг (себест.)'}
+          label={
+            cake.base_yield_unit === 'шт'
+              ? 'За 1 шт (без упак/декора, себест.)'
+              : 'За 1 кг (без упак/декора, себест.)'
+          }
           value={`${formatMoney(cake.costPerKg)} ₽/${cake.base_yield_unit ?? 'кг'}`}
         />
         <Metric
-          label={cake.base_yield_unit === 'шт' ? 'За 1 шт (продажа)' : 'За 1 кг (продажа)'}
+          label={
+            cake.base_yield_unit === 'шт'
+              ? 'За 1 шт (без упак/декора, продажа)'
+              : 'За 1 кг (без упак/декора, продажа)'
+          }
           value={`${formatMoney(cake.recommendedPricePerKg)} ₽/${cake.base_yield_unit ?? 'кг'}`}
         />
         <Metric

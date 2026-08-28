@@ -166,6 +166,9 @@ export function buildCake(
   )
   const recommendedPrice = calculateRecommendedPrice(finalCostPrice, input.marginPercent)
 
+  const baseCostPrice = roundToCurrency(totalIngredientsCost + totalOverheadsCost)
+  const baseRecommendedPrice = roundToCurrency(baseCostPrice * (1 + input.marginPercent / 100))
+
   return {
     ...input,
     totalIngredientsCost,
@@ -175,7 +178,7 @@ export function buildCake(
     finalCostPrice,
     recommendedPrice,
     weightKg,
-    costPerKg: calculateCostPerKg(finalCostPrice, weightKg),
-    recommendedPricePerKg: calculateRecommendedPricePerKg(recommendedPrice, weightKg),
+    costPerKg: calculateCostPerKg(baseCostPrice, weightKg),
+    recommendedPricePerKg: calculateRecommendedPricePerKg(baseRecommendedPrice, weightKg),
   }
 }
