@@ -110,7 +110,7 @@ function App() {
         </div>
       )}
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 print:max-w-none print:p-0">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 print:h-auto print:max-w-none print:overflow-visible print:p-0">
         <nav
           className="mb-6 flex flex-wrap gap-2 print:hidden"
           role="tablist"

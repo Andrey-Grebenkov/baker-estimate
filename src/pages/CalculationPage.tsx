@@ -191,10 +191,11 @@ export function CalculationPage({ state }: { state: AppState }) {
   }
 
   return (
-    <div data-testid="calculation-page">
-      <h2 className="mb-4 text-xl font-semibold text-slate-800" data-testid="calculation-title">
-        Расчет
-      </h2>
+    <div data-testid="calculation-page" className="print:relative print:min-h-screen print:bg-white">
+      <div className="print:hidden">
+        <h2 className="mb-4 text-xl font-semibold text-slate-800" data-testid="calculation-title">
+          Расчет
+        </h2>
 
       <div className="mb-4 card-inset p-4" data-testid="calculation-cake-select-section">
         <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Торт</h3>
@@ -534,15 +535,16 @@ export function CalculationPage({ state }: { state: AppState }) {
         </>
       )}
 
-      {!selectedCake && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:bg-slate-700/50" data-testid="calc-empty-state">
-          <p className="text-slate-600 dark:text-slate-300">Выберите торт, чтобы рассчитать ингредиенты.</p>
-        </div>
-      )}
+        {!selectedCake && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:bg-slate-700/50" data-testid="calc-empty-state">
+            <p className="text-slate-600 dark:text-slate-300">Выберите торт, чтобы рассчитать ингредиенты.</p>
+          </div>
+        )}
+      </div>
 
       {printing && printCake && (
         <div
-          className="fixed inset-0 z-50 block overflow-auto bg-white p-4 sm:p-8 print:static print:block print:p-0"
+          className="hidden print:absolute print:left-0 print:top-0 print:z-50 print:block print:min-h-screen print:w-full print:overflow-auto print:bg-white print:p-4 sm:print:p-8"
           data-testid="cake-print-overlay"
         >
           <div className="mx-auto w-full max-w-5xl print:max-w-none">
