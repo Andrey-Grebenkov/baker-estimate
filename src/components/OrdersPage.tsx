@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Calendar, FileText, List, MessageSquare } from 'lucide-react'
 import type { AppState } from '../hooks/useAppState'
 import { formatMoney } from '../domain/money'
+import { getPeriodRange, isDateInRange, formatPeriodRevenue, type PeriodFilter } from '../lib/dateFilter'
 import { OrderModal } from './OrderModal'
 import { ClientReceiptModal } from './ClientReceiptModal'
 import { OrderCalendarView } from './OrderCalendarView'
@@ -48,6 +49,10 @@ export function OrdersPage({ state }: { state: AppState }) {
   const [commentOrder, setCommentOrder] = useState<Order | null>(null)
   const [internalCommentOrder, setInternalCommentOrder] = useState<Order | null>(null)
 
+  const [period, setPeriod] = useState<PeriodFilter>('month')
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
+
   const sortedOrders = useMemo(
     () =>
       [...state.orders].sort((a, b) => {
@@ -56,6 +61,22 @@ export function OrdersPage({ state }: { state: AppState }) {
         return bTime - aTime
       }),
     [state.orders],
+  )
+
+  const dateRange = useMemo(
+    () => getPeriodRange(period, customStart, customEnd),
+    [period, customStart, customEnd],
+  )
+
+  const filteredOrders = useMemo(
+    () =>
+      dateRange ? sortedOrders.filter((order) => isDateInRange(order.delivery_date, dateRange)) : sortedOrders,
+    [sortedOrders, dateRange],
+  )
+
+  const revenue = useMemo(
+    () => filteredOrders.reduce((sum, order) => sum + order.paid_amount, 0),
+    [filteredOrders],
   )
 
   const receiptCake = receiptOrder
@@ -106,8 +127,51 @@ export function OrdersPage({ state }: { state: AppState }) {
 
   return (
     <div data-testid="orders-page">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-xl font-semibold text-slate-800">Учет продаж</h2>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:items-center" data-testid="orders-header-left">
+          <h2 className="text-xl font-semibold text-slate-800">Учет продаж</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
+              className="h-10 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+              data-testid="orders-period-select"
+            >
+              <option value="today">За сегодня</option>
+              <option value="week">За неделю</option>
+              <option value="month">За месяц</option>
+              <option value="custom">Выбрать период</option>
+              <option value="all">За все время</option>
+            </select>
+
+            {period === 'custom' && (
+              <div className="flex flex-wrap items-center gap-2" data-testid="orders-custom-range">
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="h-10 w-36 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                  data-testid="orders-custom-start"
+                />
+                <span className="text-slate-500">—</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="h-10 w-36 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                  data-testid="orders-custom-end"
+                />
+              </div>
+            )}
+
+            <span
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
+              data-testid="orders-revenue"
+            >
+              Выручка: {formatPeriodRevenue(revenue)} ₽
+            </span>
+          </div>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-slate-300 bg-white p-1 dark:border-slate-600 dark:bg-slate-800">
             <button
@@ -150,9 +214,11 @@ export function OrdersPage({ state }: { state: AppState }) {
         </div>
       </div>
 
-      {sortedOrders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <p className="text-sm text-slate-500" data-testid="orders-empty-state">
-          Пока нет заказов. Нажмите «Отметить продажу», чтобы создать первую запись.
+          {state.orders.length === 0
+            ? 'Пока нет заказов. Нажмите «Отметить продажу», чтобы создать первую запись.'
+            : 'Нет заказов за выбранный период.'}
         </p>
       ) : view === 'list' ? (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
@@ -216,7 +282,7 @@ export function OrdersPage({ state }: { state: AppState }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
-              {sortedOrders.map((order) => {
+              {filteredOrders.map((order) => {
                 const remaining = Math.max(0, order.paid_amount - order.advance_payment)
                 const isCompleted = order.status === 'Выдан'
                 return (
@@ -307,7 +373,7 @@ export function OrdersPage({ state }: { state: AppState }) {
         </div>
       ) : (
         <OrderCalendarView
-          orders={sortedOrders}
+          orders={filteredOrders}
           cakes={state.cakes}
           onEdit={(order) => {
             setEditingOrder(order)
