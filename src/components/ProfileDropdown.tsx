@@ -107,7 +107,12 @@ export function ProfileDropdown({
     <div className="relative z-[200]" ref={containerRef} data-testid="profile-dropdown">
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onPointerDown={() => setIsOpen((prev) => !prev)}
+        onClick={(e) => {
+          if (e.detail === 0) {
+            setIsOpen((prev) => !prev)
+          }
+        }}
         className="relative flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-lg font-semibold text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         data-testid="profile-avatar"
       >

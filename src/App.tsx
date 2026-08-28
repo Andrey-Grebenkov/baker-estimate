@@ -61,7 +61,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 print:bg-white" data-testid="app">
       <header className="bg-white shadow-sm ring-1 ring-slate-200 print:hidden">
-        <div className="mx-auto flex max-w-5xl flex-col items-start gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-5xl items-start justify-between gap-3 px-4 py-4 sm:items-center sm:px-6 lg:px-8">
           <div>
             <h1
               className="text-xl font-bold text-slate-900 sm:text-2xl"
