@@ -135,65 +135,10 @@ export function OrdersPage({ state }: { state: AppState }) {
 
   return (
     <div data-testid="orders-page">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:items-center" data-testid="orders-header-left">
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold text-slate-800">Учет продаж</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
-              className="h-10 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-              data-testid="orders-period-select"
-            >
-              <option value="today">За сегодня</option>
-              <option value="week">За неделю</option>
-              <option value="month">За месяц</option>
-              <option value="custom">Выбрать период</option>
-              <option value="all">За все время</option>
-            </select>
-
-            {period === 'custom' && (
-              <div className="flex flex-wrap items-center gap-2" data-testid="orders-custom-range">
-                <input
-                  type="date"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="h-10 w-36 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                  data-testid="orders-custom-start"
-                />
-                <span className="text-slate-500">—</span>
-                <input
-                  type="date"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="h-10 w-36 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-                  data-testid="orders-custom-end"
-                />
-              </div>
-            )}
-
-            <span
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
-              data-testid="orders-revenue"
-            >
-              Выручка: {formatPeriodRevenue(revenue)} ₽
-            </span>
-
-            <span
-              className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${
-                profit > 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : profit < 0
-                    ? 'text-rose-600 dark:text-rose-400'
-                    : 'text-slate-800 dark:text-slate-200'
-              }`}
-              data-testid="orders-profit"
-            >
-              Прибыль: {formatPeriodRevenue(profit)} ₽
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-slate-300 bg-white p-1 dark:border-slate-600 dark:bg-slate-800">
             <button
               type="button"
@@ -235,7 +180,65 @@ export function OrdersPage({ state }: { state: AppState }) {
         </div>
       </div>
 
-      {filteredOrders.length === 0 ? (
+      <div className="flex flex-wrap items-center justify-start gap-2">
+        <select
+          value={period}
+          onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
+          className="h-10 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+          data-testid="orders-period-select"
+        >
+          <option value="today">За сегодня</option>
+          <option value="week">За неделю</option>
+          <option value="month">За месяц</option>
+          <option value="custom">Выбрать период</option>
+          <option value="all">За все время</option>
+        </select>
+
+        {period === 'custom' && (
+          <div className="flex flex-wrap items-center gap-2" data-testid="orders-custom-range">
+            <input
+              type="date"
+              value={customStart}
+              onChange={(e) => setCustomStart(e.target.value)}
+              className="h-10 w-36 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+              data-testid="orders-custom-start"
+            />
+            <span className="text-slate-500">—</span>
+            <input
+              type="date"
+              value={customEnd}
+              onChange={(e) => setCustomEnd(e.target.value)}
+              className="h-10 w-36 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+              data-testid="orders-custom-end"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-start gap-4">
+        <span
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
+          data-testid="orders-revenue"
+        >
+          Выручка: {formatPeriodRevenue(revenue)} ₽
+        </span>
+
+        <span
+          className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${
+            profit > 0
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : profit < 0
+                ? 'text-rose-600 dark:text-rose-400'
+                : 'text-slate-800 dark:text-slate-200'
+          }`}
+          data-testid="orders-profit"
+        >
+          Прибыль: {formatPeriodRevenue(profit)} ₽
+        </span>
+      </div>
+    </div>
+
+    {filteredOrders.length === 0 ? (
         <p className="text-sm text-slate-500" data-testid="orders-empty-state">
           {state.orders.length === 0
             ? 'Пока нет заказов. Нажмите «Отметить продажу», чтобы создать первую запись.'
