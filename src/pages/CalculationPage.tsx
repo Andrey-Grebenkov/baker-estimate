@@ -27,7 +27,7 @@ function buildPan(shape: PanShape, diameter: string, length: string, width: stri
 }
 
 function unitDisplay(quantity: number, unit: MeasurementUnit): string {
-  const rounded = unit === 'pcs' ? Math.round(quantity) : Number(quantity.toFixed(1))
+  const rounded = Number(quantity.toFixed(1))
   return `${rounded} ${unitLabelFor(unit)}`
 }
 
