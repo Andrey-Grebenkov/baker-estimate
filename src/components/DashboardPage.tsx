@@ -55,7 +55,7 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
 
   if (state.cakes.length === 0) {
     return (
-      <div className="space-y-6" data-testid="dashboard-page">
+      <div className="relative z-0 space-y-6" data-testid="dashboard-page">
         <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Дашборд</h2>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -106,7 +106,7 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
   }
 
   return (
-    <div className="space-y-6" data-testid="dashboard-page">
+    <div className="relative z-0 space-y-6" data-testid="dashboard-page">
       <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Дашборд</h2>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

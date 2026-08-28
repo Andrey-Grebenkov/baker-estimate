@@ -112,7 +112,7 @@ function App() {
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 print:h-auto print:max-w-none print:overflow-visible print:p-0">
         <nav
-          className="mb-6 flex flex-wrap gap-2 print:hidden"
+          className="relative z-[100] mb-6 flex flex-wrap gap-2 print:hidden"
           role="tablist"
           data-testid="app-tabs"
         >
