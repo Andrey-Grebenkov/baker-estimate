@@ -143,8 +143,8 @@ function mapCake(row: DbCake): CakeDetails {
 
   const totalIngredientsCost = toNumber(row.total_ingredients_cost)
   const marginPercent = toNumber(row.margin_percent)
-  const baseCost = totalIngredientsCost
-  const baseRecommendedPrice = roundToCurrency(baseCost * (1 + marginPercent / 100))
+  const baseCost = finalCostPrice
+  const baseRecommendedPrice = recommendedPrice
 
   return {
     id: row.id,

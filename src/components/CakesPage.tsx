@@ -1015,8 +1015,8 @@ function calculateDerivedCake(
   const recommendedPrice = roundToCurrency(finalCostPrice * (1 + marginPercent / 100))
   const weightKg = baseYieldWeight
 
-  const baseCostPrice = totalIngredientsCost
-  const baseRecommendedPrice = roundToCurrency(baseCostPrice * (1 + marginPercent / 100))
+  const baseCostPrice = finalCostPrice
+  const baseRecommendedPrice = recommendedPrice
 
   return {
     base_yield_weight: baseYieldWeight,
@@ -1062,11 +1062,11 @@ function CakePreview({ cake }: { cake: CakeDetails | null }) {
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Metric
-          label={unit === 'шт' ? 'За 1 шт (ингредиенты, себест.)' : 'За 1 кг (ингредиенты, себест.)'}
+          label={unit === 'шт' ? 'За 1 шт (себест.)' : 'За 1 кг (себест.)'}
           value={`${formatMoney(cake.costPerKg)} ₽/${unit}`}
         />
         <Metric
-          label={unit === 'шт' ? 'За 1 шт (ингредиенты, продажа)' : 'За 1 кг (ингредиенты, продажа)'}
+          label={unit === 'шт' ? 'За 1 шт (продажа)' : 'За 1 кг (продажа)'}
           value={`${formatMoney(cake.recommendedPricePerKg)} ₽/${unit}`}
         />
       </div>
@@ -1241,16 +1241,16 @@ function CakeCard({
         <Metric
           label={
             cake.base_yield_unit === 'шт'
-              ? 'За 1 шт (ингредиенты, себест.)'
-              : 'За 1 кг (ингредиенты, себест.)'
+              ? 'За 1 шт (себест.)'
+              : 'За 1 кг (себест.)'
           }
           value={`${formatMoney(cake.costPerKg)} ₽/${cake.base_yield_unit ?? 'кг'}`}
         />
         <Metric
           label={
             cake.base_yield_unit === 'шт'
-              ? 'За 1 шт (ингредиенты, продажа)'
-              : 'За 1 кг (ингредиенты, продажа)'
+              ? 'За 1 шт (продажа)'
+              : 'За 1 кг (продажа)'
           }
           value={`${formatMoney(cake.recommendedPricePerKg)} ₽/${cake.base_yield_unit ?? 'кг'}`}
         />
