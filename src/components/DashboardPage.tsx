@@ -168,6 +168,7 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
                     borderStyle: 'solid',
                     borderRadius: 8,
                     color: tooltipColor,
+                    pointerEvents: 'none',
                   }}
                   formatter={recentCostTooltipFormatter}
                 />
@@ -212,6 +213,7 @@ export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps)
                     borderStyle: 'solid',
                     borderRadius: 8,
                     color: tooltipColor,
+                    pointerEvents: 'none',
                   }}
                   formatter={breakdownTooltipFormatter as any}
                 />
