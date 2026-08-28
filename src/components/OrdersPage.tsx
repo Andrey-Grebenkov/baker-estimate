@@ -322,13 +322,11 @@ export function OrdersPage({ state }: { state: AppState }) {
                 const remaining = Math.max(0, order.paid_amount - order.advance_payment)
                 const isCompleted = order.status === 'Выдан'
                 const isCanceled = order.status === 'Отменен'
+                const dimText = isCanceled ? 'text-slate-400 dark:text-slate-500' : 'text-slate-600 dark:text-slate-300'
+                const dimName = isCanceled ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'
+
                 return (
-                  <tr
-                    key={order.id}
-                    data-testid="order-row"
-                    data-order-id={order.id}
-                    className={isCanceled ? 'opacity-50 grayscale' : undefined}
-                  >
+                  <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
                     <td className="whitespace-nowrap px-2 py-2">
                       <OrderStatusDropdown
                         order={order}
@@ -337,22 +335,22 @@ export function OrdersPage({ state }: { state: AppState }) {
                       />
                     </td>
                     <td className="whitespace-nowrap px-2 py-2">
-                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      <div className={`text-sm font-medium ${dimName}`}>
                         {order.client_name}
                       </div>
                       {order.client_phone && (
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className={`text-xs ${isCanceled ? 'text-slate-400 dark:text-slate-500' : 'text-slate-500 dark:text-slate-400'}`}>
                           {order.client_phone}
                         </div>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
+                    <td className={`whitespace-nowrap px-2 py-2 text-sm ${dimText}`}>
                       {formatDate(order.delivery_date)}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
+                    <td className={`whitespace-nowrap px-2 py-2 text-sm ${dimText}`}>
                       {order.actual_weight_kg != null ? `${Number(order.actual_weight_kg.toFixed(3))} ${order.unit ?? 'кг'}` : '—'}
                     </td>
-                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
+                    <td className={`whitespace-nowrap px-2 py-2 text-sm ${dimText}`}>
                       <div className="flex items-center gap-1.5">
                         {formatMoney(order.paid_amount)} ₽
                         {order.completion_comment && (
@@ -364,16 +362,18 @@ export function OrdersPage({ state }: { state: AppState }) {
                         )}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
+                    <td className={`whitespace-nowrap px-2 py-2 text-sm ${dimText}`}>
                       {formatMoney(order.advance_payment)} ₽
                     </td>
                     <td
                       className={`whitespace-nowrap px-2 py-2 text-sm font-medium ${
-                        isCompleted
-                          ? 'text-emerald-500'
-                          : remaining > 0
-                            ? 'text-amber-600'
-                            : 'text-emerald-600'
+                        isCanceled
+                          ? 'text-slate-400 dark:text-slate-500'
+                          : isCompleted
+                            ? 'text-emerald-500'
+                            : remaining > 0
+                              ? 'text-amber-600'
+                              : 'text-emerald-600'
                       }`}
                     >
                       {isCompleted ? 'Оплачено' : `${formatMoney(remaining)} ₽`}

@@ -1,6 +1,6 @@
 import type { OrderStatus } from '../domain/types'
 
-export const ORDER_STATUSES: OrderStatus[] = ['Новый', 'В работе', 'Выдан', 'Отменен']
+export const ORDER_STATUSES: OrderStatus[] = ['Отменен', 'Новый', 'В работе', 'Выдан']
 
 export const statusStyles: Record<OrderStatus, string> = {
   'Новый':
