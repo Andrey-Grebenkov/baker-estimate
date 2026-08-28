@@ -362,7 +362,7 @@ export function OrdersPage({ state }: { state: AppState }) {
                     </td>
                     <td className="w-1 whitespace-nowrap px-2 py-2 text-center">
                       {order.internal_comment?.trim() && (
-                        <div className="flex justify-center">
+                        <div className="flex w-full justify-center">
                           <FileText
                             onClick={() => setInternalCommentOrder(order)}
                             className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
