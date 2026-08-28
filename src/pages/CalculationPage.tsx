@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
 import type { Ingredient, MeasurementUnit, Recipe } from '../domain/types'
 import {
   MAX_DEFAULT_DIMENSION,
+  MAX_DEFAULT_PRICE,
   MAX_DEFAULT_QUANTITY,
   normalizeNumberString,
   parseNumberInput,
@@ -11,6 +13,8 @@ import { calculateScalingCoefficient, roundToDecimal, type Pan, type PanShape } 
 import { scaleIngredientQuantity } from '../domain/recipeScaling'
 import { unitLabelFor } from '../domain/shoppingList'
 import { RequiredMark } from '../components/RequiredMark'
+import { buildCake, type CakeDetails } from '../domain/cake'
+import { CakePrintView } from '../components/CakePrintView'
 
 function buildPan(shape: PanShape, diameter: string, length: string, width: string): Pan | null {
   if (shape === 'round') {
@@ -36,6 +40,13 @@ export function CalculationPage({ state }: { state: AppState }) {
   const [selectedCakeId, setSelectedCakeId] = useState('')
   const [targetWeight, setTargetWeight] = useState('')
   const [multiplier, setMultiplier] = useState(1)
+
+  const [overridePackagingDecor, setOverridePackagingDecor] = useState(false)
+  const [customPackagingName, setCustomPackagingName] = useState('Упаковка')
+  const [customPackagingCost, setCustomPackagingCost] = useState('')
+  const [customDecorName, setCustomDecorName] = useState('Декор')
+  const [customDecorCost, setCustomDecorCost] = useState('')
+  const [printing, setPrinting] = useState(false)
 
   const [showPanCalc, setShowPanCalc] = useState(false)
   const [sourceShape, setSourceShape] = useState<PanShape>('round')
@@ -113,6 +124,71 @@ export function CalculationPage({ state }: { state: AppState }) {
       })
       .filter((item): item is { recipe: Recipe; ingredients: { ingredient: Ingredient; required: number }[] } => item !== null)
   }, [selectedCake, multiplier, recipesById, ingredientsById])
+
+  const scaledRecipeItems = useMemo(() => {
+    if (!selectedCake) return []
+    return selectedCake.recipes.map((cr) => ({
+      ...cr,
+      multiplier: cr.multiplier * multiplier,
+    }))
+  }, [selectedCake, multiplier])
+
+  const printCake: CakeDetails | null = useMemo(() => {
+    if (!selectedCake) return null
+
+    const packaging = overridePackagingDecor
+      ? [
+          {
+            id: 'override-packaging',
+            name: customPackagingName,
+            cost: Number(parseNumberInput(customPackagingCost)),
+            quantity: 1,
+          },
+        ]
+      : selectedCake.packaging
+
+    const decor = overridePackagingDecor
+      ? [
+          {
+            id: 'override-decor',
+            name: customDecorName,
+            cost: Number(parseNumberInput(customDecorCost)),
+            quantity: 1,
+          },
+        ]
+      : selectedCake.decor
+
+    return buildCake(
+      {
+        ...selectedCake,
+        recipes: scaledRecipeItems,
+        packaging,
+        decor,
+        base_yield_weight: Number(targetWeight) || baseYield,
+        base_yield_unit: baseUnit,
+      },
+      recipesById,
+    )
+  }, [
+    selectedCake,
+    scaledRecipeItems,
+    overridePackagingDecor,
+    customPackagingName,
+    customPackagingCost,
+    customDecorName,
+    customDecorCost,
+    targetWeight,
+    baseYield,
+    baseUnit,
+    recipesById,
+  ])
+
+  const handlePrint = () => {
+    if (!printCake) return
+    flushSync(() => setPrinting(true))
+    window.print()
+    setPrinting(false)
+  }
 
   return (
     <div data-testid="calculation-page">
@@ -339,6 +415,83 @@ export function CalculationPage({ state }: { state: AppState }) {
             </div>
           </div>
 
+          <div className="mb-4 card-inset p-4" data-testid="calculation-override-section">
+            <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Упаковка и декор</h3>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={overridePackagingDecor}
+                onChange={(e) => setOverridePackagingDecor(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                data-testid="calc-override-packaging-decor"
+              />
+              Переопределить упаковку / декор для этого расчета
+            </label>
+
+            {overridePackagingDecor && (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Упаковка</p>
+                  <input
+                    type="text"
+                    value={customPackagingName}
+                    onChange={(e) => setCustomPackagingName(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                    placeholder="Название"
+                    data-testid="calc-packaging-name-input"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max={MAX_DEFAULT_PRICE}
+                    step="0.01"
+                    value={customPackagingCost}
+                    onChange={(e) => setCustomPackagingCost(normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE))}
+                    className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                    placeholder="Стоимость, ₽"
+                    data-testid="calc-packaging-cost-input"
+                  />
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Декор</p>
+                  <input
+                    type="text"
+                    value={customDecorName}
+                    onChange={(e) => setCustomDecorName(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                    placeholder="Название"
+                    data-testid="calc-decor-name-input"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max={MAX_DEFAULT_PRICE}
+                    step="0.01"
+                    value={customDecorCost}
+                    onChange={(e) => setCustomDecorCost(normalizeNumberString(e.target.value, MAX_DEFAULT_PRICE))}
+                    className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+                    placeholder="Стоимость, ₽"
+                    data-testid="calc-decor-cost-input"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-4 flex justify-end">
+            <button
+              type="button"
+              onClick={handlePrint}
+              disabled={!printCake}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="calc-print-button"
+            >
+              Распечатать смету
+            </button>
+          </div>
+
           <div className="mb-4 card-inset p-4" data-testid="calculation-ingredients-section">
             <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">
               Ингредиенты ({baseUnit === 'шт' ? 'на' : 'на'} {targetWeight} {baseUnit})
@@ -384,6 +537,17 @@ export function CalculationPage({ state }: { state: AppState }) {
       {!selectedCake && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:bg-slate-700/50" data-testid="calc-empty-state">
           <p className="text-slate-600 dark:text-slate-300">Выберите торт, чтобы рассчитать ингредиенты.</p>
+        </div>
+      )}
+
+      {printing && printCake && (
+        <div
+          className="fixed inset-0 z-50 block overflow-auto bg-white p-4 sm:p-8 print:static print:block print:p-0"
+          data-testid="cake-print-overlay"
+        >
+          <div className="mx-auto w-full max-w-5xl print:max-w-none">
+            <CakePrintView cake={printCake} recipes={state.recipes} />
+          </div>
         </div>
       )}
     </div>

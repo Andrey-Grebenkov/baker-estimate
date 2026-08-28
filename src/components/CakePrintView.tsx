@@ -1,13 +1,10 @@
 import type { CakeDetails } from '../domain/cake'
+import { formatMoney } from '../domain/money'
 import type { Recipe } from '../domain/types'
 
 interface CakePrintViewProps {
   cake: CakeDetails
   recipes: Recipe[]
-}
-
-function formatMoney(value: number): string {
-  return value.toFixed(2)
 }
 
 export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
@@ -53,9 +50,9 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
               return (
                 <tr key={cr.recipeId} data-testid="cake-print-recipe-row">
                   <td className="border border-slate-300 px-3 py-2 print:border-black">{recipe.name}</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{cr.multiplier}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{formatMoney(cr.multiplier)}</td>
                   <td className="border border-slate-300 px-3 py-2 print:border-black">
-                    {(recipe.totalWeight * cr.multiplier).toFixed(0)} г
+                    {String(Math.round(recipe.totalWeight * cr.multiplier))} г
                   </td>
                 </tr>
               )
@@ -80,9 +77,9 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
               {cake.packaging.map((item) => (
                 <tr key={item.id} data-testid="cake-print-packaging-row">
                   <td className="border border-slate-300 px-3 py-2 print:border-black">{item.name}</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.quantity} шт.</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.cost.toFixed(2)}</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{(item.cost * item.quantity).toFixed(2)}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{formatMoney(item.quantity)} шт.</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{formatMoney(item.cost)}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{formatMoney(item.cost * item.quantity)}</td>
                 </tr>
               ))}
             </tbody>
@@ -106,9 +103,9 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
               {cake.decor.map((item) => (
                 <tr key={item.id} data-testid="cake-print-decor-row">
                   <td className="border border-slate-300 px-3 py-2 print:border-black">{item.name}</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.quantity} шт.</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{item.cost.toFixed(2)}</td>
-                  <td className="border border-slate-300 px-3 py-2 print:border-black">{(item.cost * item.quantity).toFixed(2)}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{formatMoney(item.quantity)} шт.</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{formatMoney(item.cost)}</td>
+                  <td className="border border-slate-300 px-3 py-2 print:border-black">{formatMoney(item.cost * item.quantity)}</td>
                 </tr>
               ))}
             </tbody>
@@ -120,7 +117,7 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
         <div>
           <p className="text-sm text-slate-600 print:text-black">Итоговый вес</p>
           <p className="text-xl font-bold print:text-black" data-testid="cake-print-weight">
-            {(cake.weightKg * 1000).toFixed(0)} г / {cake.weightKg.toFixed(3)} кг
+            {formatMoney(cake.weightKg)} {cake.base_yield_unit ?? 'кг'}
           </p>
         </div>
 
@@ -167,9 +164,9 @@ export function CakePrintView({ cake, recipes }: CakePrintViewProps) {
         </div>
 
         <div>
-          <p className="text-sm text-slate-600 print:text-black">Цена за 1 кг</p>
+          <p className="text-sm text-slate-600 print:text-black">Цена за 1 {cake.base_yield_unit ?? 'кг'}</p>
           <p className="text-xl font-bold print:text-black" data-testid="cake-print-price-per-kg">
-            {formatMoney(cake.recommendedPricePerKg)} ₽/кг
+            {formatMoney(cake.recommendedPricePerKg)} ₽/{cake.base_yield_unit ?? 'кг'}
           </p>
         </div>
       </section>

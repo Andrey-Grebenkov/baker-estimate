@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { flushSync } from 'react-dom'
 import type { AppState } from '../hooks/useAppState'
 import { CakePrintView } from './CakePrintView'
 import { generateId } from '../lib/id'
@@ -54,7 +53,6 @@ export function CakesPage({ state }: { state: AppState }) {
   const [marginPercent, setMarginPercent] = useState('30')
   const [error, setError] = useState<string | null>(null)
   const [showShoppingList, setShowShoppingList] = useState(false)
-  const [printingCakeId, setPrintingCakeId] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -317,23 +315,6 @@ export function CakesPage({ state }: { state: AppState }) {
     [recipes, recipesById, ingredientsById],
   )
 
-  const handlePrint = (cakeId: string) => {
-    const cake = state.cakes.find((c) => c.id === cakeId)
-    if (!cake) return
-
-    flushSync(() => {
-      setPrintingCakeId(cakeId)
-    })
-
-    window.print()
-
-    setPrintingCakeId(null)
-  }
-
-  const printingCake = printingCakeId
-    ? state.cakes.find((c) => c.id === printingCakeId)
-    : null
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -384,19 +365,6 @@ export function CakesPage({ state }: { state: AppState }) {
         })
       }, 500)
     }
-  }
-
-  if (printingCake) {
-    return (
-      <div
-        className="fixed inset-0 z-50 block overflow-auto bg-white p-4 sm:p-8 print:static print:block print:p-0"
-        data-testid="cake-print-overlay"
-      >
-        <div className="mx-auto w-full max-w-5xl print:max-w-none">
-          <CakePrintView cake={printingCake} recipes={state.recipes} />
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -985,7 +953,6 @@ export function CakesPage({ state }: { state: AppState }) {
                 state={state}
                 onEdit={() => startEdit(cake)}
                 onDelete={() => confirmDelete(() => state.deleteCake(cake.id))}
-                onPrint={() => handlePrint(cake.id)}
               />
             ))}
           </div>
@@ -1103,13 +1070,11 @@ function CakeCard({
   cake,
   onEdit,
   onDelete,
-  onPrint,
   state,
 }: {
   cake: CakeDetails
   onEdit: () => void
   onDelete: () => void
-  onPrint: () => void
   state: AppState
 }) {
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
@@ -1232,14 +1197,6 @@ function CakeCard({
           })}
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onPrint}
-            className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-50"
-            data-testid="cake-print-button"
-          >
-            Распечатать смету
-          </button>
           <button
             type="button"
             onClick={onEdit}
