@@ -311,14 +311,12 @@ export function OrdersPage({ state }: { state: AppState }) {
                 const isCompleted = order.status === 'Выдан'
                 return (
                   <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
-                    <td className="whitespace-nowrap px-2 py-2 text-center">
-                      <div className="flex justify-center">
-                        <OrderStatusDropdown
-                          order={order}
-                          onSelect={(status) => handleStatusSelect(order, status)}
-                          disabled={state.isLoading}
-                        />
-                      </div>
+                    <td className="whitespace-nowrap px-2 py-2">
+                      <OrderStatusDropdown
+                        order={order}
+                        onSelect={(status) => handleStatusSelect(order, status)}
+                        disabled={state.isLoading}
+                      />
                     </td>
                     <td className="whitespace-nowrap px-2 py-2">
                       <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
@@ -371,8 +369,8 @@ export function OrdersPage({ state }: { state: AppState }) {
                         />
                       )}
                     </td>
-                    <td className="w-1 whitespace-nowrap px-2 py-2 text-center">
-                      <div className="flex justify-center gap-2">
+                    <td className="w-1 whitespace-nowrap px-2 py-2 text-right">
+                      <div className="flex justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => openEdit(order)}
