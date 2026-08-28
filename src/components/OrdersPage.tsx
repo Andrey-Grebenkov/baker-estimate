@@ -251,7 +251,7 @@ export function OrdersPage({ state }: { state: AppState }) {
               <tr>
                 <th
                   scope="col"
-                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="px-2 py-2 text-center text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Статус
                 </th>
@@ -299,7 +299,7 @@ export function OrdersPage({ state }: { state: AppState }) {
                 </th>
                 <th
                   scope="col"
-                  className="w-1 px-2 py-2 text-right text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="w-1 px-2 py-2 text-center text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Действия
                 </th>
@@ -311,12 +311,14 @@ export function OrdersPage({ state }: { state: AppState }) {
                 const isCompleted = order.status === 'Выдан'
                 return (
                   <tr key={order.id} data-testid="order-row" data-order-id={order.id}>
-                    <td className="whitespace-nowrap px-2 py-2">
-                      <OrderStatusDropdown
-                        order={order}
-                        onSelect={(status) => handleStatusSelect(order, status)}
-                        disabled={state.isLoading}
-                      />
+                    <td className="whitespace-nowrap px-2 py-2 text-center">
+                      <div className="flex justify-center">
+                        <OrderStatusDropdown
+                          order={order}
+                          onSelect={(status) => handleStatusSelect(order, status)}
+                          disabled={state.isLoading}
+                        />
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-2 py-2">
                       <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
@@ -369,8 +371,8 @@ export function OrdersPage({ state }: { state: AppState }) {
                         />
                       )}
                     </td>
-                    <td className="w-1 whitespace-nowrap px-2 py-2 text-right">
-                      <div className="flex justify-end gap-2">
+                    <td className="w-1 whitespace-nowrap px-2 py-2 text-center">
+                      <div className="flex justify-center gap-2">
                         <button
                           type="button"
                           onClick={() => openEdit(order)}
