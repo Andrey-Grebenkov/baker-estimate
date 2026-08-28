@@ -141,6 +141,11 @@ function mapCake(row: DbCake): CakeDetails {
   const weightKg =
     baseYieldWeight > 0 ? baseYieldWeight : toNumber(row.weight_kg)
 
+  const totalIngredientsCost = toNumber(row.total_ingredients_cost)
+  const marginPercent = toNumber(row.margin_percent)
+  const baseCost = totalIngredientsCost
+  const baseRecommendedPrice = roundToCurrency(baseCost * (1 + marginPercent / 100))
+
   return {
     id: row.id,
     user_id: row.user_id,
@@ -156,17 +161,16 @@ function mapCake(row: DbCake): CakeDetails {
         : { workHours: 0, hourlyRate: 0, fixedCosts: 0 },
     base_yield_weight: baseYieldWeight > 0 ? baseYieldWeight : undefined,
     base_yield_unit: baseUnit,
-    marginPercent: toNumber(row.margin_percent),
-    totalIngredientsCost: toNumber(row.total_ingredients_cost),
+    marginPercent,
+    totalIngredientsCost,
     totalPackagingCost: toNumber(row.total_packaging_cost),
     totalDecorCost: toNumber(row.total_decor_cost),
     totalOverheadsCost: toNumber(row.total_overheads_cost),
     finalCostPrice,
     recommendedPrice,
     weightKg,
-    costPerKg: weightKg > 0 ? roundToCurrency(finalCostPrice / weightKg) : 0,
-    recommendedPricePerKg:
-      weightKg > 0 ? roundToCurrency(recommendedPrice / weightKg) : 0,
+    costPerKg: weightKg > 0 ? roundToCurrency(baseCost / weightKg) : 0,
+    recommendedPricePerKg: weightKg > 0 ? roundToCurrency(baseRecommendedPrice / weightKg) : 0,
     image_url: row.image_url ?? undefined,
   }
 }
