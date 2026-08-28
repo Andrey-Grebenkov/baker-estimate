@@ -61,7 +61,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 print:bg-white" data-testid="app">
       <header className="bg-white shadow-sm ring-1 ring-slate-200 print:hidden">
-        <div className="mx-auto flex max-w-5xl items-start justify-between gap-3 px-4 py-4 sm:items-center sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-6 lg:px-8">
           <div>
             <h1
               className="text-xl font-bold text-slate-900 sm:text-2xl"
@@ -74,7 +74,7 @@ function App() {
             </p>
           </div>
 
-          <div className="flex flex-row items-center gap-3">
+          <div className="ml-auto flex flex-row items-center gap-3">
             {state.isLoading && (
               <span className="text-sm text-slate-500" data-testid="data-loading-indicator">
                 Сохранение…

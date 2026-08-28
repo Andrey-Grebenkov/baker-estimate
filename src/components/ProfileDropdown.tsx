@@ -134,9 +134,16 @@ export function ProfileDropdown({
 
           <button
             type="button"
-            onClick={() => {
+            onPointerDown={(e) => {
+              e.preventDefault()
               setIsOpen(false)
               setIsChangePasswordOpen(true)
+            }}
+            onClick={(e) => {
+              if (e.detail === 0) {
+                setIsOpen(false)
+                setIsChangePasswordOpen(true)
+              }
             }}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
             data-testid="profile-change-password"
@@ -146,7 +153,15 @@ export function ProfileDropdown({
 
           <button
             type="button"
-            onClick={handleFeedback}
+            onPointerDown={(e) => {
+              e.preventDefault()
+              handleFeedback()
+            }}
+            onClick={(e) => {
+              if (e.detail === 0) {
+                handleFeedback()
+              }
+            }}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
             data-testid="profile-feedback"
           >
@@ -157,9 +172,16 @@ export function ProfileDropdown({
 
           <button
             type="button"
-            onClick={() => {
+            onPointerDown={(e) => {
+              e.preventDefault()
               setIsOpen(false)
               setIsDeleteOpen(true)
+            }}
+            onClick={(e) => {
+              if (e.detail === 0) {
+                setIsOpen(false)
+                setIsDeleteOpen(true)
+              }
             }}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
             data-testid="profile-delete-account"
@@ -169,7 +191,15 @@ export function ProfileDropdown({
 
           <button
             type="button"
-            onClick={handleSignOut}
+            onPointerDown={(e) => {
+              e.preventDefault()
+              handleSignOut()
+            }}
+            onClick={(e) => {
+              if (e.detail === 0) {
+                handleSignOut()
+              }
+            }}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
             data-testid="profile-sign-out"
           >
