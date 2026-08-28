@@ -30,29 +30,42 @@ function createMockState(orders: Order[]): AppState {
   }
 }
 
+function baseOrder(): Order {
+  return {
+    id: 'o-1',
+    status: 'Новый',
+    delivery_date: new Date().toISOString(),
+    paid_amount: 1000,
+    total_cost: 600,
+    actual_cost: 600,
+    advance_payment: 0,
+    unit: 'кг',
+  }
+}
+
 describe('OrdersPage', () => {
-  it('calculates revenue and profit from paid_amount and total_cost', async () => {
-    const today = new Date().toISOString()
+  it('counts completed orders toward revenue and all active orders toward costs and expected', async () => {
     const orders: Order[] = [
       {
+        ...baseOrder(),
         id: 'o-1',
         status: 'Выдан',
-        delivery_date: today,
         paid_amount: 1000,
         total_cost: 600,
-        actual_cost: 600,
-        advance_payment: 0,
-        unit: 'кг',
       },
       {
+        ...baseOrder(),
         id: 'o-2',
-        status: 'Новый',
-        delivery_date: today,
+        status: 'В работе',
         paid_amount: 500,
         total_cost: 300,
-        actual_cost: 300,
-        advance_payment: 0,
-        unit: 'кг',
+      },
+      {
+        ...baseOrder(),
+        id: 'o-3',
+        status: 'Новый',
+        paid_amount: 250,
+        total_cost: 150,
       },
     ]
 
@@ -62,14 +75,57 @@ describe('OrdersPage', () => {
     fireEvent.change(periodSelect, { target: { value: 'all' } })
 
     await waitFor(() => {
-      expect(screen.getByTestId('orders-revenue').textContent).toContain('1 500')
-      expect(screen.getByTestId('orders-profit').textContent).toContain('600')
+      // Revenue: only completed (order 1)
+      expect(screen.getByTestId('orders-revenue').textContent).toContain('1 000')
+      // Expected: pending orders (2 + 3)
+      expect(screen.getByTestId('orders-expected').textContent).toContain('750')
+      // Costs: all active orders (1 + 2 + 3)
+      // Profit = revenue - totalCost = 1000 - (600 + 300 + 150) = -50
+      expect(screen.getByTestId('orders-profit').textContent).toContain('-50')
     })
   })
 
-  it('shows zero profit when there are no orders', () => {
+  it('moves an order amount from "Ожидается" to "Выручка" when it is completed', async () => {
+    const workingState = createMockState([
+      {
+        ...baseOrder(),
+        status: 'В работе',
+      },
+    ])
+
+    const { rerender } = render(<OrdersPage state={workingState} />)
+
+    const periodSelect = screen.getByTestId('orders-period-select') as HTMLSelectElement
+    fireEvent.change(periodSelect, { target: { value: 'all' } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
+      expect(screen.getByTestId('orders-expected').textContent).toContain('1 000')
+      expect(screen.getByTestId('orders-profit').textContent).toContain('-600')
+    })
+
+    rerender(
+      <OrdersPage
+        state={createMockState([
+          {
+            ...baseOrder(),
+            status: 'Выдан',
+          },
+        ])}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('orders-revenue').textContent).toContain('1 000')
+      expect(screen.getByTestId('orders-expected').textContent).toContain('0')
+      expect(screen.getByTestId('orders-profit').textContent).toContain('400')
+    })
+  })
+
+  it('shows zero metrics when there are no orders', () => {
     render(<OrdersPage state={createMockState([])} />)
     expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
     expect(screen.getByTestId('orders-profit').textContent).toContain('0')
+    expect(screen.getByTestId('orders-expected').textContent).toContain('0')
   })
 })

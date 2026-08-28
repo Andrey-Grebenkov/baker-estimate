@@ -75,8 +75,8 @@ export function OrdersPage({ state }: { state: AppState }) {
     [sortedOrders, dateRange],
   )
 
-  const revenue = useMemo(
-    () => filteredOrders.reduce((sum, order) => sum + order.paid_amount, 0),
+  const realizedRevenue = useMemo(
+    () => filteredOrders.reduce((sum, order) => (order.status === 'Выдан' ? sum + order.paid_amount : sum), 0),
     [filteredOrders],
   )
 
@@ -85,7 +85,12 @@ export function OrdersPage({ state }: { state: AppState }) {
     [filteredOrders],
   )
 
-  const profit = useMemo(() => revenue - totalCost, [revenue, totalCost])
+  const expectedRevenue = useMemo(
+    () => filteredOrders.reduce((sum, order) => (order.status !== 'Выдан' ? sum + order.paid_amount : sum), 0),
+    [filteredOrders],
+  )
+
+  const profit = useMemo(() => realizedRevenue - totalCost, [realizedRevenue, totalCost])
 
   const receiptCake = receiptOrder
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
@@ -220,7 +225,7 @@ export function OrdersPage({ state }: { state: AppState }) {
           className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
           data-testid="orders-revenue"
         >
-          Выручка: {formatPeriodRevenue(revenue)} ₽
+          Выручка: {formatPeriodRevenue(realizedRevenue)} ₽
         </span>
 
         <span
@@ -234,6 +239,13 @@ export function OrdersPage({ state }: { state: AppState }) {
           data-testid="orders-profit"
         >
           Прибыль: {formatPeriodRevenue(profit)} ₽
+        </span>
+
+        <span
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-amber-600 dark:border-slate-700 dark:bg-slate-700/50 dark:text-amber-400"
+          data-testid="orders-expected"
+        >
+          Ожидается: {formatPeriodRevenue(expectedRevenue)} ₽
         </span>
       </div>
     </div>
