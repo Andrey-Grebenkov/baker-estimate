@@ -166,7 +166,7 @@ export function buildCake(
   )
   const recommendedPrice = calculateRecommendedPrice(finalCostPrice, input.marginPercent)
 
-  const baseCostPrice = roundToCurrency(totalIngredientsCost + totalOverheadsCost)
+  const baseCostPrice = totalIngredientsCost
   const baseRecommendedPrice = roundToCurrency(baseCostPrice * (1 + input.marginPercent / 100))
 
   return {
