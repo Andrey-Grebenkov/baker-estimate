@@ -104,11 +104,11 @@ export function ProfileDropdown({
   }
 
   return (
-    <div className="relative" ref={containerRef} data-testid="profile-dropdown">
+    <div className="relative z-[200]" ref={containerRef} data-testid="profile-dropdown">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-lg font-semibold text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-lg font-semibold text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         data-testid="profile-avatar"
       >
         {initial}
@@ -116,7 +116,7 @@ export function ProfileDropdown({
 
       {isOpen && (
         <div
-          className="absolute right-0 z-50 mt-2 w-56 rounded-xl bg-white p-2 shadow-lg ring-1 ring-slate-200"
+          className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-xl bg-white p-2 shadow-lg ring-1 ring-slate-200"
           data-testid="profile-menu"
         >
           <div className="px-3 py-2">
