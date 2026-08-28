@@ -293,7 +293,7 @@ export function OrdersPage({ state }: { state: AppState }) {
                 </th>
                 <th
                   scope="col"
-                  className="w-1 px-2 py-2 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="w-1 px-2 py-2 text-center text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
                 >
                   Заметка
                 </th>
@@ -362,11 +362,13 @@ export function OrdersPage({ state }: { state: AppState }) {
                     </td>
                     <td className="w-1 whitespace-nowrap px-2 py-2 text-center">
                       {order.internal_comment?.trim() && (
-                        <FileText
-                          onClick={() => setInternalCommentOrder(order)}
-                          className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                          data-testid="order-internal-comment-icon"
-                        />
+                        <div className="flex justify-center">
+                          <FileText
+                            onClick={() => setInternalCommentOrder(order)}
+                            className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            data-testid="order-internal-comment-icon"
+                          />
+                        </div>
                       )}
                     </td>
                     <td className="w-1 whitespace-nowrap px-2 py-2 text-right">
