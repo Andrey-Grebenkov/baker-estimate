@@ -8,6 +8,8 @@ interface ProfileDropdownProps {
   onSignOut: () => Promise<unknown>
   onUpdatePassword: (password: string) => Promise<{ error: { message: string; code?: string } | null }>
   onDeleteAccount: () => Promise<{ error: { message: string; code?: string } | null }>
+  onOpenSettings: () => void
+  onOpenFeedback: () => void
 }
 
 export function ProfileDropdown({
@@ -15,6 +17,8 @@ export function ProfileDropdown({
   onSignOut,
   onUpdatePassword,
   onDeleteAccount,
+  onOpenSettings,
+  onOpenFeedback,
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
@@ -58,11 +62,6 @@ export function ProfileDropdown({
   const handleSignOut = async () => {
     setIsOpen(false)
     await onSignOut()
-  }
-
-  const handleFeedback = () => {
-    setIsOpen(false)
-    alert('В разработке')
   }
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -155,11 +154,32 @@ export function ProfileDropdown({
             type="button"
             onPointerDown={(e) => {
               e.preventDefault()
-              handleFeedback()
+              setIsOpen(false)
+              onOpenSettings()
             }}
             onClick={(e) => {
               if (e.detail === 0) {
-                handleFeedback()
+                setIsOpen(false)
+                onOpenSettings()
+              }
+            }}
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+            data-testid="profile-settings"
+          >
+            Настройки
+          </button>
+
+          <button
+            type="button"
+            onPointerDown={(e) => {
+              e.preventDefault()
+              setIsOpen(false)
+              onOpenFeedback()
+            }}
+            onClick={(e) => {
+              if (e.detail === 0) {
+                setIsOpen(false)
+                onOpenFeedback()
               }
             }}
             className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"

@@ -12,6 +12,7 @@ import { useTheme } from './hooks/useTheme'
 import { ThemeToggle } from './components/ThemeToggle'
 import { DashboardPage } from './components/DashboardPage'
 import { CalculationPage } from './pages/CalculationPage'
+import { FeedbackModal } from './components/FeedbackModal'
 
 type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'cakes' | 'calculation' | 'orders' | 'settings'
 
@@ -22,7 +23,6 @@ const tabs: { value: Tab; label: string }[] = [
   { value: 'cakes', label: 'Торты' },
   { value: 'calculation', label: 'Расчет' },
   { value: 'orders', label: 'Учет' },
-  { value: 'settings', label: 'Настройки' },
 ]
 
 function App() {
@@ -30,6 +30,7 @@ function App() {
   const { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount } =
     useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const state = useAppState(user)
 
   if (loading) {
@@ -86,6 +87,8 @@ function App() {
               onSignOut={signOut}
               onUpdatePassword={updatePassword}
               onDeleteAccount={deleteAccount}
+              onOpenSettings={() => setActiveTab('settings')}
+              onOpenFeedback={() => setIsFeedbackOpen(true)}
             />
           </div>
         </div>
@@ -146,6 +149,12 @@ function App() {
         {activeTab === 'orders' && <OrdersPage state={state} />}
         {activeTab === 'settings' && <SettingsPage user={user} state={state} />}
       </main>
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        email={user?.email ?? ''}
+      />
     </div>
   )
 }
