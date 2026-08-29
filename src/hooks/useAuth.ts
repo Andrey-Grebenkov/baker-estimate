@@ -6,6 +6,7 @@ import { mapAuthError } from '../lib/authErrors'
 export interface AuthState {
   session: Session | null
   user: User | null
+  isVerified: boolean
   loading: boolean
   error: string | null
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
@@ -13,6 +14,7 @@ export interface AuthState {
   signOut: () => Promise<{ error: AuthError | null }>
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>
   deleteAccount: () => Promise<{ error: AuthError | PostgrestError | null }>
+  resendVerification: () => Promise<{ error: AuthError | null }>
 }
 
 export function useAuth(): AuthState {
@@ -109,5 +111,20 @@ export function useAuth(): AuthState {
     return { error: null }
   }, [])
 
-  return { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount }
+  const resendVerification = useCallback(async () => {
+    if (!user?.email) {
+      return { error: { message: 'Пользователь не авторизован', code: undefined } as AuthError }
+    }
+    const redirectTo = typeof window !== 'undefined' ? window.location.origin : ''
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+      ...(redirectTo ? { options: { emailRedirectTo: redirectTo } } : {}),
+    })
+    return { error }
+  }, [user])
+
+  const isVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at)
+
+  return { session, user, isVerified, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount, resendVerification }
 }

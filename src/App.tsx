@@ -27,7 +27,7 @@ const tabs: { value: Tab; label: string }[] = [
 
 function App() {
   const { theme, toggleTheme } = useTheme()
-  const { session, user, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount } =
+  const { session, user, isVerified, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount, resendVerification } =
     useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
@@ -140,13 +140,21 @@ function App() {
         </nav>
 
         {activeTab === 'dashboard' && (
-          <DashboardPage state={state} theme={theme} onOpenCakes={() => setActiveTab('cakes')} />
+          <DashboardPage
+            state={state}
+            theme={theme}
+            onOpenCakes={() => setActiveTab('cakes')}
+            isVerified={isVerified}
+            onResendVerification={resendVerification}
+          />
         )}
         {activeTab === 'ingredients' && <IngredientsPage state={state} />}
         {activeTab === 'recipes' && <RecipesPage state={state} />}
         {activeTab === 'cakes' && <CakesPage state={state} />}
         {activeTab === 'calculation' && <CalculationPage state={state} />}
-        {activeTab === 'orders' && <OrdersPage state={state} />}
+        {activeTab === 'orders' && (
+          <OrdersPage state={state} isVerified={isVerified} onResendVerification={resendVerification} />
+        )}
         {activeTab === 'settings' && <SettingsPage user={user} state={state} />}
       </main>
 

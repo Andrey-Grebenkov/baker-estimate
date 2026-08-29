@@ -20,18 +20,43 @@ import {
   getRecentCakeCosts,
   type CostBreakdownPoint,
 } from '../domain/dashboard'
+import { VerificationPrompt } from './VerificationPrompt'
 
 interface DashboardPageProps {
   state: AppState
   theme: 'light' | 'dark'
   onOpenCakes: () => void
+  isVerified?: boolean
+  onResendVerification?: () => Promise<{ error: { message: string; code?: string } | null }>
 }
 
 const BREAKDOWN_COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#64748b']
 const BAR_COLOR = '#6366f1'
 
-export function DashboardPage({ state, theme, onOpenCakes }: DashboardPageProps) {
+export function DashboardPage({
+  state,
+  theme,
+  onOpenCakes,
+  isVerified = true,
+  onResendVerification,
+}: DashboardPageProps) {
   const isDark = theme === 'dark'
+
+  if (!isVerified) {
+    return (
+      <div className="relative z-0 space-y-6" data-testid="dashboard-page">
+        <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Дашборд</h2>
+        <VerificationPrompt
+          showNotification
+          title="Дашборд заблокирован"
+          description="Доступ к финансовой аналитике открывается после подтверждения email."
+          notification="Подтвердите email, чтобы открыть аналитику и графики."
+          resendLabel="Выслать письмо"
+          onResend={onResendVerification}
+        />
+      </div>
+    )
+  }
   const axisColor = isDark ? '#94a3b8' : '#64748b'
   const gridColor = isDark ? '#334155' : '#e2e8f0'
   const tooltipBg = isDark ? '#1e293b' : '#ffffff'

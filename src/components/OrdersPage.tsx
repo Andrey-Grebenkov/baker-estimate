@@ -10,6 +10,7 @@ import { EditCommentModal } from './EditCommentModal'
 import { ViewInternalCommentModal } from './ViewInternalCommentModal'
 import { OrderStatusDropdown } from './OrderStatusDropdown'
 import { CompleteOrderModal } from './CompleteOrderModal'
+import { VerificationPrompt } from './VerificationPrompt'
 import type { Order, OrderInput, OrderStatus } from '../domain/types'
 
 function formatDate(iso: string): string {
@@ -41,7 +42,13 @@ function toOrderInput(order: Order, overrides: Partial<OrderInput> = {}): OrderI
 
 type ViewMode = 'list' | 'calendar'
 
-export function OrdersPage({ state }: { state: AppState }) {
+interface OrdersPageProps {
+  state: AppState
+  isVerified?: boolean
+  onResendVerification?: () => Promise<{ error: { message: string; code?: string } | null }>
+}
+
+export function OrdersPage({ state, isVerified = true, onResendVerification }: OrdersPageProps) {
   const [view, setView] = useState<ViewMode>('list')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
@@ -49,6 +56,7 @@ export function OrdersPage({ state }: { state: AppState }) {
   const [completingOrder, setCompletingOrder] = useState<Order | null>(null)
   const [commentOrder, setCommentOrder] = useState<Order | null>(null)
   const [internalCommentOrder, setInternalCommentOrder] = useState<Order | null>(null)
+  const [verificationToast, setVerificationToast] = useState<string | null>(null)
 
   const [period, setPeriod] = useState<PeriodFilter>('month')
   const [customStart, setCustomStart] = useState('')
@@ -96,7 +104,12 @@ export function OrdersPage({ state }: { state: AppState }) {
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
     : undefined
 
-  const openAdd = () => {
+  const handleAdd = () => {
+    if (!isVerified) {
+      setVerificationToast('Для добавления продаж необходимо подтвердить email.')
+      setTimeout(() => setVerificationToast(null), 4000)
+      return
+    }
     setEditingOrder(null)
     setIsModalOpen(true)
   }
@@ -176,7 +189,7 @@ export function OrdersPage({ state }: { state: AppState }) {
           </div>
           <button
             type="button"
-            onClick={openAdd}
+            onClick={handleAdd}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             data-testid="record-sale-button"
           >
@@ -225,32 +238,42 @@ export function OrdersPage({ state }: { state: AppState }) {
           className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
           data-testid="orders-revenue"
         >
-          Выручка: {formatPeriodRevenue(realizedRevenue)} ₽
+          Выручка: {formatPeriodRevenue(isVerified ? realizedRevenue : 0)} ₽
         </span>
 
         <span
           className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${
-            profit > 0
+            isVerified && profit > 0
               ? 'text-emerald-600 dark:text-emerald-400'
-              : profit < 0
+              : isVerified && profit < 0
                 ? 'text-rose-600 dark:text-rose-400'
                 : 'text-slate-800 dark:text-slate-200'
           }`}
           data-testid="orders-profit"
         >
-          Прибыль: {formatPeriodRevenue(profit)} ₽
+          Прибыль: {formatPeriodRevenue(isVerified ? profit : 0)} ₽
         </span>
 
         <span
           className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-amber-600 dark:border-slate-700 dark:bg-slate-700/50 dark:text-amber-400"
           data-testid="orders-expected"
         >
-          Ожидается: {formatPeriodRevenue(expectedRevenue)} ₽
+          Ожидается: {formatPeriodRevenue(isVerified ? expectedRevenue : 0)} ₽
         </span>
       </div>
     </div>
 
-    {filteredOrders.length === 0 ? (
+    {verificationToast && (
+      <div
+        className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+        data-testid="orders-verification-toast"
+      >
+        {verificationToast}
+      </div>
+    )}
+
+    {isVerified ? (
+      filteredOrders.length === 0 ? (
         <p className="text-sm text-slate-500" data-testid="orders-empty-state">
           {state.orders.length === 0
             ? 'Пока нет заказов. Нажмите «Отметить продажу», чтобы создать первую запись.'
@@ -425,7 +448,14 @@ export function OrdersPage({ state }: { state: AppState }) {
           }}
           onReceipt={openReceipt}
         />
-      )}
+      )
+    ) : (
+      <VerificationPrompt
+        description="Чтобы пользоваться учетом нужно верифицировать email"
+        resendLabel="Выслать письмо"
+        onResend={onResendVerification}
+      />
+    )}
 
       <OrderModal
         isOpen={isModalOpen}
