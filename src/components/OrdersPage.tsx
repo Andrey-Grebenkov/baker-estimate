@@ -54,7 +54,7 @@ interface OrdersPageProps {
 export function OrdersPage({
   state,
   email,
-  isVerified = true,
+  isVerified = false,
   onSendOtp,
   onVerifyOtp,
   onOtpVerified,

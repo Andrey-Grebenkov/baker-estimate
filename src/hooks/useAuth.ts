@@ -12,6 +12,7 @@ export interface AuthState {
   session: Session | null
   user: User | null
   isVerified: boolean
+  isVerificationLoading: boolean
   loading: boolean
   error: string | null
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
@@ -30,11 +31,16 @@ export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [isVerified, setIsVerified] = useState(false)
+  const [isVerificationLoading, setIsVerificationLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const checkVerification = useCallback(async (s: Session | null) => {
+    // Default-deny: never keep a previous isVerified value while re-checking.
+    setIsVerified(false)
+    setIsVerificationLoading(true)
+
     if (!s?.access_token || !s.user?.email) {
-      setIsVerified(false)
+      setIsVerificationLoading(false)
       return
     }
 
@@ -58,6 +64,8 @@ export function useAuth(): AuthState {
       // Never fail auth loading because the verification check failed.
       console.error('Verification check failed', err)
       setIsVerified(false)
+    } finally {
+      setIsVerificationLoading(false)
     }
   }, [])
 
@@ -87,12 +95,14 @@ export function useAuth(): AuthState {
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!mounted) return
+      setLoading(true)
       setSession(newSession)
       setUser(newSession?.user ?? null)
       if (newSession?.user) {
         await checkVerification(newSession)
       } else {
         setIsVerified(false)
+        setIsVerificationLoading(false)
       }
       if (mounted) setLoading(false)
     })
@@ -204,6 +214,9 @@ export function useAuth(): AuthState {
           return { error: { message: data.error || 'Не удалось проверить код' } }
         }
 
+        // The backend has already inserted the verified_emails row.
+        // We can treat a 2xx response as a successful verification.
+        setIsVerified(true)
         return { error: null }
       } catch (err) {
         return { error: { message: err instanceof Error ? err.message : 'Не удалось проверить код' } }
@@ -222,6 +235,7 @@ export function useAuth(): AuthState {
     session,
     user,
     isVerified,
+    isVerificationLoading,
     loading,
     error,
     signIn,

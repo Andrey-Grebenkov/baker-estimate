@@ -6,6 +6,7 @@ import type { Order } from '../domain/types'
 
 const mockOtpProps = {
   email: 'test@example.com',
+  isVerified: true,
   onSendOtp: vi.fn(() => Promise.resolve({ error: null })),
   onVerifyOtp: vi.fn(() => Promise.resolve({ error: null })),
   onOtpVerified: vi.fn(),

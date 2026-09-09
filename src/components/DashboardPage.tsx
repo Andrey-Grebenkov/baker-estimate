@@ -41,7 +41,7 @@ export function DashboardPage({
   theme,
   onOpenCakes,
   email,
-  isVerified = true,
+  isVerified = false,
   onSendOtp,
   onVerifyOtp,
   onOtpVerified,

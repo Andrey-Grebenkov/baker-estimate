@@ -31,6 +31,7 @@ function App() {
     session,
     user,
     isVerified,
+    isVerificationLoading,
     loading,
     error,
     signIn,
@@ -40,13 +41,12 @@ function App() {
     deleteAccount,
     sendOtp,
     verifyOtp,
-    refreshVerification,
   } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const state = useAppState(user)
 
-  if (loading) {
+  if (loading || isVerificationLoading) {
     return (
       <div
         className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600"
@@ -161,7 +161,7 @@ function App() {
             isVerified={isVerified}
             onSendOtp={sendOtp}
             onVerifyOtp={verifyOtp}
-            onOtpVerified={refreshVerification}
+            onOtpVerified={() => {}}
           />
         )}
         {activeTab === 'ingredients' && <IngredientsPage state={state} />}
@@ -175,7 +175,7 @@ function App() {
             isVerified={isVerified}
             onSendOtp={sendOtp}
             onVerifyOtp={verifyOtp}
-            onOtpVerified={refreshVerification}
+            onOtpVerified={() => {}}
           />
         )}
         {activeTab === 'settings' && <SettingsPage user={user} state={state} />}
