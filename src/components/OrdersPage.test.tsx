@@ -175,4 +175,46 @@ describe('OrdersPage', () => {
     expect(screen.getByTestId('orders-profit').textContent).toContain('0')
     expect(screen.getByTestId('orders-expected').textContent).toContain('0')
   })
+
+  it('keeps active orders from previous months in the default "month" view', () => {
+    const now = new Date()
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15).toISOString()
+
+    const orders: Order[] = [
+      {
+        ...baseOrder(),
+        id: 'o-old-active',
+        status: 'В работе',
+        delivery_date: lastMonth,
+        client_name: 'Old Active',
+      },
+      {
+        ...baseOrder(),
+        id: 'o-old-completed',
+        status: 'Выдан',
+        delivery_date: lastMonth,
+        client_name: 'Old Completed',
+      },
+      {
+        ...baseOrder(),
+        id: 'o-current-new',
+        status: 'Новый',
+        client_name: 'Current New',
+      },
+    ]
+
+    render(<OrdersPage state={createMockState(orders)} {...mockOtpProps} />)
+
+    const rows = screen.getAllByTestId('order-row')
+    expect(rows).toHaveLength(2)
+    expect(screen.getByText('Old Active')).toBeTruthy()
+    expect(screen.queryByText('Old Completed')).toBeFalsy()
+    expect(screen.getByText('Current New')).toBeTruthy()
+
+    // Metrics: expected includes the old active order + the current new order,
+    // realized revenue excludes them, and costs include both active orders.
+    expect(screen.getByTestId('orders-expected').textContent).toContain('2 000')
+    expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
+    expect(screen.getByTestId('orders-profit').textContent).toContain('-1 200')
+  })
 })

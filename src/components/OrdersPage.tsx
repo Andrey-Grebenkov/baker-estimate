@@ -42,6 +42,10 @@ function toOrderInput(order: Order, overrides: Partial<OrderInput> = {}): OrderI
 
 type ViewMode = 'list' | 'calendar'
 
+function isActiveOrder(order: Order): boolean {
+  return order.status !== 'Выдан' && order.status !== 'Отменен'
+}
+
 interface OrdersPageProps {
   state: AppState
   email: string
@@ -89,8 +93,15 @@ export function OrdersPage({
 
   const filteredOrders = useMemo(
     () =>
-      dateRange ? sortedOrders.filter((order) => isDateInRange(order.delivery_date, dateRange)) : sortedOrders,
-    [sortedOrders, dateRange],
+      dateRange
+        ? sortedOrders.filter((order) => {
+            // Active orders remain visible in the current month view even if
+            // their delivery date is in the past or future, so nothing gets lost.
+            if (period === 'month' && isActiveOrder(order)) return true
+            return isDateInRange(order.delivery_date, dateRange)
+          })
+        : sortedOrders,
+    [sortedOrders, dateRange, period],
   )
 
   const realizedRevenue = useMemo(
