@@ -31,8 +31,7 @@ function App() {
     session,
     user,
     isVerified,
-    isVerificationLoading,
-    loading,
+    isInitialLoading,
     error,
     signIn,
     signUp,
@@ -46,7 +45,9 @@ function App() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const state = useAppState(user)
 
-  if (loading || isVerificationLoading) {
+  // Only the initial mount blocks the whole app. Background re-checks
+  // (window focus, token refresh) run silently so the OTP modal keeps state.
+  if (isInitialLoading) {
     return (
       <div
         className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600"

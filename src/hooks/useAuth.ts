@@ -12,8 +12,8 @@ export interface AuthState {
   session: Session | null
   user: User | null
   isVerified: boolean
+  isInitialLoading: boolean
   isVerificationLoading: boolean
-  loading: boolean
   error: string | null
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>
@@ -29,52 +29,65 @@ export interface AuthState {
 export function useAuth(): AuthState {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isVerified, setIsVerified] = useState(false)
   const [isVerificationLoading, setIsVerificationLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const checkVerification = useCallback(async (s: Session | null) => {
-    // Default-deny: never keep a previous isVerified value while re-checking.
-    setIsVerified(false)
-    setIsVerificationLoading(true)
+  const checkVerification = useCallback(
+    async (s: Session | null, options?: { silent?: boolean }) => {
+      const { silent = false } = options ?? {}
 
-    if (!s?.access_token || !s.user?.email) {
-      setIsVerificationLoading(false)
-      return
-    }
+      setIsVerificationLoading(true)
 
-    try {
-      const response = await fetch('/api/verification-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${s.access_token}`,
-        },
-        body: JSON.stringify({ email: s.user.email }),
-      })
-
-      if (!response.ok) {
-        throw new Error(await response.text())
+      // Default-deny on first load; keep the current value for background
+      // re-checks so an open OTP modal is not unmounted while refetching.
+      if (!silent) {
+        setIsVerified(false)
       }
 
-      const data = (await response.json()) as { verified?: boolean }
-      setIsVerified(data.verified === true)
-    } catch (err) {
-      // Never fail auth loading because the verification check failed.
-      console.error('Verification check failed', err)
-      setIsVerified(false)
-    } finally {
-      setIsVerificationLoading(false)
-    }
-  }, [])
+      if (!s?.access_token || !s.user?.email) {
+        if (!silent) setIsVerified(false)
+        setIsVerificationLoading(false)
+        if (!silent) setIsInitialLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch('/api/verification-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${s.access_token}`,
+          },
+          body: JSON.stringify({ email: s.user.email }),
+        })
+
+        if (!response.ok) {
+          throw new Error(await response.text())
+        }
+
+        const data = (await response.json()) as { verified?: boolean }
+        setIsVerified(data.verified === true)
+      } catch (err) {
+        // Don't flip a verified user to unverified because of a transient
+        // background network error. Only fail closed on the initial load.
+        console.error('Verification check failed', err)
+        if (!silent) setIsVerified(false)
+      } finally {
+        setIsVerificationLoading(false)
+        if (!silent) setIsInitialLoading(false)
+      }
+    },
+    [],
+  )
 
   useEffect(() => {
     let mounted = true
 
     if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
       setError('Supabase не настроен: добавьте VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY в .env.local')
-      setLoading(false)
+      setIsInitialLoading(false)
       return
     }
 
@@ -84,27 +97,26 @@ export function useAuth(): AuthState {
         if (!mounted) return
         if (sessionError) {
           setError(mapAuthError(sessionError))
+          setIsInitialLoading(false)
         } else {
           const currentSession = data.session
           setSession(currentSession)
           setUser(currentSession?.user ?? null)
-          await checkVerification(currentSession)
+          await checkVerification(currentSession, { silent: false })
         }
-        if (mounted) setLoading(false)
       })
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!mounted) return
-      setLoading(true)
+      // Background re-checks must be silent so the OTP modal keeps its state.
       setSession(newSession)
       setUser(newSession?.user ?? null)
       if (newSession?.user) {
-        await checkVerification(newSession)
+        await checkVerification(newSession, { silent: true })
       } else {
         setIsVerified(false)
         setIsVerificationLoading(false)
       }
-      if (mounted) setLoading(false)
     })
 
     return () => {
@@ -226,7 +238,7 @@ export function useAuth(): AuthState {
   )
 
   const refreshVerification = useCallback(async () => {
-    await checkVerification(session)
+    await checkVerification(session, { silent: true })
   }, [session, checkVerification])
 
   const resendVerification = sendOtp
@@ -235,8 +247,8 @@ export function useAuth(): AuthState {
     session,
     user,
     isVerified,
+    isInitialLoading,
     isVerificationLoading,
-    loading,
     error,
     signIn,
     signUp,
