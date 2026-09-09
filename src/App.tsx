@@ -27,8 +27,21 @@ const tabs: { value: Tab; label: string }[] = [
 
 function App() {
   const { theme, toggleTheme } = useTheme()
-  const { session, user, isVerified, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount, resendVerification } =
-    useAuth()
+  const {
+    session,
+    user,
+    isVerified,
+    loading,
+    error,
+    signIn,
+    signUp,
+    signOut,
+    updatePassword,
+    deleteAccount,
+    sendOtp,
+    verifyOtp,
+    refreshVerification,
+  } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const state = useAppState(user)
@@ -144,8 +157,11 @@ function App() {
             state={state}
             theme={theme}
             onOpenCakes={() => setActiveTab('cakes')}
+            email={user?.email ?? ''}
             isVerified={isVerified}
-            onResendVerification={resendVerification}
+            onSendOtp={sendOtp}
+            onVerifyOtp={verifyOtp}
+            onOtpVerified={refreshVerification}
           />
         )}
         {activeTab === 'ingredients' && <IngredientsPage state={state} />}
@@ -153,7 +169,14 @@ function App() {
         {activeTab === 'cakes' && <CakesPage state={state} />}
         {activeTab === 'calculation' && <CalculationPage state={state} />}
         {activeTab === 'orders' && (
-          <OrdersPage state={state} isVerified={isVerified} onResendVerification={resendVerification} />
+          <OrdersPage
+            state={state}
+            email={user?.email ?? ''}
+            isVerified={isVerified}
+            onSendOtp={sendOtp}
+            onVerifyOtp={verifyOtp}
+            onOtpVerified={refreshVerification}
+          />
         )}
         {activeTab === 'settings' && <SettingsPage user={user} state={state} />}
       </main>

@@ -10,7 +10,7 @@ import { EditCommentModal } from './EditCommentModal'
 import { ViewInternalCommentModal } from './ViewInternalCommentModal'
 import { OrderStatusDropdown } from './OrderStatusDropdown'
 import { CompleteOrderModal } from './CompleteOrderModal'
-import { VerificationPrompt } from './VerificationPrompt'
+import { OtpVerificationModal } from './OtpVerificationModal'
 import type { Order, OrderInput, OrderStatus } from '../domain/types'
 
 function formatDate(iso: string): string {
@@ -44,11 +44,21 @@ type ViewMode = 'list' | 'calendar'
 
 interface OrdersPageProps {
   state: AppState
+  email: string
   isVerified?: boolean
-  onResendVerification?: () => Promise<{ error: { message: string; code?: string } | null }>
+  onSendOtp: () => Promise<{ error: { message: string; code?: string } | null }>
+  onVerifyOtp: (code: string) => Promise<{ error: { message: string; code?: string } | null }>
+  onOtpVerified: () => void
 }
 
-export function OrdersPage({ state, isVerified = true, onResendVerification }: OrdersPageProps) {
+export function OrdersPage({
+  state,
+  email,
+  isVerified = true,
+  onSendOtp,
+  onVerifyOtp,
+  onOtpVerified,
+}: OrdersPageProps) {
   const [view, setView] = useState<ViewMode>('list')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
@@ -149,6 +159,22 @@ export function OrdersPage({ state, isVerified = true, onResendVerification }: O
     }
 
     state.updateOrder(order.id, toOrderInput(order, { status }))
+  }
+
+  if (!isVerified) {
+    return (
+      <div data-testid="orders-page">
+        <h2 className="mb-4 text-xl font-semibold text-slate-800">Учет продаж</h2>
+        <OtpVerificationModal
+          email={email}
+          title="Учет продаж заблокирован"
+          description="Доступ к учету заказов открывается после подтверждения email."
+          onSend={onSendOtp}
+          onVerify={onVerifyOtp}
+          onVerified={onOtpVerified}
+        />
+      </div>
+    )
   }
 
   return (
@@ -272,7 +298,7 @@ export function OrdersPage({ state, isVerified = true, onResendVerification }: O
       </div>
     )}
 
-    {isVerified ? (
+    {
       filteredOrders.length === 0 ? (
         <p className="text-sm text-slate-500" data-testid="orders-empty-state">
           {state.orders.length === 0
@@ -449,13 +475,7 @@ export function OrdersPage({ state, isVerified = true, onResendVerification }: O
           onReceipt={openReceipt}
         />
       )
-    ) : (
-      <VerificationPrompt
-        description="Чтобы пользоваться учетом нужно верифицировать email"
-        resendLabel="Выслать письмо"
-        onResend={onResendVerification}
-      />
-    )}
+    }
 
       <OrderModal
         isOpen={isModalOpen}

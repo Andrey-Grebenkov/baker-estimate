@@ -20,14 +20,17 @@ import {
   getRecentCakeCosts,
   type CostBreakdownPoint,
 } from '../domain/dashboard'
-import { VerificationPrompt } from './VerificationPrompt'
+import { OtpVerificationModal } from './OtpVerificationModal'
 
 interface DashboardPageProps {
   state: AppState
   theme: 'light' | 'dark'
   onOpenCakes: () => void
+  email: string
   isVerified?: boolean
-  onResendVerification?: () => Promise<{ error: { message: string; code?: string } | null }>
+  onSendOtp: () => Promise<{ error: { message: string; code?: string } | null }>
+  onVerifyOtp: (code: string) => Promise<{ error: { message: string; code?: string } | null }>
+  onOtpVerified: () => void
 }
 
 const BREAKDOWN_COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#64748b']
@@ -37,8 +40,11 @@ export function DashboardPage({
   state,
   theme,
   onOpenCakes,
+  email,
   isVerified = true,
-  onResendVerification,
+  onSendOtp,
+  onVerifyOtp,
+  onOtpVerified,
 }: DashboardPageProps) {
   const isDark = theme === 'dark'
 
@@ -46,13 +52,13 @@ export function DashboardPage({
     return (
       <div className="relative z-0 space-y-6" data-testid="dashboard-page">
         <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Дашборд</h2>
-        <VerificationPrompt
-          showNotification
+        <OtpVerificationModal
+          email={email}
           title="Дашборд заблокирован"
           description="Доступ к финансовой аналитике открывается после подтверждения email."
-          notification="Подтвердите email, чтобы открыть аналитику и графики."
-          resendLabel="Выслать письмо"
-          onResend={onResendVerification}
+          onSend={onSendOtp}
+          onVerify={onVerifyOtp}
+          onVerified={onOtpVerified}
         />
       </div>
     )

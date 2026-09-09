@@ -3,6 +3,11 @@ import type { Session, User, AuthError, PostgrestError } from '@supabase/supabas
 import { supabase } from '../lib/supabase'
 import { mapAuthError } from '../lib/authErrors'
 
+interface OtpError {
+  message: string
+  code?: string
+}
+
 export interface AuthState {
   session: Session | null
   user: User | null
@@ -14,14 +19,47 @@ export interface AuthState {
   signOut: () => Promise<{ error: AuthError | null }>
   updatePassword: (password: string) => Promise<{ error: AuthError | null }>
   deleteAccount: () => Promise<{ error: AuthError | PostgrestError | null }>
-  resendVerification: () => Promise<{ error: AuthError | null }>
+  resendVerification: () => Promise<{ error: OtpError | null }>
+  sendOtp: () => Promise<{ error: OtpError | null }>
+  verifyOtp: (code: string) => Promise<{ error: OtpError | null }>
+  refreshVerification: () => Promise<void>
 }
 
 export function useAuth(): AuthState {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isVerified, setIsVerified] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const checkVerification = useCallback(async (s: Session | null) => {
+    if (!s?.access_token || !s.user?.email) {
+      setIsVerified(false)
+      return
+    }
+
+    try {
+      const response = await fetch('/api/verification-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${s.access_token}`,
+        },
+        body: JSON.stringify({ email: s.user.email }),
+      })
+
+      if (!response.ok) {
+        throw new Error(await response.text())
+      }
+
+      const data = (await response.json()) as { verified?: boolean }
+      setIsVerified(data.verified === true)
+    } catch (err) {
+      // Never fail auth loading because the verification check failed.
+      console.error('Verification check failed', err)
+      setIsVerified(false)
+    }
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -34,28 +72,36 @@ export function useAuth(): AuthState {
 
     supabase.auth
       .getSession()
-      .then(({ data, error: sessionError }) => {
+      .then(async ({ data, error: sessionError }) => {
         if (!mounted) return
         if (sessionError) {
           setError(mapAuthError(sessionError))
         } else {
-          setSession(data.session)
-          setUser(data.session?.user ?? null)
+          const currentSession = data.session
+          setSession(currentSession)
+          setUser(currentSession?.user ?? null)
+          await checkVerification(currentSession)
         }
-        setLoading(false)
+        if (mounted) setLoading(false)
       })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (!mounted) return
       setSession(newSession)
       setUser(newSession?.user ?? null)
-      setLoading(false)
+      if (newSession?.user) {
+        await checkVerification(newSession)
+      } else {
+        setIsVerified(false)
+      }
+      if (mounted) setLoading(false)
     })
 
     return () => {
       mounted = false
       listener.subscription.unsubscribe()
     }
-  }, [])
+  }, [checkVerification])
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -111,20 +157,81 @@ export function useAuth(): AuthState {
     return { error: null }
   }, [])
 
-  const resendVerification = useCallback(async () => {
-    if (!user?.email) {
-      return { error: { message: 'Пользователь не авторизован', code: undefined } as AuthError }
+  const sendOtp = useCallback(async () => {
+    if (!session?.access_token || !user?.email) {
+      return { error: { message: 'Пользователь не авторизован' } }
     }
-    const redirectTo = typeof window !== 'undefined' ? window.location.origin : ''
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-      ...(redirectTo ? { options: { emailRedirectTo: redirectTo } } : {}),
-    })
-    return { error }
-  }, [user])
 
-  const isVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at)
+    try {
+      const response = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ email: user.email }),
+      })
 
-  return { session, user, isVerified, loading, error, signIn, signUp, signOut, updatePassword, deleteAccount, resendVerification }
+      if (!response.ok) {
+        const data = (await response.json().catch(() => ({}))) as { error?: string }
+        return { error: { message: data.error || 'Не удалось отправить код' } }
+      }
+
+      return { error: null }
+    } catch (err) {
+      return { error: { message: err instanceof Error ? err.message : 'Не удалось отправить код' } }
+    }
+  }, [session, user])
+
+  const verifyOtp = useCallback(
+    async (code: string) => {
+      if (!session?.access_token || !user?.email) {
+        return { error: { message: 'Пользователь не авторизован' } }
+      }
+
+      try {
+        const response = await fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ email: user.email, code }),
+        })
+
+        if (!response.ok) {
+          const data = (await response.json().catch(() => ({}))) as { error?: string }
+          return { error: { message: data.error || 'Не удалось проверить код' } }
+        }
+
+        return { error: null }
+      } catch (err) {
+        return { error: { message: err instanceof Error ? err.message : 'Не удалось проверить код' } }
+      }
+    },
+    [session, user],
+  )
+
+  const refreshVerification = useCallback(async () => {
+    await checkVerification(session)
+  }, [session, checkVerification])
+
+  const resendVerification = sendOtp
+
+  return {
+    session,
+    user,
+    isVerified,
+    loading,
+    error,
+    signIn,
+    signUp,
+    signOut,
+    updatePassword,
+    deleteAccount,
+    resendVerification,
+    sendOtp,
+    verifyOtp,
+    refreshVerification,
+  }
 }

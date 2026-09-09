@@ -4,6 +4,13 @@ import { OrdersPage } from './OrdersPage'
 import type { AppState } from '../hooks/useAppState'
 import type { Order } from '../domain/types'
 
+const mockOtpProps = {
+  email: 'test@example.com',
+  onSendOtp: vi.fn(() => Promise.resolve({ error: null })),
+  onVerifyOtp: vi.fn(() => Promise.resolve({ error: null })),
+  onOtpVerified: vi.fn(),
+}
+
 function createMockState(orders: Order[]): AppState {
   return {
     ingredients: [],
@@ -69,7 +76,7 @@ describe('OrdersPage', () => {
       },
     ]
 
-    render(<OrdersPage state={createMockState(orders)} />)
+    render(<OrdersPage state={createMockState(orders)} {...mockOtpProps} />)
 
     const periodSelect = screen.getByTestId('orders-period-select') as HTMLSelectElement
     fireEvent.change(periodSelect, { target: { value: 'all' } })
@@ -93,7 +100,7 @@ describe('OrdersPage', () => {
       },
     ])
 
-    const { rerender } = render(<OrdersPage state={workingState} />)
+    const { rerender } = render(<OrdersPage state={workingState} {...mockOtpProps} />)
 
     const periodSelect = screen.getByTestId('orders-period-select') as HTMLSelectElement
     fireEvent.change(periodSelect, { target: { value: 'all' } })
@@ -112,6 +119,7 @@ describe('OrdersPage', () => {
             status: 'Выдан',
           },
         ])}
+        {...mockOtpProps}
       />,
     )
 
@@ -147,7 +155,7 @@ describe('OrdersPage', () => {
       },
     ]
 
-    render(<OrdersPage state={createMockState(orders)} />)
+    render(<OrdersPage state={createMockState(orders)} {...mockOtpProps} />)
 
     const periodSelect = screen.getByTestId('orders-period-select') as HTMLSelectElement
     fireEvent.change(periodSelect, { target: { value: 'all' } })
@@ -161,7 +169,7 @@ describe('OrdersPage', () => {
   })
 
   it('shows zero metrics when there are no orders', () => {
-    render(<OrdersPage state={createMockState([])} />)
+    render(<OrdersPage state={createMockState([])} {...mockOtpProps} />)
     expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
     expect(screen.getByTestId('orders-profit').textContent).toContain('0')
     expect(screen.getByTestId('orders-expected').textContent).toContain('0')
