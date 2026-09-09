@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail, X } from 'lucide-react'
 
 interface OtpError {
@@ -50,8 +50,21 @@ export function OtpVerificationModal({
   const [code, setCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [timeLeft, setTimeLeft] = useState(0)
+
+  useEffect(() => {
+    if (timeLeft <= 0) return
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [timeLeft])
 
   const handleSend = async () => {
+    if (timeLeft > 0) return
+
     setIsLoading(true)
     setError(null)
 
@@ -62,6 +75,8 @@ export function OtpVerificationModal({
         setStep('send')
       } else {
         setStep('verify')
+        setCode('')
+        setTimeLeft(60)
       }
     } finally {
       setIsLoading(false)
@@ -137,7 +152,7 @@ export function OtpVerificationModal({
           <button
             type="button"
             onClick={handleSend}
-            disabled={isLoading}
+            disabled={isLoading || timeLeft > 0}
             className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             data-testid="otp-send-button"
           >
@@ -180,11 +195,11 @@ export function OtpVerificationModal({
           <button
             type="button"
             onClick={handleSend}
-            disabled={isLoading}
+            disabled={isLoading || timeLeft > 0}
             className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
             data-testid="otp-resend-button"
           >
-            Выслать новый код
+            {timeLeft > 0 ? `Выслать новый код (${timeLeft} сек)` : 'Выслать новый код'}
           </button>
         </div>
       )}

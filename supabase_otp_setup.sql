@@ -9,10 +9,12 @@
 -- 1. otp_codes: temporary 6-digit codes, expiration and brute-force counter
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.otp_codes (
-  email       TEXT PRIMARY KEY,
-  code        TEXT NOT NULL,
-  expires_at  TIMESTAMPTZ NOT NULL,
-  attempts    INT NOT NULL DEFAULT 0
+  email         TEXT PRIMARY KEY,
+  code          TEXT NOT NULL,
+  expires_at    TIMESTAMPTZ NOT NULL,
+  attempts      INT NOT NULL DEFAULT 0,
+  resend_count  INT NOT NULL DEFAULT 0,
+  last_sent_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 COMMENT ON TABLE public.otp_codes IS 'One-time password codes for soft email verification. Managed exclusively by the Vercel backend.';

@@ -68,8 +68,48 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + OTP_TTL_MS).toISOString()
+    const lastSentAt = now.toISOString()
+
+    // Rate-limiting: inspect the existing row before generating a new code.
+    const { data: existing, error: selectError } = await supabase
+      .from('otp_codes')
+      .select('resend_count, last_sent_at, expires_at')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
+
+    if (selectError) throw selectError
+
+    let resendCount = 0
+
+    if (existing) {
+      const isExpired = new Date(existing.expires_at) < now
+
+      // Expired codes are treated as a fresh rate-limit window.
+      if (!isExpired) {
+        resendCount = existing.resend_count ?? 0
+        const lastSent = new Date(existing.last_sent_at)
+        const timeSinceLastSend = now.getTime() - lastSent.getTime()
+
+        // 60-second cooldown between resends.
+        if (timeSinceLastSend < 60_000) {
+          return res.status(429).json({
+            error: 'Подождите минуту перед следующей отправкой',
+          })
+        }
+      }
+
+      // Max 3 sends per code window (industry standard cap).
+      if (resendCount >= 3) {
+        return res.status(429).json({
+          error: 'Превышен лимит отправки писем. Попробуйте позже.',
+        })
+      }
+    }
+
+    resendCount += 1
     const code = generateOtp()
-    const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString()
 
     // Upsert so resending before expiry overwrites the old code and resets attempts.
     const { error: upsertError } = await supabase
@@ -80,6 +120,8 @@ export default async function handler(req, res) {
           code,
           expires_at: expiresAt,
           attempts: 0,
+          resend_count: resendCount,
+          last_sent_at: lastSentAt,
         },
         { onConflict: 'email' },
       )
