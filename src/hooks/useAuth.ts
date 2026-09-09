@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import type { Session, User, AuthError, PostgrestError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { mapAuthError } from '../lib/authErrors'
@@ -33,6 +33,9 @@ export function useAuth(): AuthState {
   const [isVerified, setIsVerified] = useState(false)
   const [isVerificationLoading, setIsVerificationLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const sessionRef = useRef<Session | null>(null)
+  const userRef = useRef<User | null>(null)
 
   const checkVerification = useCallback(
     async (s: Session | null, options?: { silent?: boolean }) => {
@@ -91,6 +94,19 @@ export function useAuth(): AuthState {
       return
     }
 
+    const updateSessionAndUser = (newSession: Session | null) => {
+      if (newSession?.access_token !== sessionRef.current?.access_token) {
+        setSession(newSession)
+        sessionRef.current = newSession
+      }
+
+      const newUser = newSession?.user ?? null
+      if (newUser?.id !== userRef.current?.id) {
+        setUser(newUser)
+        userRef.current = newUser
+      }
+    }
+
     supabase.auth
       .getSession()
       .then(async ({ data, error: sessionError }) => {
@@ -100,23 +116,51 @@ export function useAuth(): AuthState {
           setIsInitialLoading(false)
         } else {
           const currentSession = data.session
-          setSession(currentSession)
-          setUser(currentSession?.user ?? null)
+          updateSessionAndUser(currentSession)
           await checkVerification(currentSession, { silent: false })
         }
       })
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!mounted) return
-      // Background re-checks must be silent so the OTP modal keeps its state.
-      setSession(newSession)
-      setUser(newSession?.user ?? null)
-      if (newSession?.user) {
-        await checkVerification(newSession, { silent: true })
-      } else {
+
+      // getSession handles the initial mount; avoid a duplicate verification
+      // check and the race conditions it creates.
+      if (event === 'INITIAL_SESSION') {
+        return
+      }
+
+      // Only a real sign-out should null the session. Token refreshes and
+      // user-updated events must not transiently unmount the app tree.
+      if (event === 'SIGNED_OUT') {
+        setSession(null)
+        sessionRef.current = null
+        setUser(null)
+        userRef.current = null
         setIsVerified(false)
         setIsVerificationLoading(false)
+        return
       }
+
+      // Ignore SIGNED_IN / TOKEN_REFRESHED events that carry no session.
+      if (!newSession?.user) {
+        return
+      }
+
+      // Update the session token (e.g. after a refresh) without replacing the
+      // user object when the id is the same, so the app tree does not re-render
+      // and form state is preserved.
+      if (newSession.user.id === userRef.current?.id) {
+        if (newSession.access_token !== sessionRef.current?.access_token) {
+          setSession(newSession)
+          sessionRef.current = newSession
+        }
+        await checkVerification(newSession, { silent: true })
+        return
+      }
+
+      updateSessionAndUser(newSession)
+      await checkVerification(newSession, { silent: true })
     })
 
     return () => {
