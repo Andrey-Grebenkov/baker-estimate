@@ -104,6 +104,14 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
     return roundToCurrency((actualWeightNum / selectedCake.weightKg) * selectedCake.finalCostPrice)
   }, [selectedCake, actualWeightNum])
 
+  // Личный труд кондитера — часть накладных расходов без fixedCosts.
+  const laborCost = useMemo(() => {
+    if (!selectedCake || actualWeightNum <= 0) return 0
+    if (selectedCake.weightKg <= 0) return 0
+    const wholeCakeLabor = selectedCake.overheads.workHours * selectedCake.overheads.hourlyRate
+    return roundToCurrency((actualWeightNum / selectedCake.weightKg) * wholeCakeLabor)
+  }, [selectedCake, actualWeightNum])
+
   const remainingBalance = useMemo(
     () => Math.max(0, roundToCurrency(paidAmountNum - advancePaymentNum)),
     [paidAmountNum, advancePaymentNum],
@@ -112,6 +120,12 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
   const netProfit = useMemo(
     () => roundToCurrency(paidAmountNum - totalCost),
     [paidAmountNum, totalCost],
+  )
+
+  // Сколько реально заработал кондитер: прибыль + их собственный труд.
+  const bakerEarnings = useMemo(
+    () => roundToCurrency(netProfit + laborCost),
+    [netProfit, laborCost],
   )
 
   useEffect(() => {
@@ -440,6 +454,17 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
                   }`}
                 >
                   {formatMoney(netProfit)} ₽
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Заработок кондитера</p>
+                <p
+                  className={`text-lg font-semibold ${
+                    bakerEarnings >= 0 ? 'text-indigo-600' : 'text-rose-600'
+                  }`}
+                  data-testid="order-baker-earnings"
+                >
+                  {formatMoney(bakerEarnings)} ₽
                 </p>
               </div>
             </div>

@@ -69,6 +69,36 @@ function createMockState(): AppState {
 }
 
 describe('OrderModal total_cost snapshot', () => {
+  it('calculates baker earnings as net profit plus scaled labor cost', async () => {
+    const cakeWithLabor = buildCake(
+      {
+        ...cake,
+        overheads: { workHours: 2, hourlyRate: 500, fixedCosts: 100 },
+      },
+      { [recipe.id]: recipe },
+    )
+    const state = createMockState()
+    state.cakes = [cakeWithLabor]
+
+    render(<OrderModal isOpen state={state} onClose={() => {}} />)
+
+    fireEvent.change(screen.getByTestId('order-cake-select') as HTMLSelectElement, {
+      target: { value: cakeWithLabor.id },
+    })
+    fireEvent.change(screen.getByTestId('order-weight-input') as HTMLInputElement, {
+      target: { value: '2' },
+    })
+    fireEvent.change(screen.getByTestId('order-paid-input') as HTMLInputElement, {
+      target: { value: '3000' },
+    })
+
+    await waitFor(() => {
+      const preview = screen.getByTestId('order-calculation-preview')
+      expect(preview).toBeTruthy()
+      expect(screen.getByTestId('order-baker-earnings').textContent).toContain('2600')
+    })
+  })
+
   it('defaults total_cost to 0 when no cake is selected', async () => {
     const state = createMockState()
     render(<OrderModal isOpen state={state} onClose={() => {}} />)
