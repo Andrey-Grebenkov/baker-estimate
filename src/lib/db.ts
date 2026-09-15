@@ -58,6 +58,11 @@ interface DbOrder {
   created_at: string
 }
 
+interface DbUserSettings {
+  user_id: string
+  tax_percent: number
+}
+
 interface DbCake {
   id: string
   user_id: string
@@ -434,5 +439,21 @@ export async function updateOrder(id: string, input: OrderInput, userId: string)
 
 export async function deleteOrder(id: string): Promise<void> {
   const { error } = await supabase.from('orders').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function fetchTaxPercent(): Promise<number> {
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('tax_percent')
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data ? toNumber((data as DbUserSettings).tax_percent) : 0
+}
+
+export async function upsertTaxPercent(percent: number, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert({ user_id: userId, tax_percent: percent })
   if (error) throw new Error(error.message)
 }

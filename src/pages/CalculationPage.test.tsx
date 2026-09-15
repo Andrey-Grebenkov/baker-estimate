@@ -124,6 +124,8 @@ function createMockState(): AppState {
     addOrder: vi.fn(),
     updateOrder: vi.fn(),
     deleteOrder: vi.fn(),
+    taxPercent: 0,
+    updateTaxPercent: vi.fn(),
   }
 }
 

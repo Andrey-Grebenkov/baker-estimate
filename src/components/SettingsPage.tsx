@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import type { AppState } from '../hooks/useAppState'
 import {
@@ -9,6 +9,7 @@ import {
   fetchCurrentData,
   type ImportAnalysis,
 } from '../lib/backup'
+import { normalizeNumberString, parseNumberInput } from '../lib/numberInput'
 import { ImportConflictModal } from './ImportConflictModal'
 
 interface SettingsPageProps {
@@ -27,10 +28,23 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
+  const [taxInput, setTaxInput] = useState('')
   const [showConflictModal, setShowConflictModal] = useState(false)
   const [importData, setImportData] = useState<unknown | null>(null)
   const [importAnalysis, setImportAnalysis] = useState<ImportAnalysis | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    setTaxInput(state.taxPercent > 0 ? String(state.taxPercent) : '')
+  }, [state.taxPercent])
+
+  const handleTaxBlur = () => {
+    const parsed = Math.min(100, Math.max(0, parseNumberInput(taxInput)))
+    setTaxInput(parsed > 0 ? String(parsed) : '')
+    if (parsed !== state.taxPercent) {
+      state.updateTaxPercent(parsed)
+    }
+  }
 
   const showToast = (type: Toast['type'], message: string) => {
     setToast({ type, message })
@@ -155,6 +169,35 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
           <p className="text-base font-medium text-slate-900" data-testid="settings-user-email">
             {user?.email ?? '—'}
           </p>
+        </div>
+      </div>
+
+      <div
+        className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
+        data-testid="settings-financial"
+      >
+        <h2 className="mb-4 text-lg font-semibold text-slate-800">Финансовые настройки</h2>
+        <p className="mb-4 text-sm text-slate-600">
+          Ставка налога применяется к выручке в разделе «Учет» — для самозанятых и ИП.
+          Оставьте 0, если учитывать налог не нужно.
+        </p>
+        <div className="max-w-xs space-y-1">
+          <label htmlFor="settings-tax" className="text-sm font-medium text-slate-600">
+            Налог (%)
+          </label>
+          <input
+            id="settings-tax"
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            value={taxInput}
+            onChange={(e) => setTaxInput(normalizeNumberString(e.target.value, 100))}
+            onBlur={handleTaxBlur}
+            className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            placeholder="0"
+            data-testid="settings-tax-input"
+          />
         </div>
       </div>
 

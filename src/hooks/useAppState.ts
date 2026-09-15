@@ -48,6 +48,9 @@ export interface AppState {
   addOrder: (input: OrderInput) => void
   updateOrder: (id: string, input: OrderInput) => void
   deleteOrder: (id: string) => void
+
+  taxPercent: number
+  updateTaxPercent: (percent: number) => void
 }
 
 async function uploadCakeImage(file: File): Promise<string> {
@@ -64,6 +67,7 @@ export function useAppState(user: User | null): AppState {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [cakes, setCakes] = useState<CakeDetails[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [taxPercent, setTaxPercent] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -80,16 +84,20 @@ export function useAppState(user: User | null): AppState {
     setIsLoading(true)
     setError(null)
     try {
-      const [ingredientsData, recipesData, cakesData, ordersData] = await Promise.all([
-        db.fetchIngredients(),
-        db.fetchRecipes(),
-        db.fetchCakes(),
-        db.fetchOrders(),
-      ])
+      const [ingredientsData, recipesData, cakesData, ordersData, taxPercentData] =
+        await Promise.all([
+          db.fetchIngredients(),
+          db.fetchRecipes(),
+          db.fetchCakes(),
+          db.fetchOrders(),
+          // Отсутствие таблицы user_settings (миграция не применена) не должно ломать загрузку.
+          db.fetchTaxPercent().catch(() => 0),
+        ])
       setIngredients(ingredientsData)
       setRecipes(recipesData)
       setCakes(cakesData)
       setOrders(ordersData)
+      setTaxPercent(taxPercentData)
     } catch (err) {
       handleError(err)
     } finally {
@@ -106,6 +114,7 @@ export function useAppState(user: User | null): AppState {
       setRecipes([])
       setCakes([])
       setOrders([])
+      setTaxPercent(0)
       setInitialized(false)
       setError(null)
     }
@@ -441,6 +450,19 @@ export function useAppState(user: User | null): AppState {
     [loadAll, handleError],
   )
 
+  const updateTaxPercent = useCallback(
+    async (percent: number) => {
+      try {
+        if (!userId) throw new Error('Пользователь не авторизован')
+        await db.upsertTaxPercent(percent, userId)
+        setTaxPercent(percent)
+      } catch (err) {
+        handleError(err)
+      }
+    },
+    [handleError, userId],
+  )
+
   return {
     ingredients,
     recipes,
@@ -467,5 +489,8 @@ export function useAppState(user: User | null): AppState {
     addOrder,
     updateOrder,
     deleteOrder,
+
+    taxPercent,
+    updateTaxPercent,
   }
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Calendar, FileText, List, MessageSquare } from 'lucide-react'
 import type { AppState } from '../hooks/useAppState'
-import { formatMoney } from '../domain/money'
+import { calculateTaxAmount, formatMoney, roundToCurrency } from '../domain/money'
 import { getPeriodRange, isDateInRange, formatPeriodRevenue, type PeriodFilter } from '../lib/dateFilter'
 import { OrderModal } from './OrderModal'
 import { ClientReceiptModal } from './ClientReceiptModal'
@@ -119,7 +119,15 @@ export function OrdersPage({
     [filteredOrders],
   )
 
-  const profit = useMemo(() => realizedRevenue - totalCost, [realizedRevenue, totalCost])
+  const taxAmount = useMemo(
+    () => calculateTaxAmount(realizedRevenue, state.taxPercent),
+    [realizedRevenue, state.taxPercent],
+  )
+
+  const profit = useMemo(
+    () => roundToCurrency(realizedRevenue - totalCost - taxAmount),
+    [realizedRevenue, totalCost, taxAmount],
+  )
 
   const receiptCake = receiptOrder
     ? state.cakes.find((c) => c.id === receiptOrder.cake_id)
@@ -277,6 +285,15 @@ export function OrdersPage({
         >
           Выручка: {formatPeriodRevenue(isVerified ? realizedRevenue : 0)} ₽
         </span>
+
+        {state.taxPercent > 0 && (
+          <span
+            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
+            data-testid="orders-tax"
+          >
+            Налог ({formatMoney(state.taxPercent)}%): {formatPeriodRevenue(taxAmount)} ₽
+          </span>
+        )}
 
         <span
           className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${

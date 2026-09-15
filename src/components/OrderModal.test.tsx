@@ -65,6 +65,8 @@ function createMockState(): AppState {
     addOrder: vi.fn(() => Promise.resolve()),
     updateOrder: vi.fn(() => Promise.resolve()),
     deleteOrder: vi.fn(),
+    taxPercent: 0,
+    updateTaxPercent: vi.fn(),
   }
 }
 

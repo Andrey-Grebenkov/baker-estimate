@@ -12,7 +12,7 @@ const mockOtpProps = {
   onOtpVerified: vi.fn(),
 }
 
-function createMockState(orders: Order[]): AppState {
+function createMockState(orders: Order[], taxPercent = 0): AppState {
   return {
     ingredients: [],
     recipes: [],
@@ -35,6 +35,8 @@ function createMockState(orders: Order[]): AppState {
     addOrder: vi.fn(),
     updateOrder: vi.fn(),
     deleteOrder: vi.fn(),
+    taxPercent,
+    updateTaxPercent: vi.fn(),
   }
 }
 
@@ -216,5 +218,33 @@ describe('OrdersPage', () => {
     expect(screen.getByTestId('orders-expected').textContent).toContain('2 000')
     expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
     expect(screen.getByTestId('orders-profit').textContent).toContain('-1 200')
+  })
+
+  it('deducts the configured tax from realized revenue and shows the tax chip', async () => {
+    const orders: Order[] = [
+      {
+        ...baseOrder(),
+        status: 'Выдан',
+        paid_amount: 1000,
+        total_cost: 600,
+      },
+    ]
+
+    render(<OrdersPage state={createMockState(orders, 6)} {...mockOtpProps} />)
+
+    const periodSelect = screen.getByTestId('orders-period-select') as HTMLSelectElement
+    fireEvent.change(periodSelect, { target: { value: 'all' } })
+
+    await waitFor(() => {
+      // Tax = 6% of 1 000 = 60
+      expect(screen.getByTestId('orders-tax').textContent).toContain('60')
+      // Profit = revenue - cost - tax = 1 000 - 600 - 60 = 340
+      expect(screen.getByTestId('orders-profit').textContent).toContain('340')
+    })
+  })
+
+  it('hides the tax chip when no rate is configured', () => {
+    render(<OrdersPage state={createMockState([baseOrder()])} {...mockOtpProps} />)
+    expect(screen.queryByTestId('orders-tax')).toBeNull()
   })
 })
