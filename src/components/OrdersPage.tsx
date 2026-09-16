@@ -278,9 +278,9 @@ export function OrdersPage({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-start gap-4">
+      <div className="flex flex-wrap items-stretch justify-start gap-4">
         <span
-          className="flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
+          className="flex flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
           data-testid="orders-revenue"
         >
           <span>Выручка: {formatPeriodRevenue(isVerified ? realizedRevenue : 0)} ₽</span>
@@ -295,7 +295,7 @@ export function OrdersPage({
         </span>
 
         <span
-          className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${
+          className={`flex flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${
             isVerified && profit > 0
               ? 'text-emerald-600 dark:text-emerald-400'
               : isVerified && profit < 0
@@ -308,7 +308,7 @@ export function OrdersPage({
         </span>
 
         <span
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-amber-600 dark:border-slate-700 dark:bg-slate-700/50 dark:text-amber-400"
+          className="flex flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-amber-600 dark:border-slate-700 dark:bg-slate-700/50 dark:text-amber-400"
           data-testid="orders-expected"
         >
           Ожидается: {formatPeriodRevenue(isVerified ? expectedRevenue : 0)} ₽
