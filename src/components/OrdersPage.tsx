@@ -280,20 +280,19 @@ export function OrdersPage({
 
       <div className="flex flex-wrap items-center justify-start gap-4">
         <span
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
+          className="flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
           data-testid="orders-revenue"
         >
-          Выручка: {formatPeriodRevenue(isVerified ? realizedRevenue : 0)} ₽
+          <span>Выручка: {formatPeriodRevenue(isVerified ? realizedRevenue : 0)} ₽</span>
+          {state.taxPercent > 0 && (
+            <span
+              className="text-xs font-normal text-slate-500 dark:text-slate-400"
+              data-testid="orders-tax"
+            >
+              в т.ч. налог ({formatMoney(state.taxPercent)}%): {formatPeriodRevenue(taxAmount)} ₽
+            </span>
+          )}
         </span>
-
-        {state.taxPercent > 0 && (
-          <span
-            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 dark:border-slate-700 dark:bg-slate-700/50 dark:text-slate-200"
-            data-testid="orders-tax"
-          >
-            Налог ({formatMoney(state.taxPercent)}%): {formatPeriodRevenue(taxAmount)} ₽
-          </span>
-        )}
 
         <span
           className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-700/50 ${

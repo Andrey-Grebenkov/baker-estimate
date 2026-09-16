@@ -50,7 +50,7 @@ export interface AppState {
   deleteOrder: (id: string) => void
 
   taxPercent: number
-  updateTaxPercent: (percent: number) => void
+  updateTaxPercent: (percent: number) => Promise<boolean>
 }
 
 async function uploadCakeImage(file: File): Promise<string> {
@@ -451,13 +451,15 @@ export function useAppState(user: User | null): AppState {
   )
 
   const updateTaxPercent = useCallback(
-    async (percent: number) => {
+    async (percent: number): Promise<boolean> => {
       try {
         if (!userId) throw new Error('Пользователь не авторизован')
         await db.upsertTaxPercent(percent, userId)
         setTaxPercent(percent)
+        return true
       } catch (err) {
         handleError(err)
+        return false
       }
     },
     [handleError, userId],

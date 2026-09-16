@@ -29,6 +29,8 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
   const [isImporting, setIsImporting] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
   const [taxInput, setTaxInput] = useState('')
+  const [isSaved, setIsSaved] = useState(false)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showConflictModal, setShowConflictModal] = useState(false)
   const [importData, setImportData] = useState<unknown | null>(null)
   const [importAnalysis, setImportAnalysis] = useState<ImportAnalysis | null>(null)
@@ -38,12 +40,22 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
     setTaxInput(state.taxPercent > 0 ? String(state.taxPercent) : '')
   }, [state.taxPercent])
 
-  const handleTaxBlur = () => {
+  useEffect(
+    () => () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    },
+    [],
+  )
+
+  const handleTaxBlur = async () => {
     const parsed = Math.min(100, Math.max(0, parseNumberInput(taxInput)))
     setTaxInput(parsed > 0 ? String(parsed) : '')
-    if (parsed !== state.taxPercent) {
-      state.updateTaxPercent(parsed)
-    }
+    if (parsed === state.taxPercent) return
+    const saved = await state.updateTaxPercent(parsed)
+    if (!saved) return
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    setIsSaved(true)
+    savedTimerRef.current = setTimeout(() => setIsSaved(false), 2500)
   }
 
   const showToast = (type: Toast['type'], message: string) => {
@@ -192,12 +204,22 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
             max="100"
             step="0.1"
             value={taxInput}
-            onChange={(e) => setTaxInput(normalizeNumberString(e.target.value, 100))}
+            onChange={(e) => {
+              setTaxInput(normalizeNumberString(e.target.value, 100))
+              setIsSaved(false)
+            }}
             onBlur={handleTaxBlur}
             className="h-10 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             placeholder="0"
             data-testid="settings-tax-input"
           />
+          <p
+            className="h-4 text-xs text-emerald-600"
+            aria-live="polite"
+            data-testid="settings-tax-saved"
+          >
+            {isSaved ? '✓ Сохранено' : ''}
+          </p>
         </div>
       </div>
 
