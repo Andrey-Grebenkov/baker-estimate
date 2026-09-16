@@ -23,8 +23,9 @@ COMMENT ON TABLE public.otp_codes IS 'One-time password codes for soft email ver
 -- 2. verified_emails: durable record of a successfully verified address
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.verified_emails (
-  email        TEXT PRIMARY KEY,
-  verified_at  TIMESTAMPTZ NOT NULL
+  email          TEXT PRIMARY KEY,
+  verified_at    TIMESTAMPTZ NOT NULL,
+  trial_ends_at  TIMESTAMPTZ
 );
 
 COMMENT ON TABLE public.verified_emails IS 'Emails that have passed the custom OTP gate. Managed exclusively by the Vercel backend.';

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type { Session, User, AuthError, PostgrestError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { mapAuthError } from '../lib/authErrors'
@@ -12,6 +12,9 @@ export interface AuthState {
   session: Session | null
   user: User | null
   isVerified: boolean
+  trialEndsAt: string | null
+  trialDaysLeft: number
+  isTrialExpired: boolean
   isInitialLoading: boolean
   isVerificationLoading: boolean
   error: string | null
@@ -31,6 +34,7 @@ export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isVerified, setIsVerified] = useState(false)
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null)
   const [isVerificationLoading, setIsVerificationLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,10 +51,14 @@ export function useAuth(): AuthState {
       // re-checks so an open OTP modal is not unmounted while refetching.
       if (!silent) {
         setIsVerified(false)
+        setTrialEndsAt(null)
       }
 
       if (!s?.access_token || !s.user?.email) {
-        if (!silent) setIsVerified(false)
+        if (!silent) {
+          setIsVerified(false)
+          setTrialEndsAt(null)
+        }
         setIsVerificationLoading(false)
         if (!silent) setIsInitialLoading(false)
         return
@@ -70,13 +78,20 @@ export function useAuth(): AuthState {
           throw new Error(await response.text())
         }
 
-        const data = (await response.json()) as { verified?: boolean }
+        const data = (await response.json()) as {
+          verified?: boolean
+          trial_ends_at?: string | null
+        }
         setIsVerified(data.verified === true)
+        setTrialEndsAt(data.trial_ends_at ?? null)
       } catch (err) {
         // Don't flip a verified user to unverified because of a transient
         // background network error. Only fail closed on the initial load.
         console.error('Verification check failed', err)
-        if (!silent) setIsVerified(false)
+        if (!silent) {
+          setIsVerified(false)
+          setTrialEndsAt(null)
+        }
       } finally {
         setIsVerificationLoading(false)
         if (!silent) setIsInitialLoading(false)
@@ -138,6 +153,7 @@ export function useAuth(): AuthState {
         setUser(null)
         userRef.current = null
         setIsVerified(false)
+        setTrialEndsAt(null)
         setIsVerificationLoading(false)
         return
       }
@@ -272,7 +288,11 @@ export function useAuth(): AuthState {
 
         // The backend has already inserted the verified_emails row.
         // We can treat a 2xx response as a successful verification.
+        const data = (await response.json().catch(() => ({}))) as {
+          trial_ends_at?: string | null
+        }
         setIsVerified(true)
+        setTrialEndsAt(data.trial_ends_at ?? null)
         return { error: null }
       } catch (err) {
         return { error: { message: err instanceof Error ? err.message : 'Не удалось проверить код' } }
@@ -287,10 +307,24 @@ export function useAuth(): AuthState {
 
   const resendVerification = sendOtp
 
+  // Days until the trial/premium ends. NULL trialEndsAt (legacy rows) is
+  // treated as "no limit"; a far-future date acts as an admin premium grant.
+  const trialDaysLeft = useMemo(() => {
+    if (!trialEndsAt) return 0
+    const ms = new Date(trialEndsAt).getTime() - Date.now()
+    if (!Number.isFinite(ms)) return 0
+    return Math.max(0, Math.ceil(ms / 86_400_000))
+  }, [trialEndsAt])
+
+  const isTrialExpired = trialEndsAt != null && trialDaysLeft <= 0
+
   return {
     session,
     user,
     isVerified,
+    trialEndsAt,
+    trialDaysLeft,
+    isTrialExpired,
     isInitialLoading,
     isVerificationLoading,
     error,

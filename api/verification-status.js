@@ -58,7 +58,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('verified_emails')
-      .select('email')
+      .select('email, trial_ends_at')
       .eq('email', normalizedEmail)
       .maybeSingle()
 
@@ -66,7 +66,9 @@ export default async function handler(req, res) {
       throw error
     }
 
-    return res.status(200).json({ verified: Boolean(data) })
+    return res
+      .status(200)
+      .json({ verified: Boolean(data), trial_ends_at: data?.trial_ends_at ?? null })
   } catch (err) {
     console.error('[verification-status]', err)
     return res.status(500).json({

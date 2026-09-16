@@ -95,12 +95,25 @@ export default async function handler(req, res) {
     // Success: mark the email as verified and delete the consumed OTP row.
     const verifiedAt = new Date().toISOString()
 
+    // Preserve an existing trial_ends_at (e.g. an admin-granted premium
+    // override with a far-future date); otherwise start a fresh 60-day trial.
+    const { data: existingVerification } = await supabase
+      .from('verified_emails')
+      .select('trial_ends_at')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
+
+    const trialEndsAt =
+      existingVerification?.trial_ends_at ??
+      new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+
     const { error: verifiedError } = await supabase
       .from('verified_emails')
       .upsert(
         {
           email: normalizedEmail,
           verified_at: verifiedAt,
+          trial_ends_at: trialEndsAt,
         },
         { onConflict: 'email' },
       )
@@ -111,7 +124,7 @@ export default async function handler(req, res) {
 
     await supabase.from('otp_codes').delete().eq('email', normalizedEmail)
 
-    return res.status(200).json({ verified: true })
+    return res.status(200).json({ verified: true, trial_ends_at: trialEndsAt })
   } catch (err) {
     console.error('[verify-otp]', err)
     return res.status(500).json({

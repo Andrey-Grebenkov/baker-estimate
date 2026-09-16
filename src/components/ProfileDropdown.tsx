@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { mapAuthError } from '../lib/authErrors'
+import { pluralizeRu } from '../lib/pluralize'
 import { RequiredMark } from './RequiredMark'
 
 interface ProfileDropdownProps {
   user: User | null
+  isVerified: boolean
+  trialDaysLeft: number
+  isTrialExpired: boolean
   onSignOut: () => Promise<unknown>
   onUpdatePassword: (password: string) => Promise<{ error: { message: string; code?: string } | null }>
   onDeleteAccount: () => Promise<{ error: { message: string; code?: string } | null }>
@@ -14,6 +18,9 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({
   user,
+  isVerified,
+  trialDaysLeft,
+  isTrialExpired,
   onSignOut,
   onUpdatePassword,
   onDeleteAccount,
@@ -127,6 +134,18 @@ export function ProfileDropdown({
             <p className="truncate text-sm font-medium text-slate-800" data-testid="profile-email">
               {email}
             </p>
+            {isVerified && (
+              <p
+                className="mt-0.5 text-xs text-slate-500"
+                data-testid="profile-trial-status"
+              >
+                {trialDaysLeft > 365
+                  ? 'Премиум-доступ'
+                  : isTrialExpired
+                    ? 'Пробный период завершен'
+                    : `Пробная версия: осталось ${pluralizeRu(trialDaysLeft, ['день', 'дня', 'дней'])}`}
+              </p>
+            )}
           </div>
 
           <div className="my-1 border-t border-slate-100" />

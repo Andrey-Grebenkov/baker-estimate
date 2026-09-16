@@ -15,14 +15,37 @@ import { ImportConflictModal } from './ImportConflictModal'
 interface SettingsPageProps {
   user: User | null
   state: AppState
+  isVerified: boolean
+  trialEndsAt: string | null
+  trialDaysLeft: number
+  isTrialExpired: boolean
 }
 
 interface Toast {
-  type: 'success' | 'error'
+  type: 'success' | 'error' | 'info'
   message: string
 }
 
-export function SettingsPage({ user, state }: SettingsPageProps) {
+function formatRuDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  } catch {
+    return iso
+  }
+}
+
+export function SettingsPage({
+  user,
+  state,
+  isVerified,
+  trialEndsAt,
+  trialDaysLeft,
+  isTrialExpired,
+}: SettingsPageProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -186,6 +209,35 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
 
       <div
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
+        data-testid="settings-subscription"
+      >
+        <h2 className="mb-4 text-lg font-semibold text-slate-800">Управление подпиской</h2>
+        <p className="text-sm text-slate-600" data-testid="subscription-status">
+          {!isVerified
+            ? 'Требуется подтверждение email'
+            : trialDaysLeft > 365
+              ? 'Премиум-доступ активен'
+              : isTrialExpired
+                ? 'Пробный период завершен'
+                : trialEndsAt
+                  ? `Пробная версия: активна до ${formatRuDate(trialEndsAt)}`
+                  : 'Пробная версия активна'}
+        </p>
+        <button
+          type="button"
+          onClick={() => showToast('info', 'Интеграция оплаты в разработке')}
+          className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          data-testid="subscription-upgrade-button"
+        >
+          Перейти на Premium
+        </button>
+        <p className="mt-2 text-xs text-slate-500">
+          Оплаченное время добавится к оставшимся дням пробного периода.
+        </p>
+      </div>
+
+      <div
+        className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
         data-testid="settings-financial"
       >
         <h2 className="mb-4 text-lg font-semibold text-slate-800">Финансовые настройки</h2>
@@ -261,19 +313,22 @@ export function SettingsPage({ user, state }: SettingsPageProps) {
           />
         </div>
 
-        {toast && (
-          <div
-            className={`mt-4 rounded-lg border p-3 text-sm ${
-              toast.type === 'success'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-rose-200 bg-rose-50 text-rose-700'
-            }`}
-            data-testid="settings-backup-toast"
-          >
-            {toast.message}
-          </div>
-        )}
       </div>
+
+      {toast && (
+        <div
+          className={`rounded-lg border p-3 text-sm ${
+            toast.type === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              : toast.type === 'info'
+                ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                : 'border-rose-200 bg-rose-50 text-rose-700'
+          }`}
+          data-testid="settings-toast"
+        >
+          {toast.message}
+        </div>
+      )}
 
       {showConflictModal && importAnalysis && (
         <ImportConflictModal

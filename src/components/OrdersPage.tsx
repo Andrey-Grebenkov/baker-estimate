@@ -11,6 +11,7 @@ import { ViewInternalCommentModal } from './ViewInternalCommentModal'
 import { OrderStatusDropdown } from './OrderStatusDropdown'
 import { CompleteOrderModal } from './CompleteOrderModal'
 import { OtpVerificationModal } from './OtpVerificationModal'
+import { TrialExpiredNotice } from './TrialExpiredNotice'
 import type { Order, OrderInput, OrderStatus } from '../domain/types'
 
 function formatDate(iso: string): string {
@@ -50,6 +51,8 @@ interface OrdersPageProps {
   state: AppState
   email: string
   isVerified?: boolean
+  isTrialExpired?: boolean
+  onOpenSettings: () => void
   onSendOtp: () => Promise<{ error: { message: string; code?: string } | null }>
   onVerifyOtp: (code: string) => Promise<{ error: { message: string; code?: string } | null }>
   onOtpVerified: () => void
@@ -59,6 +62,8 @@ export function OrdersPage({
   state,
   email,
   isVerified = false,
+  isTrialExpired = false,
+  onOpenSettings,
   onSendOtp,
   onVerifyOtp,
   onOtpVerified,
@@ -191,6 +196,18 @@ export function OrdersPage({
           onSend={onSendOtp}
           onVerify={onVerifyOtp}
           onVerified={onOtpVerified}
+        />
+      </div>
+    )
+  }
+
+  if (isTrialExpired) {
+    return (
+      <div data-testid="orders-page">
+        <h2 className="mb-4 text-xl font-semibold text-slate-800">Учет продаж</h2>
+        <TrialExpiredNotice
+          description="Бесплатный пробный период завершился. Оформите подписку, чтобы продолжить вести учет заказов."
+          onOpenSettings={onOpenSettings}
         />
       </div>
     )

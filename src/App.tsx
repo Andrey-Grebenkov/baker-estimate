@@ -31,6 +31,9 @@ function App() {
     session,
     user,
     isVerified,
+    trialEndsAt,
+    trialDaysLeft,
+    isTrialExpired,
     isInitialLoading,
     error,
     signIn,
@@ -98,6 +101,9 @@ function App() {
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <ProfileDropdown
               user={user}
+              isVerified={isVerified}
+              trialDaysLeft={trialDaysLeft}
+              isTrialExpired={isTrialExpired}
               onSignOut={signOut}
               onUpdatePassword={updatePassword}
               onDeleteAccount={deleteAccount}
@@ -158,8 +164,10 @@ function App() {
             state={state}
             theme={theme}
             onOpenCakes={() => setActiveTab('cakes')}
+            onOpenSettings={() => setActiveTab('settings')}
             email={user?.email ?? ''}
             isVerified={isVerified}
+            isTrialExpired={isTrialExpired}
             onSendOtp={sendOtp}
             onVerifyOtp={verifyOtp}
             onOtpVerified={() => {}}
@@ -174,12 +182,23 @@ function App() {
             state={state}
             email={user?.email ?? ''}
             isVerified={isVerified}
+            isTrialExpired={isTrialExpired}
+            onOpenSettings={() => setActiveTab('settings')}
             onSendOtp={sendOtp}
             onVerifyOtp={verifyOtp}
             onOtpVerified={() => {}}
           />
         )}
-        {activeTab === 'settings' && <SettingsPage user={user} state={state} />}
+        {activeTab === 'settings' && (
+          <SettingsPage
+            user={user}
+            state={state}
+            isVerified={isVerified}
+            trialEndsAt={trialEndsAt}
+            trialDaysLeft={trialDaysLeft}
+            isTrialExpired={isTrialExpired}
+          />
+        )}
       </main>
 
       <FeedbackModal

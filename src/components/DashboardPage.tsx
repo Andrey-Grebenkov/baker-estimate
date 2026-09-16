@@ -21,13 +21,16 @@ import {
   type CostBreakdownPoint,
 } from '../domain/dashboard'
 import { OtpVerificationModal } from './OtpVerificationModal'
+import { TrialExpiredNotice } from './TrialExpiredNotice'
 
 interface DashboardPageProps {
   state: AppState
   theme: 'light' | 'dark'
   onOpenCakes: () => void
+  onOpenSettings: () => void
   email: string
   isVerified?: boolean
+  isTrialExpired?: boolean
   onSendOtp: () => Promise<{ error: { message: string; code?: string } | null }>
   onVerifyOtp: (code: string) => Promise<{ error: { message: string; code?: string } | null }>
   onOtpVerified: () => void
@@ -40,8 +43,10 @@ export function DashboardPage({
   state,
   theme,
   onOpenCakes,
+  onOpenSettings,
   email,
   isVerified = false,
+  isTrialExpired = false,
   onSendOtp,
   onVerifyOtp,
   onOtpVerified,
@@ -63,6 +68,19 @@ export function DashboardPage({
       </div>
     )
   }
+
+  if (isTrialExpired) {
+    return (
+      <div className="relative z-0 space-y-6" data-testid="dashboard-page">
+        <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Дашборд</h2>
+        <TrialExpiredNotice
+          description="Бесплатный пробный период завершился. Оформите подписку, чтобы снова видеть финансовую аналитику."
+          onOpenSettings={onOpenSettings}
+        />
+      </div>
+    )
+  }
+
   const axisColor = isDark ? '#94a3b8' : '#64748b'
   const gridColor = isDark ? '#334155' : '#e2e8f0'
   const tooltipBg = isDark ? '#1e293b' : '#ffffff'

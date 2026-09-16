@@ -10,6 +10,7 @@ const mockOtpProps = {
   onSendOtp: vi.fn(() => Promise.resolve({ error: null })),
   onVerifyOtp: vi.fn(() => Promise.resolve({ error: null })),
   onOtpVerified: vi.fn(),
+  onOpenSettings: vi.fn(),
 }
 
 function createMockState(orders: Order[], taxPercent = 0): AppState {
@@ -246,5 +247,20 @@ describe('OrdersPage', () => {
   it('hides the tax chip when no rate is configured', () => {
     render(<OrdersPage state={createMockState([baseOrder()])} {...mockOtpProps} />)
     expect(screen.queryByTestId('orders-tax')).toBeNull()
+  })
+
+  it('shows the trial-expired notice instead of orders when the trial is over', () => {
+    render(
+      <OrdersPage
+        state={createMockState([baseOrder()])}
+        {...mockOtpProps}
+        isTrialExpired
+      />,
+    )
+    expect(screen.getByTestId('trial-expired-notice')).toBeTruthy()
+    expect(screen.queryByTestId('order-row')).toBeNull()
+
+    fireEvent.click(screen.getByTestId('trial-subscribe-button'))
+    expect(mockOtpProps.onOpenSettings).toHaveBeenCalledTimes(1)
   })
 })
