@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Cell,
   Legend,
@@ -7,10 +7,19 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts'
-import { format } from 'date-fns'
+import { addMonths, format, startOfMonth, subMonths } from 'date-fns'
 import { ru } from 'date-fns/locale/ru'
-import { ArrowRight, ClipboardList, Receipt, TrendingUp, Wallet } from 'lucide-react'
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Receipt,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react'
 import type { AppState } from '../hooks/useAppState'
+import type { CakeDetails } from '../domain/cake'
 import type { Order } from '../domain/types'
 import { formatPeriodRevenue } from '../lib/dateFilter'
 import { statusStyles } from '../lib/orderStatus'
@@ -18,6 +27,7 @@ import {
   calculateAverageCostBreakdown,
   calculateMonthMetrics,
   getActiveOrdersByDelivery,
+  getCurrentMonthOrders,
   getOrderUrgency,
   type CostBreakdownPoint,
   type OrderUrgency,
@@ -47,22 +57,22 @@ const URGENCY_BADGE: Record<OrderUrgency, { label: string; className: string }> 
   overdue: {
     label: 'Просрочено',
     className:
-      'bg-rose-100 text-rose-700 ring-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800',
+      'border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400',
   },
   urgent: {
     label: 'Срочно',
     className:
-      'bg-rose-100 text-rose-700 ring-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800',
+      'border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400',
   },
   soon: {
     label: 'Скоро',
     className:
-      'bg-amber-100 text-amber-700 ring-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:ring-amber-800',
+      'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400',
   },
   planned: {
     label: 'В планах',
     className:
-      'bg-slate-100 text-slate-500 ring-slate-200 dark:bg-slate-700/60 dark:text-slate-400 dark:ring-slate-600',
+      'border-slate-500/20 bg-slate-500/10 text-slate-500 dark:text-slate-400',
   },
 }
 
@@ -82,16 +92,28 @@ export function DashboardPage({
 }: DashboardPageProps) {
   const isDark = theme === 'dark'
 
+  // Месяц для финансовых метрик и структуры затрат. «Ближайшие отдачи»
+  // его игнорируют — операционные задачи всегда считаются от реального «сегодня».
+  const [selectedMonth, setSelectedMonth] = useState(() => startOfMonth(new Date()))
+
   const monthMetrics = useMemo(
-    () => calculateMonthMetrics(state.orders, state.taxPercent),
-    [state.orders, state.taxPercent],
+    () => calculateMonthMetrics(state.orders, state.taxPercent, selectedMonth),
+    [state.orders, state.taxPercent, selectedMonth],
   )
   const upcomingOrders = useMemo(() => getActiveOrdersByDelivery(state.orders), [state.orders])
-  const costBreakdown = useMemo(() => calculateAverageCostBreakdown(state.cakes), [state.cakes])
-  const cakeNameById = useMemo(
-    () => new Map(state.cakes.map((cake) => [cake.id, cake.name])),
+  const cakesById = useMemo(
+    () => new Map(state.cakes.map((cake) => [cake.id, cake])),
     [state.cakes],
   )
+  // Структура затрат выбранного месяца: средняя по тортам из его заказов
+  // (кроме отменённых). Один торт в нескольких заказах учитывается за каждый заказ.
+  const costBreakdown = useMemo(() => {
+    const monthCakes = getCurrentMonthOrders(state.orders, selectedMonth)
+      .filter((order) => order.status !== 'Отменен')
+      .map((order) => (order.cake_id ? cakesById.get(order.cake_id) : undefined))
+      .filter((cake): cake is CakeDetails => cake !== undefined)
+    return calculateAverageCostBreakdown(monthCakes)
+  }, [state.orders, selectedMonth, cakesById])
 
   // Пока статус верификации неизвестен или грузятся данные — спиннер,
   // чтобы не мигали OTP-заглушка и пустой дашборд. Фоновые silent-проверки
@@ -133,8 +155,7 @@ export function DashboardPage({
   const tooltipBorder = isDark ? '#475569' : '#e2e8f0'
   const tooltipColor = isDark ? '#e2e8f0' : '#1e293b'
 
-  const now = new Date()
-  const monthLabel = format(now, 'LLLL yyyy', { locale: ru })
+  const monthLabel = format(selectedMonth, 'LLLL yyyy', { locale: ru })
 
   const breakdownTooltipFormatter = (value: number, _name: string, props: { payload: CostBreakdownPoint }) => {
     return [`${value.toFixed(2)} ₽`, props.payload.name]
@@ -155,7 +176,7 @@ export function DashboardPage({
 
   const orderCakeName = (order: Order): string => {
     if (!order.cake_id) return 'Без торта'
-    return cakeNameById.get(order.cake_id) ?? 'Торт удалён'
+    return cakesById.get(order.cake_id)?.name ?? 'Торт удалён'
   }
 
   return (
@@ -165,9 +186,31 @@ export function DashboardPage({
       <section>
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Метрики текущего месяца
+            Метрики месяца
           </h3>
-          <span className="text-sm capitalize text-slate-400 dark:text-slate-500">{monthLabel}</span>
+          <div className="flex items-center gap-1" data-testid="dashboard-month-nav">
+            <button
+              type="button"
+              onClick={() => setSelectedMonth((m) => subMonths(m, 1))}
+              className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none dark:hover:bg-slate-700 dark:hover:text-slate-300"
+              aria-label="Предыдущий месяц"
+              data-testid="dashboard-month-prev"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="min-w-32 text-center text-sm capitalize text-slate-400 dark:text-slate-500">
+              {monthLabel}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth((m) => addMonths(m, 1))}
+              className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-none dark:hover:bg-slate-700 dark:hover:text-slate-300"
+              aria-label="Следующий месяц"
+              data-testid="dashboard-month-next"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className={statCardClass}>
@@ -334,7 +377,7 @@ export function DashboardPage({
             </h3>
             {costBreakdown.length === 0 ? (
               <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                Нет данных — создайте смету
+                Нет данных за этот месяц
               </p>
             ) : (
               <div className="h-64 w-full">
@@ -348,7 +391,6 @@ export function DashboardPage({
                       cy="50%"
                       outerRadius={80}
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     >
                       {costBreakdown.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={BREAKDOWN_COLORS[index % BREAKDOWN_COLORS.length]} />

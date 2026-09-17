@@ -102,6 +102,17 @@ describe('calculateMonthMetrics', () => {
 
     expect(calculateMonthMetrics(orders, 0, NOW).activeOrdersCount).toBe(2)
   })
+
+  it('calculates metrics for a selected past month', () => {
+    const orders = [
+      makeOrder({ id: 'aug', delivery_date: '2026-08-10T12:00:00', paid_amount: 3000 }),
+      makeOrder({ id: 'sep', delivery_date: '2026-09-10T12:00:00', paid_amount: 5000 }),
+    ]
+
+    const metrics = calculateMonthMetrics(orders, 0, new Date(2026, 7, 15))
+    expect(metrics.expectedRevenue).toBe(3000)
+    expect(metrics.monthOrderCount).toBe(1)
+  })
 })
 
 describe('getActiveOrdersByDelivery', () => {
