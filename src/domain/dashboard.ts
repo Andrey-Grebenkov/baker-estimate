@@ -9,17 +9,16 @@ export interface CostBreakdownPoint {
 }
 
 /**
- * Метрики дашборда за текущий месяц.
+ * Метрики дашборда за выбранный месяц.
  * Выручка и прибыль — ожидаемые (pipeline): по всем заказам месяца,
  * кроме отменённых, а не только по выданным.
  */
 export interface MonthMetrics {
   expectedRevenue: number
   expectedProfit: number
+  /** Заказы месяца без «Отменен» — знаменатель среднего чека. */
   monthOrderCount: number
   averageCheck: number
-  /** Все активные заказы («Новый»/«В работе») независимо от месяца. */
-  activeOrdersCount: number
 }
 
 /** Визуальная срочность отдачи заказа для списка «Ближайшие отдачи». */
@@ -68,7 +67,6 @@ export function calculateMonthMetrics(
     expectedProfit: roundToCurrency(expectedRevenue - cost - tax),
     monthOrderCount,
     averageCheck: monthOrderCount > 0 ? roundToCurrency(expectedRevenue / monthOrderCount) : 0,
-    activeOrdersCount: orders.filter(isActiveOrder).length,
   }
 }
 

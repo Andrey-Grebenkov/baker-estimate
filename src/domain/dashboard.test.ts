@@ -65,7 +65,6 @@ describe('calculateMonthMetrics', () => {
     expect(metrics.expectedProfit).toBe(0)
     expect(metrics.monthOrderCount).toBe(0)
     expect(metrics.averageCheck).toBe(0)
-    expect(metrics.activeOrdersCount).toBe(0)
   })
 
   it('sums expected revenue over all month orders except canceled', () => {
@@ -92,15 +91,16 @@ describe('calculateMonthMetrics', () => {
     expect(metrics.expectedProfit).toBe(10000 - 4000 - 600)
   })
 
-  it('counts all active orders regardless of the month', () => {
+  it('counts every non-canceled order of the month in monthOrderCount', () => {
     const orders = [
       makeOrder({ id: 'a', status: 'Новый' }),
-      makeOrder({ id: 'b', status: 'В работе', delivery_date: '2026-12-01T12:00:00' }),
+      makeOrder({ id: 'b', status: 'В работе' }),
       makeOrder({ id: 'c', status: 'Выдан' }),
       makeOrder({ id: 'd', status: 'Отменен' }),
+      makeOrder({ id: 'e', status: 'Новый', delivery_date: '2026-10-05T12:00:00' }),
     ]
 
-    expect(calculateMonthMetrics(orders, 0, NOW).activeOrdersCount).toBe(2)
+    expect(calculateMonthMetrics(orders, 0, NOW).monthOrderCount).toBe(3)
   })
 
   it('calculates metrics for a selected past month', () => {

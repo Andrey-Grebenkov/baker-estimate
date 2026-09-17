@@ -156,6 +156,8 @@ export function DashboardPage({
   const tooltipColor = isDark ? '#e2e8f0' : '#1e293b'
 
   const monthLabel = format(selectedMonth, 'LLLL yyyy', { locale: ru })
+  const isPastMonth = selectedMonth.getTime() < startOfMonth(new Date()).getTime()
+  const ordersCardTitle = isPastMonth ? 'Завершено заказов' : 'Заказов на месяц'
 
   const breakdownTooltipFormatter = (value: number, _name: string, props: { payload: CostBreakdownPoint }) => {
     return [`${value.toFixed(2)} ₽`, props.payload.name]
@@ -237,13 +239,13 @@ export function DashboardPage({
           </div>
           <div className={statCardClass}>
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-slate-500 dark:text-slate-400">Заказов в работе</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{ordersCardTitle}</p>
               <span className={`${statIconClass} bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300`}>
                 <ClipboardList className="h-4 w-4" />
               </span>
             </div>
-            <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-active-orders">
-              {monthMetrics.activeOrdersCount}
+            <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white" data-testid="dashboard-month-orders">
+              {monthMetrics.monthOrderCount}
             </p>
           </div>
           <div className={statCardClass}>
@@ -391,6 +393,7 @@ export function DashboardPage({
                       cy="50%"
                       outerRadius={80}
                       labelLine={false}
+                      label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
                     >
                       {costBreakdown.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={BREAKDOWN_COLORS[index % BREAKDOWN_COLORS.length]} />
