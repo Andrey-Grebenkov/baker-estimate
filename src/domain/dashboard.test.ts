@@ -4,11 +4,17 @@ import { buildIngredient } from './ingredient'
 import { buildRecipe } from './recipe'
 import {
   calculateAverageCostBreakdown,
-  calculateDashboardMetrics,
-  getRecentCakeCosts,
+  calculateMonthMetrics,
+  getActiveOrdersByDelivery,
+  getCurrentMonthOrders,
+  getOrderUrgency,
 } from './dashboard'
+import type { Order } from './types'
 
 const userId = 'user-1'
+
+// Фиксированное «сейчас»: чт, 17 сентября 2026, полдень.
+const NOW = new Date(2026, 8, 17, 12, 0, 0)
 
 function makeIngredient(id: string, name: string, price = 100, quantity = 1000) {
   return buildIngredient({
@@ -21,96 +27,111 @@ function makeIngredient(id: string, name: string, price = 100, quantity = 1000) 
   })
 }
 
-function makeCake(name: string, costOverrides: Partial<Parameters<typeof buildCake>[0]> = {}) {
-  const ing = makeIngredient('ing-1', 'Сахар')
-  const recipe = buildRecipe(
-    {
-      id: 'rec-1',
-      user_id: userId,
-      name: 'Бисквит',
-      ingredients: [{ ingredientId: ing.id, quantityUsed: 100 }],
-    },
-    { [ing.id]: ing },
-  )
-
-  return buildCake(
-    {
-      id: 'cake-1',
-      user_id: userId,
-      name,
-      recipes: [{ recipeId: recipe.id, multiplier: 1 }],
-      packaging: [],
-      decor: [],
-      overheads: { workHours: 1, hourlyRate: 100, fixedCosts: 0 },
-      marginPercent: 30,
-      ...costOverrides,
-    },
-    { [recipe.id]: recipe },
-  )
+function makeOrder(overrides: Partial<Order> = {}): Order {
+  return {
+    id: 'order-1',
+    status: 'Новый',
+    delivery_date: '2026-09-20T12:00:00',
+    actual_cost: 0,
+    total_cost: 500,
+    paid_amount: 2000,
+    advance_payment: 0,
+    ...overrides,
+  }
 }
 
-describe('calculateDashboardMetrics', () => {
-  it('returns zeros for empty data', () => {
-    const metrics = calculateDashboardMetrics([], [], [])
-    expect(metrics.totalCakes).toBe(0)
-    expect(metrics.totalRecipes).toBe(0)
-    expect(metrics.averageCost).toBe(0)
-    expect(metrics.totalRevenue).toBe(0)
-  })
-
-  it('calculates totals and average cost', () => {
-    const cakes = [makeCake('Торт 1'), makeCake('Торт 2')]
-    const recipes = [{ id: 'rec-1' }, { id: 'rec-2' }]
-
-    const metrics = calculateDashboardMetrics(cakes, recipes, [])
-
-    expect(metrics.totalCakes).toBe(2)
-    expect(metrics.totalRecipes).toBe(2)
-    expect(metrics.averageCost).toBeGreaterThan(0)
-    expect(metrics.averageCost).toBe(
-      Math.round(((cakes[0].finalCostPrice + cakes[1].finalCostPrice) / 2) * 100) / 100,
-    )
-    expect(metrics.totalRevenue).toBe(0)
-  })
-
-  it('calculates revenue only from delivered orders', () => {
-    const cakes = [makeCake('Торт 1')]
-    const recipes = [{ id: 'rec-1' }]
+describe('getCurrentMonthOrders', () => {
+  it('keeps only orders with delivery date inside the month', () => {
     const orders = [
-      { id: 'o-1', status: 'Выдан', paid_amount: 2500 },
-      { id: 'o-2', status: 'В работе', paid_amount: 1000 },
-      { id: 'o-3', status: 'Новый', paid_amount: 500 },
-    ] as const
+      makeOrder({ id: 'aug', delivery_date: '2026-08-31T23:59:00' }),
+      makeOrder({ id: 'sep-first', delivery_date: '2026-09-01T00:01:00' }),
+      makeOrder({ id: 'sep-last', delivery_date: '2026-09-30T23:59:00' }),
+      makeOrder({ id: 'oct', delivery_date: '2026-10-01T00:01:00' }),
+    ]
 
-    const metrics = calculateDashboardMetrics(cakes, recipes, orders as any)
-    expect(metrics.totalRevenue).toBe(2500)
+    const ids = getCurrentMonthOrders(orders, NOW).map((o) => o.id)
+    expect(ids).toEqual(['sep-first', 'sep-last'])
   })
 
-  it('handles missing recipes array', () => {
-    const metrics = calculateDashboardMetrics([makeCake('Торт 1')], undefined, [])
-    expect(metrics.totalRecipes).toBe(0)
+  it('returns empty array for empty input', () => {
+    expect(getCurrentMonthOrders([], NOW)).toEqual([])
   })
 })
 
-describe('getRecentCakeCosts', () => {
-  it('returns empty array when no cakes', () => {
-    expect(getRecentCakeCosts([])).toEqual([])
+describe('calculateMonthMetrics', () => {
+  it('returns zeros for empty data', () => {
+    const metrics = calculateMonthMetrics([], 0, NOW)
+    expect(metrics.expectedRevenue).toBe(0)
+    expect(metrics.expectedProfit).toBe(0)
+    expect(metrics.monthOrderCount).toBe(0)
+    expect(metrics.averageCheck).toBe(0)
+    expect(metrics.activeOrdersCount).toBe(0)
   })
 
-  it('returns up to the requested limit', () => {
-    const cakes = [1, 2, 3, 4, 5, 6].map((i) => makeCake(`Торт ${i}`))
-    const recent = getRecentCakeCosts(cakes, 5)
-    expect(recent).toHaveLength(5)
-    expect(recent[0].name).toBe('Торт 1')
-    expect(recent[4].name).toBe('Торт 5')
+  it('sums expected revenue over all month orders except canceled', () => {
+    const orders = [
+      makeOrder({ id: 'a', paid_amount: 3000, total_cost: 1000 }),
+      makeOrder({ id: 'b', status: 'В работе', paid_amount: 2000, total_cost: 800 }),
+      makeOrder({ id: 'c', status: 'Выдан', paid_amount: 1000, total_cost: 400 }),
+      makeOrder({ id: 'd', status: 'Отменен', paid_amount: 5000, total_cost: 2000 }),
+      // Заказ следующего месяца не участвует в выручке/среднем чеке.
+      makeOrder({ id: 'e', delivery_date: '2026-10-05T12:00:00', paid_amount: 9000, total_cost: 100 }),
+    ]
+
+    const metrics = calculateMonthMetrics(orders, 0, NOW)
+
+    expect(metrics.expectedRevenue).toBe(6000)
+    expect(metrics.expectedProfit).toBe(6000 - 2200)
+    expect(metrics.monthOrderCount).toBe(3)
+    expect(metrics.averageCheck).toBe(2000)
   })
 
-  it('truncates long names', () => {
-    const name = 'Очень длинное название торта'
-    const cake = makeCake(name)
-    const recent = getRecentCakeCosts([cake])
-    expect(recent[0].name.endsWith('…')).toBe(true)
-    expect(recent[0].name.length).toBeLessThanOrEqual(19)
+  it('deducts tax from expected profit', () => {
+    const orders = [makeOrder({ paid_amount: 10000, total_cost: 4000 })]
+    const metrics = calculateMonthMetrics(orders, 6, NOW)
+    expect(metrics.expectedProfit).toBe(10000 - 4000 - 600)
+  })
+
+  it('counts all active orders regardless of the month', () => {
+    const orders = [
+      makeOrder({ id: 'a', status: 'Новый' }),
+      makeOrder({ id: 'b', status: 'В работе', delivery_date: '2026-12-01T12:00:00' }),
+      makeOrder({ id: 'c', status: 'Выдан' }),
+      makeOrder({ id: 'd', status: 'Отменен' }),
+    ]
+
+    expect(calculateMonthMetrics(orders, 0, NOW).activeOrdersCount).toBe(2)
+  })
+})
+
+describe('getActiveOrdersByDelivery', () => {
+  it('excludes delivered/canceled and sorts by nearest delivery date', () => {
+    const orders = [
+      makeOrder({ id: 'later', delivery_date: '2026-09-25T10:00:00' }),
+      makeOrder({ id: 'done', status: 'Выдан', delivery_date: '2026-09-18T10:00:00' }),
+      makeOrder({ id: 'first', status: 'В работе', delivery_date: '2026-09-18T09:00:00' }),
+      makeOrder({ id: 'canceled', status: 'Отменен', delivery_date: '2026-09-19T10:00:00' }),
+      makeOrder({ id: 'overdue', delivery_date: '2026-09-10T10:00:00' }),
+    ]
+
+    expect(getActiveOrdersByDelivery(orders).map((o) => o.id)).toEqual([
+      'overdue',
+      'first',
+      'later',
+    ])
+  })
+})
+
+describe('getOrderUrgency', () => {
+  const urgencyAt = (iso: string) => getOrderUrgency(makeOrder({ delivery_date: iso }), NOW)
+
+  it('marks overdue, urgent, soon and planned', () => {
+    expect(urgencyAt('2026-09-16T23:00:00')).toBe('overdue')
+    expect(urgencyAt('2026-09-17T08:00:00')).toBe('urgent') // сегодня
+    expect(urgencyAt('2026-09-18T23:00:00')).toBe('urgent') // завтра
+    expect(urgencyAt('2026-09-20T12:00:00')).toBe('soon') // +3 дня
+    expect(urgencyAt('2026-09-24T12:00:00')).toBe('soon') // +7 дней
+    expect(urgencyAt('2026-09-25T12:00:00')).toBe('planned') // +8 дней
   })
 })
 

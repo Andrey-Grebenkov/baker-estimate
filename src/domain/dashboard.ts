@@ -1,23 +1,29 @@
-import { roundToCurrency } from './money'
+import { differenceInCalendarDays, endOfMonth, startOfMonth } from 'date-fns'
+import { calculateTaxAmount, roundToCurrency } from './money'
 import type { CakeDetails } from './cake'
-import type { Order } from './types'
-
-export interface DashboardMetrics {
-  totalCakes: number
-  totalRecipes: number
-  averageCost: number
-  totalRevenue: number
-}
-
-export interface CakeCostPoint {
-  name: string
-  cost: number
-}
+import type { Order, OrderStatus } from './types'
 
 export interface CostBreakdownPoint {
   name: string
   value: number
 }
+
+/**
+ * Метрики дашборда за текущий месяц.
+ * Выручка и прибыль — ожидаемые (pipeline): по всем заказам месяца,
+ * кроме отменённых, а не только по выданным.
+ */
+export interface MonthMetrics {
+  expectedRevenue: number
+  expectedProfit: number
+  monthOrderCount: number
+  averageCheck: number
+  /** Все активные заказы («Новый»/«В работе») независимо от месяца. */
+  activeOrdersCount: number
+}
+
+/** Визуальная срочность отдачи заказа для списка «Ближайшие отдачи». */
+export type OrderUrgency = 'overdue' | 'urgent' | 'soon' | 'planned'
 
 const BREAKDOWN_LABELS: Record<string, string> = {
   totalIngredientsCost: 'Ингредиенты',
@@ -26,38 +32,63 @@ const BREAKDOWN_LABELS: Record<string, string> = {
   totalOverheadsCost: 'Накладные',
 }
 
-const MAX_CAKE_NAME_LENGTH = 18
+const ACTIVE_STATUSES: OrderStatus[] = ['Новый', 'В работе']
 
-function truncateCakeName(name: string): string {
-  return name.length > MAX_CAKE_NAME_LENGTH ? `${name.slice(0, MAX_CAKE_NAME_LENGTH)}…` : name
+export function isActiveOrder(order: Order): boolean {
+  return ACTIVE_STATUSES.includes(order.status)
 }
 
-export function calculateDashboardMetrics(
-  cakes: CakeDetails[],
-  recipes: { id?: string }[] | undefined,
-  orders: Order[] | undefined,
-): DashboardMetrics {
-  const totalCakes = cakes.length
-  const totalRecipes = recipes?.length ?? 0
-  const averageCost =
-    totalCakes > 0
-      ? roundToCurrency(cakes.reduce((sum, cake) => sum + cake.finalCostPrice, 0) / totalCakes)
-      : 0
-  const totalRevenue =
-    orders?.filter((o) => o.status === 'Выдан').reduce((sum, o) => sum + o.paid_amount, 0) ?? 0
+/** Заказы с датой отдачи внутри месяца, содержащего `now`. */
+export function getCurrentMonthOrders(orders: Order[], now = new Date()): Order[] {
+  const start = startOfMonth(now).getTime()
+  const end = endOfMonth(now).getTime()
+  return orders.filter((order) => {
+    const time = new Date(order.delivery_date).getTime()
+    return time >= start && time <= end
+  })
+}
 
-  return { totalCakes, totalRecipes, averageCost, totalRevenue: roundToCurrency(totalRevenue) }
+export function calculateMonthMetrics(
+  orders: Order[],
+  taxPercent: number,
+  now = new Date(),
+): MonthMetrics {
+  const monthOrders = getCurrentMonthOrders(orders, now).filter(
+    (order) => order.status !== 'Отменен',
+  )
+  const expectedRevenue = roundToCurrency(
+    monthOrders.reduce((sum, order) => sum + order.paid_amount, 0),
+  )
+  const cost = monthOrders.reduce((sum, order) => sum + order.total_cost, 0)
+  const tax = calculateTaxAmount(expectedRevenue, taxPercent)
+  const monthOrderCount = monthOrders.length
+
+  return {
+    expectedRevenue,
+    expectedProfit: roundToCurrency(expectedRevenue - cost - tax),
+    monthOrderCount,
+    averageCheck: monthOrderCount > 0 ? roundToCurrency(expectedRevenue / monthOrderCount) : 0,
+    activeOrdersCount: orders.filter(isActiveOrder).length,
+  }
+}
+
+/** Все активные заказы по возрастанию даты отдачи (ближайшие и просроченные сверху). */
+export function getActiveOrdersByDelivery(orders: Order[]): Order[] {
+  return orders
+    .filter(isActiveOrder)
+    .sort((a, b) => new Date(a.delivery_date).getTime() - new Date(b.delivery_date).getTime())
 }
 
 /**
- * Returns the `limit` most recent cakes with their final cost.
- * `cakes` is expected to already be ordered by `created_at` descending.
+ * Срочность по дате отдачи: уже прошла → 'overdue', сегодня/завтра → 'urgent',
+ * в пределах недели → 'soon', позже → 'planned'.
  */
-export function getRecentCakeCosts(cakes: CakeDetails[], limit = 5): CakeCostPoint[] {
-  return cakes.slice(0, limit).map((cake) => ({
-    name: truncateCakeName(cake.name),
-    cost: cake.finalCostPrice,
-  }))
+export function getOrderUrgency(order: Order, now = new Date()): OrderUrgency {
+  const days = differenceInCalendarDays(new Date(order.delivery_date), now)
+  if (days < 0) return 'overdue'
+  if (days <= 1) return 'urgent'
+  if (days <= 7) return 'soon'
+  return 'planned'
 }
 
 export function calculateAverageCostBreakdown(cakes: CakeDetails[]): CostBreakdownPoint[] {

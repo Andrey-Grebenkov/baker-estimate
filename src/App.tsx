@@ -172,6 +172,7 @@ function App() {
             state={state}
             theme={theme}
             onOpenCakes={() => setActiveTab('cakes')}
+            onOpenOrders={() => setActiveTab('orders')}
             onOpenSettings={() => setActiveTab('settings')}
             email={user?.email ?? ''}
             isVerified={isVerified}
