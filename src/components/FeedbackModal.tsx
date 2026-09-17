@@ -12,8 +12,23 @@ interface Toast {
   message: string
 }
 
+type FeedbackType = 'bug' | 'suggestion' | 'general'
+
+const FEEDBACK_TYPES: { value: FeedbackType; label: string; tag: string }[] = [
+  { value: 'bug', label: 'Баг', tag: 'БАГ' },
+  { value: 'suggestion', label: 'Предложение', tag: 'ПРЕДЛОЖЕНИЕ' },
+  { value: 'general', label: 'Вопрос/Отзыв', tag: 'ОТЗЫВ' },
+]
+
+const PLACEHOLDERS: Record<FeedbackType, string> = {
+  bug: 'Что сломалось и как это повторить?',
+  suggestion: 'Какую функцию стоит добавить?',
+  general: 'Ваш вопрос или отзыв…',
+}
+
 export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
   const [message, setMessage] = useState('')
+  const [feedbackType, setFeedbackType] = useState<FeedbackType>('suggestion')
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
   const { legalDoc, openLegalDoc, closeLegalDoc } = useLegalModal()
@@ -21,6 +36,7 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
   useEffect(() => {
     if (isOpen) {
       setMessage('')
+      setFeedbackType('suggestion')
       setToast(null)
       setIsLoading(false)
     }
@@ -36,11 +52,12 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
 
     setIsLoading(true)
     setToast(null)
+    const typeTag = FEEDBACK_TYPES.find((t) => t.value === feedbackType)?.tag ?? 'ОТЗЫВ'
     try {
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, message: trimmed }),
+        body: JSON.stringify({ email, message: `[${typeTag}] ${email}: ${trimmed}` }),
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
@@ -71,9 +88,14 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
     >
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
         <div className="mb-4 flex items-start justify-between">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            Обратная связь
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              Обратная связь
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400" data-testid="feedback-subtitle">
+              Расскажите о баге, предложите улучшение или задайте вопрос.
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -86,6 +108,40 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} onChange={() => setToast(null)} className="space-y-4">
+          <p className="mb-4 text-xs text-slate-400" data-testid="feedback-sender">
+            Отзыв будет отправлен от: {email}
+          </p>
+
+          <div
+            className="flex gap-2"
+            role="radiogroup"
+            aria-label="Тип отзыва"
+            data-testid="feedback-type-group"
+          >
+            {FEEDBACK_TYPES.map((type) => (
+              <label
+                key={type.value}
+                className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  feedbackType === type.value
+                    ? 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-500/20 dark:text-indigo-300'
+                    : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+                }`}
+                data-testid={`feedback-type-${type.value}`}
+              >
+                <input
+                  type="radio"
+                  name="feedback-type"
+                  value={type.value}
+                  checked={feedbackType === type.value}
+                  onChange={() => setFeedbackType(type.value)}
+                  disabled={isLoading}
+                  className="sr-only"
+                />
+                {type.label}
+              </label>
+            ))}
+          </div>
+
           <div className="space-y-1">
             <label
               htmlFor="feedback-message"
@@ -100,7 +156,7 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
               rows={5}
               disabled={isLoading}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-              placeholder="Опишите проблему или предложение..."
+              placeholder={PLACEHOLDERS[feedbackType]}
               data-testid="feedback-message-input"
             />
           </div>
