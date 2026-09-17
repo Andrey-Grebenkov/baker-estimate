@@ -53,6 +53,18 @@ describe('getCurrentMonthOrders', () => {
     expect(ids).toEqual(['sep-first', 'sep-last'])
   })
 
+  it('bounds UTC-midnight delivery dates by calendar day in any timezone', () => {
+    // Заказы сохраняются как UTC-полночь выбранной даты; в поясах западнее UTC
+    // new Date() сдвигает её на день назад — фильтр обязан работать по дате.
+    const orders = [
+      makeOrder({ id: 'sep-30', delivery_date: '2026-09-30T00:00:00.000Z' }),
+      makeOrder({ id: 'oct-1', delivery_date: '2026-10-01T00:00:00.000Z' }),
+    ]
+
+    const ids = getCurrentMonthOrders(orders, NOW).map((o) => o.id)
+    expect(ids).toEqual(['sep-30'])
+  })
+
   it('returns empty array for empty input', () => {
     expect(getCurrentMonthOrders([], NOW)).toEqual([])
   })

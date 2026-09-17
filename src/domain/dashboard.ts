@@ -1,4 +1,4 @@
-import { differenceInCalendarDays, endOfMonth, startOfMonth } from 'date-fns'
+import { differenceInCalendarDays, endOfMonth, format, startOfMonth } from 'date-fns'
 import { calculateTaxAmount, roundToCurrency } from './money'
 import type { CakeDetails } from './cake'
 import type { Order, OrderStatus } from './types'
@@ -39,11 +39,14 @@ export function isActiveOrder(order: Order): boolean {
 
 /** Заказы с датой отдачи внутри месяца, содержащего `now`. */
 export function getCurrentMonthOrders(orders: Order[], now = new Date()): Order[] {
-  const start = startOfMonth(now).getTime()
-  const end = endOfMonth(now).getTime()
+  // delivery_date хранится как UTC-полночь выбранной даты, поэтому сравниваем
+  // календарные дни (YYYY-MM-DD), а не моменты времени: иначе в поясах западнее
+  // UTC отдача 1-го числа уезжала бы на последний день предыдущего месяца.
+  const firstDay = format(startOfMonth(now), 'yyyy-MM-dd')
+  const lastDay = format(endOfMonth(now), 'yyyy-MM-dd')
   return orders.filter((order) => {
-    const time = new Date(order.delivery_date).getTime()
-    return time >= start && time <= end
+    const day = order.delivery_date.slice(0, 10)
+    return day >= firstDay && day <= lastDay
   })
 }
 

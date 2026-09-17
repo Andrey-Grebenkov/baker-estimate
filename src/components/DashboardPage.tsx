@@ -157,6 +157,8 @@ export function DashboardPage({
 
   const monthLabel = format(selectedMonth, 'LLLL yyyy', { locale: ru })
   const isPastMonth = selectedMonth.getTime() < startOfMonth(new Date()).getTime()
+  const revenueCardTitle = isPastMonth ? 'Выручка' : 'Ожидаемая выручка'
+  const profitCardTitle = isPastMonth ? 'Прибыль' : 'Ожидаемая прибыль'
   const ordersCardTitle = isPastMonth ? 'Завершено заказов' : 'Заказов на месяц'
 
   const breakdownTooltipFormatter = (value: number, _name: string, props: { payload: CostBreakdownPoint }) => {
@@ -217,7 +219,7 @@ export function DashboardPage({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className={statCardClass}>
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-slate-500 dark:text-slate-400">Ожидаемая выручка</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{revenueCardTitle}</p>
               <span className={`${statIconClass} bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300`}>
                 <Wallet className="h-4 w-4" />
               </span>
@@ -228,7 +230,7 @@ export function DashboardPage({
           </div>
           <div className={statCardClass}>
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-slate-500 dark:text-slate-400">Ожидаемая прибыль</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{profitCardTitle}</p>
               <span className={`${statIconClass} bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300`}>
                 <TrendingUp className="h-4 w-4" />
               </span>

@@ -56,7 +56,7 @@ function baseOrder(): Order {
 }
 
 describe('OrdersPage', () => {
-  it('counts completed orders toward revenue and all active orders toward costs and expected', async () => {
+  it('counts completed orders toward revenue and all active orders toward costs', async () => {
     const orders: Order[] = [
       {
         ...baseOrder(),
@@ -89,15 +89,13 @@ describe('OrdersPage', () => {
     await waitFor(() => {
       // Revenue: only completed (order 1)
       expect(screen.getByTestId('orders-revenue').textContent).toContain('1 000')
-      // Expected: pending orders (2 + 3)
-      expect(screen.getByTestId('orders-expected').textContent).toContain('750')
       // Costs: all active orders (1 + 2 + 3)
       // Profit = revenue - totalCost = 1000 - (600 + 300 + 150) = -50
       expect(screen.getByTestId('orders-profit').textContent).toContain('-50')
     })
   })
 
-  it('moves an order amount from "Ожидается" to "Выручка" when it is completed', async () => {
+  it('moves an order amount into "Выручка" when it is completed', async () => {
     const workingState = createMockState([
       {
         ...baseOrder(),
@@ -112,7 +110,6 @@ describe('OrdersPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
-      expect(screen.getByTestId('orders-expected').textContent).toContain('1 000')
       expect(screen.getByTestId('orders-profit').textContent).toContain('-600')
     })
 
@@ -130,12 +127,11 @@ describe('OrdersPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('orders-revenue').textContent).toContain('1 000')
-      expect(screen.getByTestId('orders-expected').textContent).toContain('0')
       expect(screen.getByTestId('orders-profit').textContent).toContain('400')
     })
   })
 
-  it('excludes canceled orders from revenue, cost, and expected metrics', async () => {
+  it('excludes canceled orders from revenue and cost metrics', async () => {
     const orders: Order[] = [
       {
         ...baseOrder(),
@@ -167,7 +163,6 @@ describe('OrdersPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('orders-revenue').textContent).toContain('1 000')
-      expect(screen.getByTestId('orders-expected').textContent).toContain('500')
       // Profit = revenue - (costs of active orders) = 1000 - (600 + 300) = 100
       expect(screen.getByTestId('orders-profit').textContent).toContain('100')
     })
@@ -177,7 +172,6 @@ describe('OrdersPage', () => {
     render(<OrdersPage state={createMockState([])} {...mockOtpProps} />)
     expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
     expect(screen.getByTestId('orders-profit').textContent).toContain('0')
-    expect(screen.getByTestId('orders-expected').textContent).toContain('0')
   })
 
   it('keeps active orders from previous months in the default "month" view', () => {
@@ -215,9 +209,7 @@ describe('OrdersPage', () => {
     expect(screen.queryByText('Old Completed')).toBeFalsy()
     expect(screen.getByText('Current New')).toBeTruthy()
 
-    // Metrics: expected includes the old active order + the current new order,
-    // realized revenue excludes them, and costs include both active orders.
-    expect(screen.getByTestId('orders-expected').textContent).toContain('2 000')
+    // Metrics: realized revenue excludes the active orders, and costs include both.
     expect(screen.getByTestId('orders-revenue').textContent).toContain('0')
     expect(screen.getByTestId('orders-profit').textContent).toContain('-1 200')
   })
