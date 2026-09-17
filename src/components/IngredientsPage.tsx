@@ -25,6 +25,11 @@ export function IngredientsPage({ state }: { state: AppState }) {
   const [unit, setUnit] = useState<MeasurementUnit>('g')
   const [error, setError] = useState<string | null>(null)
 
+  const clearErrors = () => {
+    setError(null)
+    state.clearError()
+  }
+
   const resetForm = () => {
     setIsFormOpen(false)
     setEditingId(null)
@@ -128,6 +133,7 @@ export function IngredientsPage({ state }: { state: AppState }) {
       {isFormOpen && (
       <form
         onSubmit={handleSubmit}
+        onChange={clearErrors}
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
         data-testid="ingredient-form"
       >

@@ -18,6 +18,18 @@ describe('AuthPage — consent gate', () => {
     )
   })
 
+  it('очищает ошибку согласия при установке чекбокса', () => {
+    render(<AuthPage error={null} onSignIn={vi.fn()} onSignUp={vi.fn()} />)
+
+    fireEvent.submit(screen.getByTestId('auth-form'))
+    expect(screen.getByTestId('auth-error').textContent).toContain(
+      'Необходимо согласие с условиями',
+    )
+
+    fireEvent.click(screen.getByTestId('auth-consent-checkbox'))
+    expect(screen.queryByTestId('auth-error')).toBeNull()
+  })
+
   it('вызывает onSignIn после установки чекбокса согласия', async () => {
     const onSignIn = vi.fn().mockResolvedValue({ error: null })
     render(<AuthPage error={null} onSignIn={onSignIn} onSignUp={vi.fn()} />)

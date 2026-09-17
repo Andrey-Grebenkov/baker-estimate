@@ -70,7 +70,13 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
           {isRegister ? 'Создайте аккаунт, чтобы начать' : 'Войдите, чтобы продолжить'}
         </p>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-4" data-testid="auth-form">
+        <form
+          onSubmit={handleSubmit}
+          onChange={() => setLocalError(null)}
+          noValidate
+          className="space-y-4"
+          data-testid="auth-form"
+        >
           <div>
             <label htmlFor="auth-email" className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-slate-600">
               Email

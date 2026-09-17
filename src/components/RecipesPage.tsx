@@ -23,6 +23,11 @@ export function RecipesPage({ state }: { state: AppState }) {
   const [selectedQuantity, setSelectedQuantity] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  const clearErrors = () => {
+    setError(null)
+    state.clearError()
+  }
+
   const resetForm = () => {
     setIsFormOpen(false)
     setEditingId(null)
@@ -86,6 +91,7 @@ export function RecipesPage({ state }: { state: AppState }) {
   }
 
   const removeRecipeIngredient = (ingredientId: string) => {
+    setError(null)
     setRecipeIngredients((prev) => {
       const next = prev.filter((ri) => ri.ingredientId !== ingredientId)
       const usedIds = new Set(next.map((ri) => ri.ingredientId))
@@ -164,6 +170,7 @@ export function RecipesPage({ state }: { state: AppState }) {
       {isFormOpen && (
       <form
         onSubmit={handleSubmit}
+        onChange={clearErrors}
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
         data-testid="recipe-form"
       >

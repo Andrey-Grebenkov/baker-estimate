@@ -65,6 +65,11 @@ export function CakesPage({ state }: { state: AppState }) {
     }
   }, [previewUrl])
 
+  const clearErrors = () => {
+    setError(null)
+    state.clearError()
+  }
+
   const resetForm = () => {
     setIsFormOpen(false)
     setEditingId(null)
@@ -147,6 +152,7 @@ export function CakesPage({ state }: { state: AppState }) {
   }
 
   const removeRecipeFromCake = (recipeId: string) => {
+    setError(null)
     setRecipes((prev) => prev.filter((r) => r.recipeId !== recipeId))
   }
 
@@ -181,6 +187,7 @@ export function CakesPage({ state }: { state: AppState }) {
   }
 
   const removePackaging = (id: string) => {
+    setError(null)
     setPackaging((prev) => prev.filter((p) => p.id !== id))
   }
 
@@ -223,6 +230,7 @@ export function CakesPage({ state }: { state: AppState }) {
   }
 
   const removeDecor = (id: string) => {
+    setError(null)
     setDecor((prev) => prev.filter((d) => d.id !== id))
   }
 
@@ -251,6 +259,7 @@ export function CakesPage({ state }: { state: AppState }) {
   }
 
   const removeImage = () => {
+    setError(null)
     setImageFile(null)
     setImageUrl(null)
     if (previewUrl) {
@@ -383,6 +392,7 @@ export function CakesPage({ state }: { state: AppState }) {
       {isFormOpen && (
       <form
         onSubmit={handleSubmit}
+        onChange={clearErrors}
         className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-6"
         data-testid="cake-form"
       >

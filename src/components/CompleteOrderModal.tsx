@@ -42,6 +42,11 @@ export function CompleteOrderModal({ order, state, isOpen, onClose }: CompleteOr
 
   if (!isOpen) return null
 
+  function clearErrors() {
+    setError(null)
+    state.clearError()
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -102,7 +107,7 @@ export function CompleteOrderModal({ order, state, isOpen, onClose }: CompleteOr
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} onChange={clearErrors} className="space-y-4">
           <div className="grid gap-3 rounded-lg border border-indigo-100 bg-indigo-50 p-4 dark:border-slate-600 dark:bg-slate-700/50">
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400">Общая сумма</p>

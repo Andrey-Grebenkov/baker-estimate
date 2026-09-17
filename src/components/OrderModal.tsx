@@ -141,6 +141,11 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
 
   if (!isOpen) return null
 
+  function clearErrors() {
+    setError(null)
+    state.clearError()
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -215,7 +220,11 @@ export function OrderModal({ isOpen, onClose, state, orderToEdit }: OrderModalPr
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          onChange={clearErrors}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
           <div className="flex-1 space-y-4 overflow-y-auto overflow-x-hidden pr-1">
             <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">

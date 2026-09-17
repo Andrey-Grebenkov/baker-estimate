@@ -255,7 +255,14 @@ export function ProfileDropdown({
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
             <h2 className="mb-4 text-lg font-semibold text-slate-800">Сменить пароль</h2>
 
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
+            <form
+              onSubmit={handleUpdatePassword}
+              onChange={() => {
+                setLocalError(null)
+                setSuccess(null)
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label
                   htmlFor="new-password"

@@ -44,6 +44,11 @@ export function EditCommentModal({ isOpen, onClose, order, state }: EditCommentM
     }
   }, [isOpen])
 
+  const clearErrors = () => {
+    setError(null)
+    state.clearError()
+  }
+
   const handleEdit = () => {
     setDraft(currentOrder.completion_comment ?? '')
     setIsEditing(true)
@@ -94,7 +99,10 @@ export function EditCommentModal({ isOpen, onClose, order, state }: EditCommentM
           <div className="space-y-4">
             <textarea
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => {
+                setDraft(e.target.value)
+                clearErrors()
+              }}
               rows={4}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
               placeholder="Введите комментарий..."

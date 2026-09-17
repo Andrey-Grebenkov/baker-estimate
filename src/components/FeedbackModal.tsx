@@ -85,7 +85,7 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} onChange={() => setToast(null)} className="space-y-4">
           <div className="space-y-1">
             <label
               htmlFor="feedback-message"

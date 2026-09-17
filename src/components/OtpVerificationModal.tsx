@@ -174,7 +174,10 @@ export function OtpVerificationModal({
               pattern="[0-9]*"
               maxLength={6}
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => {
+                setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                setError(null)
+              }}
               disabled={isLoading}
               placeholder="000000"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-center text-lg tracking-[0.5em] text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
