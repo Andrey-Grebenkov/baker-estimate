@@ -22,6 +22,8 @@ export interface AppState {
   cakes: CakeDetails[]
   orders: Order[]
   isLoading: boolean
+  /** True только во время первой загрузки данных; фоновые обновления её не поднимают. */
+  isInitialDataLoading: boolean
   initialized: boolean
   error: string | null
   clearError: () => void
@@ -71,6 +73,10 @@ export function useAppState(user: User | null): AppState {
   const [isLoading, setIsLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Первая загрузка: loadAll ещё ни разу не завершился. Повторные loadAll
+  // (мутации, reload) идут с initialized=true и этот флаг не поднимают.
+  const isInitialDataLoading = isLoading && !initialized
 
   const clearError = useCallback(() => setError(null), [])
 
@@ -471,6 +477,7 @@ export function useAppState(user: User | null): AppState {
     cakes,
     orders,
     isLoading,
+    isInitialDataLoading,
     initialized,
     error,
     clearError,

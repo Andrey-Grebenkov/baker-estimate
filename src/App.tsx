@@ -14,6 +14,7 @@ import { DashboardPage } from './components/DashboardPage'
 import { CalculationPage } from './pages/CalculationPage'
 import { FeedbackModal } from './components/FeedbackModal'
 import { CookieBanner } from './components/CookieBanner'
+import { LoadingSpinner } from './components/LoadingSpinner'
 
 type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'cakes' | 'calculation' | 'orders' | 'settings'
 
@@ -36,6 +37,7 @@ function App() {
     trialDaysLeft,
     isTrialExpired,
     isInitialLoading,
+    isVerificationLoading,
     error,
     signIn,
     signUp,
@@ -54,10 +56,10 @@ function App() {
   if (isInitialLoading) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600"
+        className="flex min-h-screen items-center justify-center bg-slate-50"
         data-testid="auth-loading"
       >
-        Загрузка…
+        <LoadingSpinner />
       </div>
     )
   }
@@ -74,10 +76,10 @@ function App() {
   if (!state.initialized) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600"
+        className="flex min-h-screen items-center justify-center bg-slate-50"
         data-testid="data-loading"
       >
-        Загрузка данных…
+        <LoadingSpinner label="Загрузка данных…" />
       </div>
     )
   }
@@ -173,6 +175,7 @@ function App() {
             onOpenSettings={() => setActiveTab('settings')}
             email={user?.email ?? ''}
             isVerified={isVerified}
+            isVerificationLoading={isVerificationLoading}
             isTrialExpired={isTrialExpired}
             onSendOtp={sendOtp}
             onVerifyOtp={verifyOtp}
@@ -188,6 +191,7 @@ function App() {
             state={state}
             email={user?.email ?? ''}
             isVerified={isVerified}
+            isVerificationLoading={isVerificationLoading}
             isTrialExpired={isTrialExpired}
             onOpenSettings={() => setActiveTab('settings')}
             onSendOtp={sendOtp}

@@ -49,6 +49,7 @@ function createMockState(): AppState {
     cakes: [cake],
     orders: [],
     isLoading: false,
+    isInitialDataLoading: false,
     initialized: true,
     error: null,
     clearError: vi.fn(),

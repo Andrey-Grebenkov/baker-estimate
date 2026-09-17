@@ -13,6 +13,7 @@ import { calculateScalingCoefficient, roundToDecimal, type Pan, type PanShape } 
 import { scaleIngredientQuantity } from '../domain/recipeScaling'
 import { unitLabelFor } from '../domain/shoppingList'
 import { RequiredMark } from '../components/RequiredMark'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import { buildCake, type CakeDetails } from '../domain/cake'
 import { CakePrintView } from '../components/CakePrintView'
 
@@ -188,6 +189,10 @@ export function CalculationPage({ state }: { state: AppState }) {
     flushSync(() => setPrinting(true))
     window.print()
     setPrinting(false)
+  }
+
+  if (state.isInitialDataLoading) {
+    return <LoadingSpinner />
   }
 
   return (

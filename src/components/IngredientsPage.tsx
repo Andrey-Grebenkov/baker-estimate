@@ -8,6 +8,7 @@ import {
 } from '../lib/numberInput'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
+import { LoadingSpinner } from './LoadingSpinner'
 
 const units: { value: MeasurementUnit; label: string }[] = [
   { value: 'g', label: 'г' },
@@ -115,6 +116,10 @@ export function IngredientsPage({ state }: { state: AppState }) {
         })
       }, 500)
     }
+  }
+
+  if (state.isInitialDataLoading) {
+    return <LoadingSpinner />
   }
 
   return (

@@ -12,6 +12,7 @@ import { OrderStatusDropdown } from './OrderStatusDropdown'
 import { CompleteOrderModal } from './CompleteOrderModal'
 import { OtpVerificationModal } from './OtpVerificationModal'
 import { TrialExpiredNotice } from './TrialExpiredNotice'
+import { LoadingSpinner } from './LoadingSpinner'
 import type { Order, OrderInput, OrderStatus } from '../domain/types'
 
 function formatDate(iso: string): string {
@@ -51,6 +52,7 @@ interface OrdersPageProps {
   state: AppState
   email: string
   isVerified?: boolean
+  isVerificationLoading?: boolean
   isTrialExpired?: boolean
   onOpenSettings: () => void
   onSendOtp: () => Promise<{ error: { message: string; code?: string } | null }>
@@ -62,6 +64,7 @@ export function OrdersPage({
   state,
   email,
   isVerified = false,
+  isVerificationLoading = false,
   isTrialExpired = false,
   onOpenSettings,
   onSendOtp,
@@ -183,6 +186,13 @@ export function OrdersPage({
     }
 
     state.updateOrder(order.id, toOrderInput(order, { status }))
+  }
+
+  // Спиннер, пока статус верификации неизвестен или идёт первая загрузка
+  // данных — иначе на жёстком рефреше мигали OTP-заглушка и пустой список.
+  // Silent-проверки у верифицированного пользователя сюда не попадают.
+  if (state.isInitialDataLoading || (isVerificationLoading && !isVerified)) {
+    return <LoadingSpinner />
   }
 
   if (!isVerified) {

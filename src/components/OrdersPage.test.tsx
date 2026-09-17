@@ -20,6 +20,7 @@ function createMockState(orders: Order[], taxPercent = 0): AppState {
     cakes: [],
     orders,
     isLoading: false,
+    isInitialDataLoading: false,
     initialized: true,
     error: null,
     clearError: vi.fn(),

@@ -22,6 +22,7 @@ import {
 } from '../domain/dashboard'
 import { OtpVerificationModal } from './OtpVerificationModal'
 import { TrialExpiredNotice } from './TrialExpiredNotice'
+import { LoadingSpinner } from './LoadingSpinner'
 
 interface DashboardPageProps {
   state: AppState
@@ -30,6 +31,7 @@ interface DashboardPageProps {
   onOpenSettings: () => void
   email: string
   isVerified?: boolean
+  isVerificationLoading?: boolean
   isTrialExpired?: boolean
   onSendOtp: () => Promise<{ error: { message: string; code?: string } | null }>
   onVerifyOtp: (code: string) => Promise<{ error: { message: string; code?: string } | null }>
@@ -46,12 +48,20 @@ export function DashboardPage({
   onOpenSettings,
   email,
   isVerified = false,
+  isVerificationLoading = false,
   isTrialExpired = false,
   onSendOtp,
   onVerifyOtp,
   onOtpVerified,
 }: DashboardPageProps) {
   const isDark = theme === 'dark'
+
+  // Пока статус верификации неизвестен или грузятся данные — спиннер,
+  // чтобы не мигали OTP-заглушка и пустой дашборд. Фоновые silent-проверки
+  // у верифицированного пользователя сюда не попадают (isVerified остаётся true).
+  if (state.isInitialDataLoading || (isVerificationLoading && !isVerified)) {
+    return <LoadingSpinner />
+  }
 
   if (!isVerified) {
     return (

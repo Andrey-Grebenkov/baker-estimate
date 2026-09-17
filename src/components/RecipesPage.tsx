@@ -5,6 +5,7 @@ import { MAX_DEFAULT_QUANTITY, normalizeNumberString } from '../lib/numberInput'
 import { pluralizeRu } from '../lib/pluralize'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
+import { LoadingSpinner } from './LoadingSpinner'
 
 const unitLabels: Record<Ingredient['unit'], string> = {
   g: 'г',
@@ -152,6 +153,10 @@ export function RecipesPage({ state }: { state: AppState }) {
         })
       }, 500)
     }
+  }
+
+  if (state.isInitialDataLoading) {
+    return <LoadingSpinner />
   }
 
   return (

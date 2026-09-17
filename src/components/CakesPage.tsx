@@ -18,6 +18,7 @@ import { pluralizeRu } from '../lib/pluralize'
 import { ShoppingListModal } from './ShoppingListModal'
 import { confirmDelete } from '../lib/confirmDelete'
 import { RequiredMark } from './RequiredMark'
+import { LoadingSpinner } from './LoadingSpinner'
 
 export function CakesPage({ state }: { state: AppState }) {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -374,6 +375,10 @@ export function CakesPage({ state }: { state: AppState }) {
         })
       }, 500)
     }
+  }
+
+  if (state.isInitialDataLoading) {
+    return <LoadingSpinner />
   }
 
   return (
