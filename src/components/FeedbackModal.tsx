@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { LegalDocModal, useLegalModal } from './LegalModals'
 
 interface FeedbackModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
+  const { legalDoc, openLegalDoc, closeLegalDoc } = useLegalModal()
 
   useEffect(() => {
     if (isOpen) {
@@ -135,8 +137,22 @@ export function FeedbackModal({ isOpen, onClose, email }: FeedbackModalProps) {
               {isLoading ? 'Отправка…' : 'Отправить'}
             </button>
           </div>
+
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+            Отправляя сообщение, вы соглашаетесь с{' '}
+            <button
+              type="button"
+              onClick={() => openLegalDoc('privacy')}
+              className="underline hover:text-slate-700 dark:hover:text-slate-200"
+              data-testid="feedback-privacy-link"
+            >
+              Политикой обработки персональных данных
+            </button>
+          </p>
         </form>
       </div>
+
+      <LegalDocModal doc={legalDoc} onClose={closeLegalDoc} />
     </div>
   )
 }

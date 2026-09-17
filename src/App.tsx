@@ -13,6 +13,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { DashboardPage } from './components/DashboardPage'
 import { CalculationPage } from './pages/CalculationPage'
 import { FeedbackModal } from './components/FeedbackModal'
+import { CookieBanner } from './components/CookieBanner'
 
 type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'cakes' | 'calculation' | 'orders' | 'settings'
 
@@ -62,7 +63,12 @@ function App() {
   }
 
   if (!session) {
-    return <AuthPage error={error} onSignIn={signIn} onSignUp={signUp} />
+    return (
+      <>
+        <AuthPage error={error} onSignIn={signIn} onSignUp={signUp} />
+        <CookieBanner />
+      </>
+    )
   }
 
   if (!state.initialized) {
@@ -206,6 +212,8 @@ function App() {
         onClose={() => setIsFeedbackOpen(false)}
         email={user?.email ?? ''}
       />
+
+      <CookieBanner />
     </div>
   )
 }

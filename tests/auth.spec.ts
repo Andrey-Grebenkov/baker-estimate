@@ -10,11 +10,14 @@ test.describe('Страница авторизации', () => {
     await expect(page.locator('[data-testid="auth-email-input"]')).toBeVisible()
     await expect(page.locator('[data-testid="auth-password-input"]')).toBeVisible()
     await expect(page.locator('[data-testid="auth-submit-button"]')).toHaveText('Войти')
+    await expect(page.locator('[data-testid="auth-consent-checkbox"]')).toBeVisible()
+    await expect(page.locator('[data-testid="auth-submit-button"]')).toBeDisabled()
   })
 
   test('показывает ошибку при пустых полях', async ({ page }) => {
     await page.goto('/')
 
+    await page.locator('[data-testid="auth-consent-checkbox"]').check()
     await page.locator('[data-testid="auth-submit-button"]').click()
 
     const error = page.locator('[data-testid="auth-error"]')

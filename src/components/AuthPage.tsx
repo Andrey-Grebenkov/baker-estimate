@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AuthError } from '@supabase/supabase-js'
 import { mapAuthError } from '../lib/authErrors'
 import { RequiredMark } from './RequiredMark'
+import { LegalDocModal, useLegalModal } from './LegalModals'
 
 interface AuthPageProps {
   error: string | null
@@ -15,6 +16,8 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
+  const [consent, setConsent] = useState(false)
+  const { legalDoc, openLegalDoc, closeLegalDoc } = useLegalModal()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,6 +97,43 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
             />
           </div>
 
+          <div className="flex items-start gap-2">
+            <input
+              id="auth-consent"
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              data-testid="auth-consent-checkbox"
+            />
+            <label htmlFor="auth-consent" className="text-xs leading-relaxed text-slate-600">
+              Я согласен с{' '}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  openLegalDoc('terms')
+                }}
+                className="text-indigo-600 underline hover:text-indigo-500"
+                data-testid="auth-terms-link"
+              >
+                Пользовательским соглашением
+              </button>{' '}
+              и{' '}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  openLegalDoc('privacy')
+                }}
+                className="text-indigo-600 underline hover:text-indigo-500"
+                data-testid="auth-privacy-link"
+              >
+                Политикой обработки персональных данных
+              </button>
+            </label>
+          </div>
+
           {displayedError && (
             <div
               className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
@@ -105,7 +145,7 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !consent}
             className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             data-testid="auth-submit-button"
           >
@@ -127,6 +167,8 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
             {isRegister ? 'Войти' : 'Зарегистрироваться'}
           </button>
         </div>
+
+        <LegalDocModal doc={legalDoc} onClose={closeLegalDoc} />
       </div>
     </div>
   )
