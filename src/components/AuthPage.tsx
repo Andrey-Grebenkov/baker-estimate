@@ -21,6 +21,14 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Guard against DevTools bypass: the disabled attribute can be removed,
+    // but the submit handler must still refuse to run without consent.
+    if (!consent) {
+      setLocalError('Необходимо согласие с условиями')
+      return
+    }
+
     setLocalError(null)
 
     const trimmedEmail = email.trim()
