@@ -143,28 +143,30 @@ function App() {
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 print:h-auto print:max-w-none print:overflow-visible print:p-0">
         <nav
-          className="relative z-10 mb-6 flex flex-wrap gap-2 print:hidden"
+          className="no-scrollbar relative z-10 mb-6 overflow-x-auto print:hidden"
           role="tablist"
           data-testid="app-tabs"
         >
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              onPointerDown={() => setActiveTab(tab.value)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-base ${
-                activeTab === tab.value
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50'
-              }`}
-              data-testid={`tab-${tab.value}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          <div className="flex w-fit space-x-1 rounded-xl border border-slate-300/60 bg-slate-200/60 p-1 backdrop-blur-sm dark:border-slate-700/50 dark:bg-slate-800/40">
+            {tabs.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                onPointerDown={() => setActiveTab(tab.value)}
+                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-500 ${
+                  activeTab === tab.value
+                    ? 'bg-white/90 text-slate-900 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-700 dark:text-white dark:ring-white/10'
+                    : 'text-slate-500 hover:bg-white/60 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-200'
+                }`}
+                data-testid={`tab-${tab.value}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </nav>
 
         {activeTab === 'dashboard' && (
