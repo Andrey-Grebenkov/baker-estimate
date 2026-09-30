@@ -50,12 +50,17 @@ export function AuthPage({ error, onSignIn, onSignUp }: AuthPageProps) {
       if (signError) {
         setLocalError(mapAuthError(signError))
       }
+    } catch (err) {
+      setLocalError(mapAuthError(err instanceof Error ? err : String(err)))
     } finally {
       setIsLoading(false)
     }
   }
 
-  const displayedError = mapAuthError(localError || error)
+  // localError and the error prop are already display-ready (mapAuthError is
+  // applied where they are produced), so they must not be mapped again —
+  // localized strings would otherwise fall through to the generic fallback.
+  const displayedError = localError || error
 
   return (
     <div

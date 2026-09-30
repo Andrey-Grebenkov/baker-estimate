@@ -135,6 +135,14 @@ export function useAuth(): AuthState {
           await checkVerification(currentSession, { silent: false })
         }
       })
+      .catch((err: unknown) => {
+        // A rejected getSession (e.g. connection timeout on the refresh_token
+        // endpoint) must still end the initial loading state and surface a
+        // friendly error instead of an unhandled rejection.
+        if (!mounted) return
+        setError(mapAuthError(err instanceof Error ? err : String(err)))
+        setIsInitialLoading(false)
+      })
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!mounted) return

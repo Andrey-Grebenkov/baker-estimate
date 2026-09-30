@@ -67,3 +67,62 @@ describe('AuthPage — consent gate', () => {
     ).toBeTruthy()
   })
 })
+
+describe('AuthPage — дружелюбные ошибки', () => {
+  const fillAndSubmit = () => {
+    fireEvent.change(screen.getByTestId('auth-email-input'), {
+      target: { value: 'user@example.com' },
+    })
+    fireEvent.change(screen.getByTestId('auth-password-input'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.click(screen.getByTestId('auth-consent-checkbox'))
+    fireEvent.click(screen.getByTestId('auth-submit-button'))
+  }
+
+  it('показывает "Проблема с сетью" вместо "Failed to fetch"', async () => {
+    const onSignIn = vi
+      .fn()
+      .mockResolvedValue({ error: { message: 'Failed to fetch' } })
+    render(<AuthPage error={null} onSignIn={onSignIn} onSignUp={vi.fn()} />)
+
+    fillAndSubmit()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auth-error').textContent).toContain(
+        'Проблема с сетью',
+      )
+    })
+    expect(screen.getByTestId('auth-error').textContent).not.toContain(
+      'Failed to fetch',
+    )
+  })
+
+  it('мапит ошибку, если onSignIn отклонил промис (network timeout)', async () => {
+    const onSignIn = vi
+      .fn()
+      .mockRejectedValue(new TypeError('Failed to fetch'))
+    render(<AuthPage error={null} onSignIn={onSignIn} onSignUp={vi.fn()} />)
+
+    fillAndSubmit()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auth-error').textContent).toContain(
+        'Проблема с сетью',
+      )
+    })
+  })
+
+  it('показывает локальную валидацию без изменений', async () => {
+    render(<AuthPage error={null} onSignIn={vi.fn()} onSignUp={vi.fn()} />)
+
+    fireEvent.click(screen.getByTestId('auth-consent-checkbox'))
+    fireEvent.click(screen.getByTestId('auth-submit-button'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auth-error').textContent).toContain(
+        'Введите email и пароль',
+      )
+    })
+  })
+})

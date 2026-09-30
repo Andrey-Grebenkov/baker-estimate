@@ -1,6 +1,7 @@
 interface AuthErrorLike {
   message: string
   code?: string
+  name?: string
 }
 
 export function isSuppressedAuthError(error: AuthErrorLike | string | null | undefined): boolean {
@@ -14,6 +15,7 @@ export function mapAuthError(error: AuthErrorLike | string | null | undefined): 
 
   const message = typeof error === 'string' ? error : error.message
   const code = typeof error === 'string' ? undefined : error.code
+  const name = typeof error === 'string' ? undefined : error.name
 
   if (code === 'invalid_credentials') {
     return 'Неверный email или пароль'
@@ -33,6 +35,27 @@ export function mapAuthError(error: AuthErrorLike | string | null | undefined): 
 
   const lower = message.toLowerCase()
 
+  // Fetch failures: Chrome "Failed to fetch", Node "fetch failed",
+  // Firefox "NetworkError when attempting to fetch resource.",
+  // Safari "Load failed" / "The network connection was lost.",
+  // React Native "Network request failed". supabase-js wraps them in
+  // AuthRetryableFetchError/AuthUnknownError, keeping the message.
+  if (
+    name === 'AuthRetryableFetchError' ||
+    lower.includes('failed to fetch') ||
+    lower.includes('fetch failed') ||
+    lower.includes('networkerror') ||
+    lower.includes('network error') ||
+    lower.includes('network request failed') ||
+    lower.includes('network connection') ||
+    lower.includes('load failed') ||
+    lower.includes('timed out') ||
+    lower.includes('timeout') ||
+    lower.includes('err_connection')
+  ) {
+    return 'Проблема с сетью. Проверьте подключение к интернету.'
+  }
+
   if (lower.includes('invalid login credentials')) {
     return 'Неверный email или пароль'
   }
@@ -49,5 +72,5 @@ export function mapAuthError(error: AuthErrorLike | string | null | undefined): 
     return 'Некорректный email'
   }
 
-  return message
+  return 'Произошла ошибка. Попробуйте еще раз.'
 }
