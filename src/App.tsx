@@ -155,8 +155,7 @@ function App() {
                 role="tab"
                 aria-selected={activeTab === tab.value}
                 onClick={() => setActiveTab(tab.value)}
-                onPointerDown={() => setActiveTab(tab.value)}
-                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-500 ${
+                className={`whitespace-nowrap touch-manipulation rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-500 ${
                   activeTab === tab.value
                     ? 'bg-white/90 text-slate-900 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-700 dark:text-white dark:ring-white/10'
                     : 'text-slate-500 hover:bg-white/60 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-200'
