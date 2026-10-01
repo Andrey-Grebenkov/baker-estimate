@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { useAppState } from './hooks/useAppState'
 import { AuthPage } from './components/AuthPage'
@@ -50,6 +50,11 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const state = useAppState(user)
+
+  // Smart-tap for the tab strip: mobile browsers cancel click on 1–2px
+  // "micro-swipes" and swallow the first tap that merely stops scroll inertia.
+  // Track the press start instead — release within ~10px counts as a tap.
+  const tabPressRef = useRef<{ x: number; y: number } | null>(null)
 
   // Only the initial mount blocks the whole app. Background re-checks
   // (window focus, token refresh) run silently so the OTP modal keeps state.
@@ -154,7 +159,29 @@ function App() {
                 type="button"
                 role="tab"
                 aria-selected={activeTab === tab.value}
-                onClick={() => setActiveTab(tab.value)}
+                onPointerDown={(e) => {
+                  tabPressRef.current = { x: e.clientX, y: e.clientY }
+                }}
+                onPointerUp={(e) => {
+                  const start = tabPressRef.current
+                  tabPressRef.current = null
+                  if (!start) return
+                  if (
+                    Math.abs(e.clientX - start.x) < 10 &&
+                    Math.abs(e.clientY - start.y) < 10
+                  ) {
+                    setActiveTab(tab.value)
+                  }
+                }}
+                onPointerCancel={() => {
+                  tabPressRef.current = null
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setActiveTab(tab.value)
+                  }
+                }}
                 className={`whitespace-nowrap touch-manipulation rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-500 ${
                   activeTab === tab.value
                     ? 'bg-white/90 text-slate-900 shadow-sm ring-1 ring-slate-900/5 dark:bg-slate-700 dark:text-white dark:ring-white/10'
